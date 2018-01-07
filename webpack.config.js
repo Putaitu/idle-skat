@@ -4,7 +4,7 @@
 module.exports = {
     // The main .js file path
     entry: {
-        app: './src/index.js'
+        app: './src/index'
     },
 
     // Define loaders
@@ -28,6 +28,6 @@ module.exports = {
     
     // Output .js file
     output: {
-        filename: './[name].js'
+        filename: './js/[name].js'
     }
 };
