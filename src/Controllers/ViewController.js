@@ -20,6 +20,7 @@ class ViewController {
         Crisp.View.clear(Crisp.View);
 
         _.append(document.body,
+            new Game.Views.Widgets.PlayerInfo(),
             new Game.Views.Pages.Setup() 
         );
     }

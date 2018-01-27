@@ -1,0 +1,9 @@
+.widget--player-info {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 1px solid black;
+    margin: 1rem;
+    padding: 1rem;
+}

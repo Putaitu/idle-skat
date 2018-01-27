@@ -1,33 +1,51 @@
 'use strict';
 
-// Define settings
+const path = require('path');
+const webpack = require('webpack');
+const ExtractTextPlugin = require("extract-text-webpack-plugin");
+
+require('es6-promise').polyfill();
+
 module.exports = {
-    // The main .js file path
-    entry: {
-        app: './src/index'
-    },
+  entry: './src/index.js',
 
-    // Define loaders
-    module: {
-        loaders: [
-            // Babel.js
-            {
-                test: /\.js$/,
-                loader: 'babel',
-                query: {
-                    presets: ['env']
-                }
-            }
+  output: {
+    path: __dirname,
+    filename: 'js/app.js'
+  },
+
+  plugins: [
+    // Specify the resulting CSS filename
+    new ExtractTextPlugin('css/app.css'),
+  ],
+
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: [
+          'babel-loader'
         ]
-    },
+      },
+      {
+        test: /\.scss$/,
+        use: ExtractTextPlugin.extract({
+          fallback: 'style-loader',
+          use: [
+            'css-loader',
+            'sass-loader'
+          ]
+        })
+      }
+    ]
+  },
 
-    // Automatically accept these extensions
-    resolve: {
-        extensions: ['.js', '.json']
-    },
-    
-    // Output .js file
-    output: {
-        filename: './js/[name].js'
-    }
+  stats: {
+    // Colored output
+    colors: true
+  },
+
+  // Create Sourcemaps for the bundle
+  devtool: 'source-map'
 };

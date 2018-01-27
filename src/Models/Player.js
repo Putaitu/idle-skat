@@ -8,7 +8,7 @@ class Player extends Game.Models.Entity {
      * Structure
      */
     structure() {
-        this.personalAccount = 0;
+        this.personalAccount = 30000;
         this.company = new Game.Models.Company();
     }
 
@@ -28,6 +28,13 @@ class Player extends Game.Models.Entity {
      */
     static load() {
         return new Player(Game.Services.ConfigService.get('player'));
+    }
+
+    /**
+     * Saves the player data
+     */
+    save() {
+        Game.Services.ConfigService.set('player', this);
     }
 }
 

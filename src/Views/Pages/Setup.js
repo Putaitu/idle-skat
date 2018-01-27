@@ -11,7 +11,9 @@ class Setup extends Crisp.View {
             
         this.fetch();
 
-        this.renderEstimates();
+        this.model.sanityCheck();
+
+        this.renderCalculations();
     }
 
     /**
@@ -21,61 +23,57 @@ class Setup extends Crisp.View {
      * @param {String} label
      * @param {String} description
      * @param {Boolean} readOnly
-     * @param {Function} calculation
      *
      * @returns {HTMLElement} Field element
      */
-    renderField(key, label, description, readOnly, calculation) {
-        if(typeof calculation !== 'function') {
-            calculation = (value) => { return ''; };
-        }
-
-        let calculationField;
-
+    renderField(key, label, description, readOnly) {
         return _.div({class: 'page--setup__user-input__field'},
             _.h4({class: 'page--setup__user-input__field__label'}, label || ''),
+            _.div({class: 'page--setup__user-input__field__description'}, description || ''),
             _.input({disabled: readOnly, class: 'page--setup__user-input__field__input', value: this.model[key] || ''})
                 .on('input', (e) => {
                     if(readOnly) { return; }
 
                     this.model[key] = e.currentTarget.value;
 
-                    calculationField.innerHTML = calculation(this.model[key]);
-
-                    this.renderEstimates();
-                }),
-            calculationField = _.div({class: 'page--setup__user-input__field__calculation'}, calculation(this.model[key])),
-            _.div({class: 'page--setup__user-input__field__description'}, description || '')
+                    this.renderCalculations();
+                })
         );
     }
 
     /**
-     * Renders the estimates
+     * Renders the calculations
      */
-    renderEstimates() {
-        let estimates = this.element.querySelector('.page--setup__estimates');
+    renderCalculations() {
+        let calculations = this.element.querySelector('.page--setup__calculations');
 
-        if(!estimates) { return; }
+        if(!calculations) { return; }
 
-        estimates.innerHTML = '';
+        calculations.innerHTML = '';
 
-        _.append(estimates,
-            _.h2({class: 'page--setup__estimates__heading'}, 'Estimates'),
-            _.div({class: 'page--setup__estimates__field'},
-                _.h4({class: 'page--setup__estimates__field__label'}, 'Total sales'),
-                _.div({class: 'page--setup__estimates__field__calculation'}, this.model.estimatedDemand + ' × ' + this.model.unitPrice),
-                _.div({class: 'page--setup__estimates__field__result'}, this.model.estimatedTotalSales),
-                _.div({class: 'page--setup__estimates__field__vat'}, 'VAT: ' + this.model.estimatedTotalSales + ' × 25% = ' + (this.model.estimatedTotalSales * 0.25))
+        _.append(calculations,
+            _.h2({class: 'page--setup__calculations__heading'}, 'Calculations (yearly)'),
+            _.div({class: 'page--setup__calculations__field'},
+                _.h4({class: 'page--setup__calculations__field__label'}, 'Sales'),
+                _.div({class: 'page--setup__calculations__field__result'}, this.model.demand + ' × ' + this.model.unitPrice + ' = ' + this.model.estimatedYearlySales),
+                _.div({class: 'page--setup__calculations__field__vat'}, 'VAT: ' + this.model.estimatedYearlySales + ' × 25% = ' + this.model.estimatedYearlySalesVAT)
             ),
-            _.div({class: 'page--setup__estimates__field'},
-                _.h4({class: 'page--setup__estimates__field__label'}, 'Total cost'),
-                _.div({class: 'page--setup__estimates__field__calculation'}, this.model.unitProduction + ' × ' + this.model.productionCost),
-                _.div({class: 'page--setup__estimates__field__result'}, this.model.estimatedTotalCost),
-                _.div({class: 'page--setup__estimates__field__vat'}, 'VAT: ' + this.model.estimatedTotalCost + ' / 125% * 25% = ' + (this.model.estimatedTotalCost / 1.25 * 0.25))
+            _.div({class: 'page--setup__calculations__field'},
+                _.h4({class: 'page--setup__calculations__field__label'}, 'Cost'),
+                _.div({class: 'page--setup__calculations__field__result'}, this.model.unitProduction + ' × ' + this.model.estimatedYearlyProductionCost + ' = ' + this.model.estimatedYearlyProductionCost),
+                _.div({class: 'page--setup__calculations__field__vat'}, 'VAT: ' + this.model.estimatedYearlyProductionCost + ' / 125% × 25% = ' + this.model.estimatedYearlyProductionCostVAT)
             ),
-            _.div({class: 'page--setup__estimates__field'},
-                _.h4({class: 'page--setup__estimates__field__label'}, 'Estimated income'),
-                _.div({class: 'page--setup__estimates__field__result'}, this.model.estimatedIncome)
+            _.div({class: 'page--setup__calculations__field'},
+                _.h4({class: 'page--setup__calculations__field__label'}, 'Income'),
+                _.div({class: 'page--setup__calculations__field__result'}, this.model.estimatedYearlyIncome)
+            ),
+            _.div({class: 'page--setup__calculations__field'},
+                _.h4({class: 'page--setup__calculations__field__label'}, 'B-skat'),
+                _.div({class: 'page--setup__calculations__field__result'}, this.model.estimatedYearlyBSkat + ' (' + this.model.estimatedMonthlyBSkat + ' per month)')
+            ),
+            _.div({class: 'page--setup__calculations__field'},
+                _.h4({class: 'page--setup__calculations__field__label'}, 'VAT'),
+                _.div({class: 'page--setup__calculations__field__result'}, this.model.estimatedYearlySalesVAT + ' - ' + this.model.estimatedYearlyProductionCostVAT + ' = ' + this.model.estimatedYearlyVAT)
             )
         );
     }
@@ -85,15 +83,24 @@ class Setup extends Crisp.View {
      */
     template() {
         return _.div({class: 'page page--setup'},
-            _.div({class: 'page--setup__user-input'},
-                this.renderField('name', 'Name'),
-                this.renderField('capital', 'Capital', 'How much you, as the owner, invest for the company\'s spending'),
-                this.renderField('unitPrice', 'Unit price', 'How much you want to charge for your product'),
-                this.renderField('unitProduction', 'Unit production', 'How many units you plan to produce in a year'),
-                this.renderField('estimatedDemand', 'Estimated demand', 'How many units people will buy, based on the set price', true),
-                this.renderField('productionCost', 'Production cost', 'How much a single unit costs to make', true)
+            _.div({class: 'page--setup__numbers'},
+                _.div({class: 'page--setup__user-input'},
+                    _.h2({class: 'page--setup__user-input__heading'}, 'Estimates'),
+                    this.renderField('name', 'Name'),
+                    this.renderField('capital', 'Capital', 'How much you, as the owner, will invest for the company\'s spending'),
+                    this.renderField('unitPrice', 'Unit price', 'How much you want to charge for your product'),
+                    this.renderField('unitProduction', 'Unit production', 'How many units you plan to produce in a year'),
+                    this.renderField('unitProductionCost', 'Production cost', 'How much a single unit costs to make'),
+                    this.renderField('demand', 'Demand', 'How many units people will buy, based on the set price')
+                ),
+                _.div({class: 'page--setup__calculations'})
             ),
-            _.div({class: 'page--setup__estimates'})
+            _.div({class: 'page--setup__actions'},
+                _.button({class: 'widget widget--button'}, 'Start game')
+                    .click((e) => {
+                        this.model.save();
+                    })
+            )
         );
     }
 }

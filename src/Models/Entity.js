@@ -12,9 +12,21 @@ class Entity {
     constructor(params) {
         this.structure();
 
-        if(params && params instanceof Object === false && Array.isArray(params)) {
+        if(params && params instanceof Object && !Array.isArray(params)) {
             for(let k in params) {
-                this[k] = params[k];
+                switch(typeof this[k]) {
+                    case 'number':
+                        this[k] = parseFloat(params[k] || 0);
+                        break;
+
+                    case 'string':
+                        this[k] = (params[k] || '').toString();
+                        break;
+
+                    default:
+                        this[k] = params[k];
+                        break;
+                }
             }
         }
 
