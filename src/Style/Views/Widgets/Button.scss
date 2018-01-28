@@ -1,12 +1,16 @@
 .widget--button {
-    border: 1px solid black;
     line-height: 2rem;
-    padding: 0 0.5rem;
-    background-color: white;
+    padding: 0 1rem;
+    background-color: lightgrey;
     text-transform: uppercase;
     cursor: pointer;
+    color: dimgrey;
+    font-weight: bold;
+    border-radius: 1rem;
+    border: 0;
 
     &:hover {
-        background-color: grey;
+        background-color: dimgrey;
+        color: lightgrey;
     }
 }

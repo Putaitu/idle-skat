@@ -8,6 +8,7 @@ window.Game = {};
 
 Game.Services = {};
 Game.Services.ConfigService = require('./Services/ConfigService');
+Game.Services.TimeService = require('./Services/TimeService');
 Game.Services.DebugService = require('./Services/DebugService');
 
 Game.Models = {};

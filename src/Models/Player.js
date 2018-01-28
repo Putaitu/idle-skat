@@ -1,5 +1,7 @@
 'use strict';
 
+let current;
+
 /**
  * The player model
  */
@@ -8,7 +10,7 @@ class Player extends Game.Models.Entity {
      * Structure
      */
     structure() {
-        this.personalAccount = 30000;
+        this.personalAccount = 50000;
         this.company = new Game.Models.Company();
     }
 
@@ -28,6 +30,17 @@ class Player extends Game.Models.Entity {
      */
     static load() {
         return new Player(Game.Services.ConfigService.get('player'));
+    }
+
+    /**
+     * Get the current player
+     */
+    static get current() {
+        if(!current) {
+            current = this.load();
+        }
+
+        return current;
     }
 
     /**

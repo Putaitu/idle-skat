@@ -90,42 +90,11 @@ class Company extends Game.Models.Entity {
      * Saves this company
      */
     save() {
-        this.sanityCheck();
-
-        let player = Game.Models.Player.load();
+        let player = Game.Models.Player.current;
 
         player.company = this;
 
         player.save();
-    }
-
-    /**
-     * Performs a sanity check
-     */
-    sanityCheck() {
-        if(!this.name) {
-            this.name = 'My Company A/S';
-        }
-
-        if(this.capital < 0) {
-            this.capital = 20000;
-        }
-
-        if(this.unitPrice < 0) {
-            this.unitPrice = 0;
-        }
-
-        if(this.unitProduction < 0) {
-            this.unitProduction = 0;
-        }
-
-        if(this.unitProductionCost < 0) {
-            this.unitProductionCost = 0;
-        }
-
-        if(this.demand < 0) {
-            this.demand = 0;
-        }
     }
 }
 

@@ -402,7 +402,8 @@ html {
       font-size: 13px; } }
 
 body {
-  font-family: sans-serif; }
+  font-family: sans-serif;
+  line-height: 1.5em; }
 
 * {
   box-sizing: border-box; }
@@ -415,24 +416,83 @@ h1, h2, h3, h4, h5, h6 {
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  border: 1px solid black;
-  margin: 1rem;
-  padding: 1rem; }
+  padding: 0.5rem;
+  background-color: dimgrey;
+  color: white;
+  display: flex;
+  border-bottom-left-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem; }
+  .widget--player-info__toggle {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    -webkit-appearance: none;
+    appearance: none;
+    border-bottom-left-radius: 0.5rem;
+    background-color: darkgrey;
+    border-bottom-right-radius: 0.5rem; }
+    .widget--player-info__toggle:focus {
+      outline: none; }
+    .widget--player-info__toggle:hover {
+      background-color: lightgrey; }
+  .widget--player-info__area {
+    display: flex;
+    flex-wrap: wrap; }
+    .widget--player-info__area:not(:last-child) {
+      border-right: 1px solid lightgrey;
+      padding-right: 0.5rem;
+      margin-right: 0.5rem; }
+    .widget--player-info__area__icon {
+      margin-right: 0.5rem; }
+    .widget--player-info__area__heading {
+      white-space: nowrap; }
+    .widget--player-info__area__value {
+      flex-grow: 1; }
+  .widget--player-info__toggle:checked {
+    height: 1rem;
+    opacity: 1; }
+  .widget--player-info__toggle:checked ~ .widget--player-info__area {
+    margin-bottom: 1rem;
+    padding: 0.5rem; }
+  .widget--player-info__toggle:checked ~ .widget--player-info__area .widget--player-info__area__value {
+    margin-top: 0.5rem;
+    width: 100%; }
+  .widget--player-info__toggle:checked ~ .widget--player-info__area .widget--player-info__area__icon {
+    margin: 0 0 0 0.5rem; }
+  .widget--player-info__toggle:not(:checked) ~ .widget--player-info__area {
+    display: flex; }
+  .widget--player-info__toggle:not(:checked) ~ .widget--player-info__area .widget--player-info__area__heading {
+    display: none; }
 
 .widget--button {
-  border: 1px solid black;
+  line-height: 2rem;
+  padding: 0 1rem;
+  background-color: lightgrey;
+  text-transform: uppercase;
+  cursor: pointer;
+  color: dimgrey;
+  font-weight: bold;
+  border-radius: 1rem;
+  border: 0; }
+  .widget--button:hover {
+    background-color: dimgrey;
+    color: lightgrey; }
+
+.widget--input {
+  border: 1px solid grey;
   line-height: 2rem;
   padding: 0 0.5rem;
-  background-color: white;
-  text-transform: uppercase;
-  cursor: pointer; }
-  .widget--button:hover {
-    background-color: grey; }
+  border-radius: 1rem; }
 
 .page {
   width: calc(100% - 2rem);
   max-width: 80rem;
-  margin: 7rem auto 0 auto; }
+  margin: 3rem auto 0 auto; }
 
 .page--setup__numbers {
   display: flex;

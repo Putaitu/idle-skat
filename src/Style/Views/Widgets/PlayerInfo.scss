@@ -3,7 +3,88 @@
     top: 0;
     left: 50%;
     transform: translateX(-50%);
-    border: 1px solid black;
-    margin: 1rem;
-    padding: 1rem;
+    padding: 0.5rem;
+    background-color: dimgrey;
+    color: white;
+    display: flex;
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+
+    &__toggle {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        -webkit-appearance: none;
+        appearance: none;
+        border-bottom-left-radius: 0.5rem;
+        background-color: darkgrey;
+        border-bottom-right-radius: 0.5rem;
+        
+        &:focus {
+            outline: none;
+        }
+
+        &:hover {
+            background-color: lightgrey;
+        }
+    }
+    
+    &__area {
+        display: flex;
+        flex-wrap: wrap;
+
+        &:not(:last-child) {
+            border-right: 1px solid lightgrey;
+            padding-right: 0.5rem;
+            margin-right: 0.5rem;
+        }
+
+        &__icon {
+            margin-right: 0.5rem;
+        }
+
+        &__heading {
+            white-space: nowrap;
+        }
+
+        &__value {
+            flex-grow: 1;
+        }
+    }
+    
+    // Expanded
+    &__toggle:checked {
+        height: 1rem;
+        opacity: 1;
+    }
+    
+    &__toggle:checked ~ &__area {
+        margin-bottom: 1rem;
+        padding: 0.5rem;
+    }
+    
+    &__toggle:checked ~ &__area &__area {
+        &__value {
+            margin-top: 0.5rem;
+            width: 100%;
+        }
+
+        &__icon {
+            margin: 0 0 0 0.5rem;
+        }
+    }
+    
+    // Collapsed
+    &__toggle:not(:checked) ~ &__area {
+        display: flex;
+    }
+
+    &__toggle:not(:checked) ~ &__area &__area {
+        &__heading { display: none; }
+    }
 }
