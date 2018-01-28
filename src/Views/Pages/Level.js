@@ -12,12 +12,19 @@ class Level extends Crisp.View {
         this.fetch();
 
         setInterval(() => {
-            this.model.sellUnit();
-
-            this._render();
-
-            Game.Models.Player.current.save();
+            this.heartbeat();
         }, 1000);
+    }
+
+    /**
+     * Heartbeat
+     */
+    heartbeat() {
+        this.model.sellUnit();
+
+        this._render();
+
+        Game.Models.Player.current.save();
     }
 
     /**

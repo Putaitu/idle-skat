@@ -601,7 +601,7 @@ class PlayerInfo extends Crisp.View {
      * Template
      */
     template() {
-        return _.div({ class: 'widget widget--player-info' }, _.input({ type: 'checkbox', class: 'widget widget--player-info__toggle', checked: this.isExpanded }), _.div({ class: 'widget--player-info__area company' }, _.h4({ class: 'widget--player-info__area__heading' }, 'Company'), _.div({ class: 'widget--player-info__area__icon' }, '🏭'), _.div({ class: 'widget--player-info__area__value' }, this.model.company.name + ': ' + this.model.company.capital)), _.div({ class: 'widget--player-info__area personal-account' }, _.h4({ class: 'widget--player-info__area__heading' }, 'Personal account'), _.div({ class: 'widget--player-info__area__icon' }, '💰'), _.div({ class: 'widget--player-info__area__value' }, this.model.personalAccount.toString())), _.div({ class: 'widget--player-info__area calendar' }, _.h4({ class: 'widget--player-info__area__heading' }, 'Calendar'), _.div({ class: 'widget--player-info__area__icon' }, '🗓'), _.div({ class: 'widget--player-info__area__value' }, this.getTimeString())));
+        return _.div({ class: 'widget widget--player-info' }, _.input({ type: 'checkbox', class: 'widget widget--player-info__toggle', checked: this.isExpanded }), _.div({ class: 'widget--player-info__area company' }, _.h4({ class: 'widget--player-info__area__heading' }, 'Company'), _.div({ class: 'widget--player-info__area__icon' }, '🏭'), _.div({ class: 'widget--player-info__area__preview' }, this.model.company.name + ': ' + this.model.company.capital), _.div({ class: 'widget--player-info__area__data' }, 'Name: ' + this.model.company.name, '<br>', 'Capital: ' + this.model.company.capital)), _.div({ class: 'widget--player-info__area personal-account' }, _.h4({ class: 'widget--player-info__area__heading' }, 'Personal account'), _.div({ class: 'widget--player-info__area__icon' }, '💰'), _.div({ class: 'widget--player-info__area__preview' }, this.model.personalAccount.toString()), _.div({ class: 'widget--player-info__area__data' }, 'Balance: ' + this.model.personalAccount)), _.div({ class: 'widget--player-info__area calendar' }, _.h4({ class: 'widget--player-info__area__heading' }, 'Calendar'), _.div({ class: 'widget--player-info__area__icon' }, '🗓'), _.div({ class: 'widget--player-info__area__preview' }, this.getTimeString()), _.div({ class: 'widget--player-info__area__data' }, 'Time: ' + this.getTimeString())));
     }
 }
 
@@ -856,12 +856,19 @@ class Level extends Crisp.View {
         this.fetch();
 
         setInterval(() => {
-            this.model.sellUnit();
-
-            this._render();
-
-            Game.Models.Player.current.save();
+            this.heartbeat();
         }, 1000);
+    }
+
+    /**
+     * Heartbeat
+     */
+    heartbeat() {
+        this.model.sellUnit();
+
+        this._render();
+
+        Game.Models.Player.current.save();
     }
 
     /**

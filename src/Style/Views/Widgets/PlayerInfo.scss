@@ -52,8 +52,9 @@
             white-space: nowrap;
         }
 
-        &__value {
+        &__data {
             flex-grow: 1;
+            display: none;
         }
     }
     
@@ -69,9 +70,12 @@
     }
     
     &__toggle:checked ~ &__area &__area {
-        &__value {
-            margin-top: 0.5rem;
-            width: 100%;
+        &__preview {
+            display: none;
+        }
+
+        &__data {
+            display: block;
         }
 
         &__icon {

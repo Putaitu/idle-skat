@@ -451,17 +451,19 @@ h1, h2, h3, h4, h5, h6 {
       margin-right: 0.5rem; }
     .widget--player-info__area__heading {
       white-space: nowrap; }
-    .widget--player-info__area__value {
-      flex-grow: 1; }
+    .widget--player-info__area__data {
+      flex-grow: 1;
+      display: none; }
   .widget--player-info__toggle:checked {
     height: 1rem;
     opacity: 1; }
   .widget--player-info__toggle:checked ~ .widget--player-info__area {
     margin-bottom: 1rem;
     padding: 0.5rem; }
-  .widget--player-info__toggle:checked ~ .widget--player-info__area .widget--player-info__area__value {
-    margin-top: 0.5rem;
-    width: 100%; }
+  .widget--player-info__toggle:checked ~ .widget--player-info__area .widget--player-info__area__preview {
+    display: none; }
+  .widget--player-info__toggle:checked ~ .widget--player-info__area .widget--player-info__area__data {
+    display: block; }
   .widget--player-info__toggle:checked ~ .widget--player-info__area .widget--player-info__area__icon {
     margin: 0 0 0 0.5rem; }
   .widget--player-info__toggle:not(:checked) ~ .widget--player-info__area {
