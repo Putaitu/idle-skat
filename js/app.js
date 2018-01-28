@@ -72,6 +72,15 @@
 
 __webpack_require__(1);
 
+/**
+ * Resets the game
+ */
+window.reset = function reset() {
+    localStorage.clear();
+
+    location.reload();
+};
+
 window._ = Crisp.Elements;
 
 window.Game = {};
@@ -85,12 +94,14 @@ Game.Models = {};
 Game.Models.Entity = __webpack_require__(4);
 Game.Models.Player = __webpack_require__(5);
 Game.Models.Company = __webpack_require__(6);
+Game.Models.Summary = __webpack_require__(16);
 
 Game.Views = {};
 Game.Views.Widgets = {};
 Game.Views.Widgets.PlayerInfo = __webpack_require__(7);
 Game.Views.Pages = {};
 Game.Views.Pages.Setup = __webpack_require__(8);
+Game.Views.Pages.Level = __webpack_require__(15);
 
 Game.Controllers = {};
 Game.Controllers.ViewController = __webpack_require__(9);
@@ -331,103 +342,182 @@ module.exports = Player;
 "use strict";
 
 
+const MACHINE_PRICE = 200;
+const MACHINE_CAPACITY = 10;
+
 /**
  * The main company model
  */
-
 class Company extends Game.Models.Entity {
-  /**
-   * Structure
-   */
-  structure() {
-    this.name = 'My Company A/S';
-    this.capital = 20000;
-    this.unitPrice = 20;
-    this.unitProduction = 5000;
-    this.unitProductionCost = 10;
-    this.demand = 10000;
-  }
+    /**
+     * Constructor
+     */
+    constructor(params) {
+        super(params);
+    }
 
-  /**
-   * Rounds a number by 2 decimal places
-   */
-  round(num) {
-    return Math.round(num * 100) / 100;
-  }
+    /**
+     * Structure
+     */
+    structure() {
+        this.name = 'My Company A/S';
+        this.capital = 20000;
+        this.unitPrice = 20;
+        this.unitProduction = 5000;
+        this.unitProductionCost = 10;
+        this.demand = 10000;
 
-  /**
-   * Gets the estimated yearly sales
-   */
-  get estimatedYearlySales() {
-    return this.round(this.demand * this.unitPrice);
-  }
+        this.inventory = 0;
+        this.machines = 0;
+        this.summaries = {};
+    }
 
-  /**
-   * Gets the estimated yearly sales VAT
-   */
-  get estimatedYearlySalesVAT() {
-    return this.round(this.estimatedYearlySales * 0.25);
-  }
+    /**
+     * Rounds a number by 2 decimal places
+     */
+    round(num) {
+        return Math.round(num * 100) / 100;
+    }
 
-  /**
-   * Gets the estimated yearly cost
-   */
-  get estimatedYearlyProductionCost() {
-    return this.round(this.unitProduction * this.unitProductionCost);
-  }
+    /**
+     * Gets the current summary
+     */
+    get currentSummary() {
+        let time = Game.Services.TimeService.currentTime;
 
-  /**
-   * Gets the estimated yearly cost VAT
-   */
-  get estimatedYearlyProductionCostVAT() {
-    return this.round(this.estimatedYearlyProductionCost / 1.25 * 0.25);
-  }
+        if (!this.summaries[time.getFullYear()]) {
+            this.summaries[time.getFullYear()] = {};
+        }
 
-  /**
-   * Gets the estimated income
-   */
-  get estimatedYearlyIncome() {
-    return this.round(this.estimatedYearlySales - this.estimatedYearlyProductionCost);
-  }
+        if (!this.summaries[time.getFullYear()][time.getMonth() + 1]) {
+            this.summaries[time.getFullYear()][time.getMonth() + 1] = new Game.Models.Summary();
+        }
 
-  /**
-   * Gets the estimated yearly B skat
-   */
-  get estimatedYearlyBSkat() {
-    return this.round(this.estimatedYearlyIncome * this.estimatedVATPercentage / 100);
-  }
+        return this.summaries[time.getFullYear()][time.getMonth() + 1];
+    }
 
-  /**
-   * Gets the estimated yearly VAT
-   */
-  get estimatedYearlyVAT() {
-    return this.round(this.estimatedYearlySalesVAT - this.estimatedYearlyProductionCostVAT);
-  }
+    /**
+     * Gets the production capacity
+     */
+    get productionCapacity() {
+        return this.machines * MACHINE_CAPACITY;
+    }
 
-  /**
-   * Gets the estimated monthly B skat
-   */
-  get estimatedMonthlyBSkat() {
-    return this.round(this.estimatedYearlyBSkat / 12);
-  }
+    /**
+     * Gets the estimated yearly sales
+     */
+    get estimatedYearlySales() {
+        return this.round(this.demand * this.unitPrice);
+    }
 
-  /**
-   * Gets the estimated VAT percentage
-   */
-  get estimatedVATPercentage() {
-    return 38;
-  }
+    /**
+     * Gets the estimated yearly sales VAT
+     */
+    get estimatedYearlySalesVAT() {
+        return this.round(this.estimatedYearlySales * 0.25);
+    }
 
-  /**
-   * Saves this company
-   */
-  save() {
-    let player = Game.Models.Player.current;
+    /**
+     * Gets the estimated yearly cost
+     */
+    get estimatedYearlyProductionCost() {
+        return this.round(this.unitProduction * this.unitProductionCost);
+    }
 
-    player.company = this;
+    /**
+     * Gets the estimated yearly cost VAT
+     */
+    get estimatedYearlyProductionCostVAT() {
+        return this.round(this.estimatedYearlyProductionCost / 1.25 * 0.25);
+    }
 
-    player.save();
-  }
+    /**
+     * Gets the estimated income
+     */
+    get estimatedYearlyIncome() {
+        return this.round(this.estimatedYearlySales - this.estimatedYearlyProductionCost);
+    }
+
+    /**
+     * Gets the estimated yearly B skat
+     */
+    get estimatedYearlyBSkat() {
+        return this.round(this.estimatedYearlyIncome * this.estimatedVATPercentage / 100);
+    }
+
+    /**
+     * Gets the estimated yearly VAT
+     */
+    get estimatedYearlyVAT() {
+        return this.round(this.estimatedYearlySalesVAT - this.estimatedYearlyProductionCostVAT);
+    }
+
+    /**
+     * Gets the estimated monthly B skat
+     */
+    get estimatedMonthlyBSkat() {
+        return this.round(this.estimatedYearlyBSkat / 12);
+    }
+
+    /**
+     * Gets the estimated VAT percentage
+     */
+    get estimatedVATPercentage() {
+        return 38;
+    }
+
+    /**
+     * Saves this company
+     */
+    save() {
+        let player = Game.Models.Player.current;
+
+        player.company = this;
+
+        player.save();
+    }
+
+    /**
+     * Sells a unit
+     */
+    sellUnit() {
+        if (this.inventory < 1) {
+            return;
+        }
+
+        this.inventory--;
+
+        this.capital += this.unitPrice;
+        this.currentSummary.sales += this.unitPrice;
+    }
+
+    /**
+     * Produces a number of units
+     */
+    produceUnits() {
+        if (this.capital < this.unitProductionCost * this.productionCapacity) {
+            return alert('You do not have enough capital to produce more units');
+        }
+
+        this.inventory += this.productionCapacity;
+
+        this.capital -= this.unitProductionCost * this.productionCapacity;
+        this.currentSummary.productionCost += this.unitProductionCost * this.productionCapacity;
+    }
+
+    /**
+     * Purchases a machine
+     */
+    purchaseMachine() {
+        if (this.capital < MACHINE_PRICE) {
+            return alert('You do not have enough capital to purchase more machines');
+        }
+
+        this.machines++;
+
+        this.capital -= MACHINE_PRICE;
+        this.currentSummary.productionCost += MACHINE_PRICE;
+    }
 }
 
 module.exports = Company;
@@ -455,22 +545,14 @@ class PlayerInfo extends Crisp.View {
         this.fetch();
 
         setInterval(() => {
-            this.updateCalendar();
+            this._render();
         }, 1000);
-
-        this.updateCalendar();
     }
 
     /**
-     * Updates the calendar
+     * Gets the time string
      */
-    updateCalendar() {
-        let calendarDiv = this.element.querySelector('.calendar .widget--player-info__area__value');
-
-        if (!calendarDiv) {
-            return;
-        }
-
+    getTimeString() {
         let time = Game.Services.TimeService.currentTime;
         let timeString = time.getFullYear() + '-';
 
@@ -484,21 +566,9 @@ class PlayerInfo extends Crisp.View {
             timeString += '0';
         }
 
-        timeString += time.getDate() + ' ';
+        timeString += time.getDate();
 
-        if (time.getHours() < 10) {
-            timeString += '0';
-        }
-
-        timeString += time.getHours() + ':';
-
-        if (time.getMinutes() < 10) {
-            timeString += '0';
-        }
-
-        timeString += time.getMinutes();
-
-        calendarDiv.innerHTML = timeString;
+        return timeString;
     }
 
     /**
@@ -515,10 +585,23 @@ class PlayerInfo extends Crisp.View {
     }
 
     /**
+     * Gets whether or not this view is expanded
+     */
+    get isExpanded() {
+        let toggle = this.element.querySelector('.widget--player-info__toggle');
+
+        if (!toggle) {
+            return false;
+        }
+
+        return toggle.checked;
+    }
+
+    /**
      * Template
      */
     template() {
-        return _.div({ class: 'widget widget--player-info' }, _.input({ type: 'checkbox', class: 'widget widget--player-info__toggle' }), _.div({ class: 'widget--player-info__area personal-account' }, _.h4({ class: 'widget--player-info__area__heading' }, 'Personal account'), _.div({ class: 'widget--player-info__area__icon' }, '💰'), _.div({ class: 'widget--player-info__area__value' }, this.model.personalAccount.toString())), _.div({ class: 'widget--player-info__area calendar' }, _.h4({ class: 'widget--player-info__area__heading' }, 'Calendar'), _.div({ class: 'widget--player-info__area__icon' }, '🗓'), _.div({ class: 'widget--player-info__area__value' })));
+        return _.div({ class: 'widget widget--player-info' }, _.input({ type: 'checkbox', class: 'widget widget--player-info__toggle', checked: this.isExpanded }), _.div({ class: 'widget--player-info__area company' }, _.h4({ class: 'widget--player-info__area__heading' }, 'Company'), _.div({ class: 'widget--player-info__area__icon' }, '🏭'), _.div({ class: 'widget--player-info__area__value' }, this.model.company.name + ': ' + this.model.company.capital)), _.div({ class: 'widget--player-info__area personal-account' }, _.h4({ class: 'widget--player-info__area__heading' }, 'Personal account'), _.div({ class: 'widget--player-info__area__icon' }, '💰'), _.div({ class: 'widget--player-info__area__value' }, this.model.personalAccount.toString())), _.div({ class: 'widget--player-info__area calendar' }, _.h4({ class: 'widget--player-info__area__heading' }, 'Calendar'), _.div({ class: 'widget--player-info__area__icon' }, '🗓'), _.div({ class: 'widget--player-info__area__value' }, this.getTimeString())));
     }
 }
 
@@ -609,7 +692,13 @@ class Setup extends Crisp.View {
      * @returns {HTMLElement} Field element
      */
     renderInputField(key, label, description, readOnly) {
-        return _.div({ class: 'page--setup__user-input__field' }, _.h4({ class: 'page--setup__user-input__field__label' }, label || ''), _.div({ class: 'page--setup__user-input__field__description' }, description || ''), _.input({ disabled: readOnly, class: 'widget widget--input', value: this.model[key] || '' }).on('input', e => {
+        let type = 'text';
+
+        if (typeof this.model[key] === 'number') {
+            type = 'number';
+        }
+
+        return _.div({ class: 'page--setup__user-input__field' }, _.h4({ class: 'page--setup__user-input__field__label' }, label || ''), _.div({ class: 'page--setup__user-input__field__description' }, description || ''), _.input({ disabled: readOnly, type: type, class: 'widget widget--input', value: this.model[key] || '' }).on('input', e => {
             if (readOnly) {
                 return;
             }
@@ -636,7 +725,7 @@ class Setup extends Crisp.View {
      * Renders the calculations
      */
     renderCalculations() {
-        let calculations = this.element.querySelector('.page--setup__calculations');
+        let calculations = this.element.querySelector('.page--setup__calculations__inner');
 
         if (!calculations) {
             return;
@@ -651,12 +740,17 @@ class Setup extends Crisp.View {
      * Template
      */
     template() {
-        return _.div({ class: 'page page--setup' }, _.div({ class: 'page--setup__numbers' }, _.div({ class: 'page--setup__user-input' }, _.h2({ class: 'page--setup__user-input__heading' }, 'Estimates'), this.renderInputField('name', 'Name'), this.renderInputField('capital', 'Capital', 'How much you, as the owner, will invest for the company\'s spending'), this.renderInputField('unitPrice', 'Unit price', 'How much you want to charge for your product'), this.renderInputField('unitProduction', 'Unit production', 'How many units you plan to produce in a year'), this.renderInputField('unitProductionCost', 'Production cost', 'How much a single unit costs to make'), this.renderInputField('demand', 'Demand', 'How many units people will buy')), _.div({ class: 'page--setup__calculations' })), _.div({ class: 'page--setup__actions' }, _.button({ class: 'widget widget--button' }, 'Start game').click(e => {
+        return _.div({ class: 'page page--setup' }, _.div({ class: 'page--setup__numbers' }, _.div({ class: 'page--setup__user-input' }, _.h2({ class: 'page--setup__user-input__heading' }, 'Registration'), this.renderInputField('name', 'Name', 'The name of your company'), _.h2({ class: 'page--setup__user-input__heading' }, 'Business plan'), this.renderInputField('capital', 'Capital', 'How much you, as the owner, will invest for the company\'s spending'), this.renderInputField('unitPrice', 'Unit price', 'How much you want to charge for your product'), this.renderInputField('unitProduction', 'Unit production', 'How many units you plan to produce in a year'), this.renderInputField('unitProductionCost', 'Production cost', 'How much a single unit costs to make'), this.renderInputField('demand', 'Demand', 'How many units people will buy')), _.div({ class: 'page--setup__calculations' }, _.div({ class: 'page--setup__calculations__inner' }))), _.div({ class: 'page--setup__actions' }, _.button({ class: 'widget widget--button' }, 'Start game').click(e => {
             if (!this.sanityCheck()) {
                 return;
             }
 
             this.model.save();
+
+            Game.Services.ConfigService.set('completedSetup', true);
+            Game.Services.TimeService.startClock();
+
+            Crisp.Router.init();
         })));
     }
 }
@@ -690,7 +784,11 @@ class ViewController {
     static index() {
         Crisp.View.clear(Crisp.View);
 
-        _.append(document.body, new Game.Views.Widgets.PlayerInfo(), new Game.Views.Pages.Setup());
+        if (!Game.Services.ConfigService.get('completedSetup')) {
+            _.append(document.body, new Game.Views.Widgets.PlayerInfo(), new Game.Views.Pages.Setup());
+        } else {
+            _.append(document.body, new Game.Views.Widgets.PlayerInfo(), new Game.Views.Pages.Level());
+        }
     }
 }
 
@@ -738,6 +836,133 @@ class TimeService {
 }
 
 module.exports = TimeService;
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+class Level extends Crisp.View {
+    /**
+     * Constrcutor
+     */
+    constructor(params) {
+        super(params);
+
+        this.model = Game.Models.Player.current.company;
+
+        this.fetch();
+
+        setInterval(() => {
+            this.model.sellUnit();
+
+            this._render();
+
+            Game.Models.Player.current.save();
+        }, 1000);
+    }
+
+    /**
+     * Renders an input field
+     *
+     * @param {String} key
+     * @param {String} label
+     * @param {String} description
+     * @param {Boolean} readOnly
+     *
+     * @returns {HTMLElement} Field element
+     */
+    renderInputField(key, label, description, readOnly) {
+        let type = 'text';
+
+        if (typeof this.model[key] === 'number') {
+            type = 'number';
+        }
+
+        return _.div({ class: 'page--level__user-input__field' }, _.h4({ class: 'page--level__user-input__field__label' }, label || ''), _.div({ class: 'page--level__user-input__field__description' }, description || ''), _.input({ disabled: readOnly, type: type, class: 'widget widget--input', value: this.model[key] || '' }).on('change', e => {
+            if (readOnly) {
+                return;
+            }
+
+            this.model[key] = e.currentTarget.value;
+
+            Game.Models.Player.current.save();
+            Game.Views.Widgets.PlayerInfo.update();
+
+            this.fetch();
+        }));
+    }
+
+    /**
+     * Renders a button
+     *
+     * @param {String} key
+     * @param {String} label
+     * @param {String} description
+     * @param {String} action
+     * @param {Function} onClick
+     *
+     * @returns {HTMLElement} Field element
+     */
+    renderButton(key, label, description, action, onClick) {
+        return _.div({ class: 'page--level__user-input__field' }, _.h4({ class: 'page--level__user-input__field__label' }, (label || '') + ': ' + this.model[key]), _.div({ class: 'page--level__user-input__field__description' }, description || ''), _.button({ class: 'widget widget--button' }, action).on('click', e => {
+            onClick();
+
+            Game.Models.Player.current.save();
+            Game.Views.Widgets.PlayerInfo.update();
+
+            this.fetch();
+        }));
+    }
+
+    /**
+     * Renders a calculation field
+     *
+     * @param {String} label
+     * @param {String} result
+     */
+    renderCalculationField(label, result) {
+        return _.div({ class: 'page--level__calculations__field' }, _.h4({ class: 'page--level__calculations__field__label' }, label), _.div({ class: 'page--level__calculations__field__result' }, result));
+    }
+
+    /**
+     * Template
+     */
+    template() {
+        return _.div({ class: 'page page--level' }, _.div({ class: 'page--level__numbers' }, _.div({ class: 'page--level__user-input' }, this.renderInputField('unitPrice', 'Unit price'), this.renderButton('machines', 'Machines', 'Price: 200', 'Purchase', () => {
+            this.model.purchaseMachine();
+        }), this.renderButton('inventory', 'Inventory', 'Capacity: ' + this.model.productionCapacity + ' / Cost: ' + this.model.productionCapacity * this.model.unitProductionCost, 'Produce', () => {
+            this.model.produceUnits();
+        })), _.div({ class: 'page--level__calculations' }, _.div({ class: 'page--level__calculations__inner' }, this.renderCalculationField('Sales', this.model.currentSummary.sales || '0'), this.renderCalculationField('Production cost', this.model.currentSummary.productionCost || '0')))));
+    }
+}
+
+module.exports = Level;
+
+/***/ }),
+/* 16 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * A monthly summary
+ */
+
+class Summary extends Game.Models.Entity {
+  /**
+   * Structure
+   */
+  structure() {
+    this.sales = 0;
+    this.productionCost = 0;
+  }
+}
+
+module.exports = Summary;
 
 /***/ })
 /******/ ]);

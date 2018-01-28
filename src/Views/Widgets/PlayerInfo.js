@@ -14,19 +14,13 @@ class PlayerInfo extends Crisp.View {
 
         this.fetch();
 
-        setInterval(() => { this.updateCalendar(); }, 1000);
-
-        this.updateCalendar();
+        setInterval(() => { this._render(); }, 1000);
     }
 
     /**
-     * Updates the calendar
+     * Gets the time string
      */
-    updateCalendar() {
-        let calendarDiv = this.element.querySelector('.calendar .widget--player-info__area__value');
-    
-        if(!calendarDiv) { return; }
-        
+    getTimeString() {
         let time = Game.Services.TimeService.currentTime;
         let timeString = time.getFullYear() + '-';
 
@@ -40,21 +34,9 @@ class PlayerInfo extends Crisp.View {
             timeString += '0';
         }
 
-        timeString += time.getDate() + ' ';
+        timeString += time.getDate();
 
-        if(time.getHours() < 10) {
-            timeString += '0';
-        }
-        
-        timeString += time.getHours() + ':';
-        
-        if(time.getMinutes() < 10) {
-            timeString += '0';
-        }
-        
-        timeString += time.getMinutes();
-
-        calendarDiv.innerHTML = timeString;
+        return timeString;
     }
 
     /**
@@ -69,11 +51,27 @@ class PlayerInfo extends Crisp.View {
     }
 
     /**
+     * Gets whether or not this view is expanded
+     */
+    get isExpanded() {
+        let toggle = this.element.querySelector('.widget--player-info__toggle');
+
+        if(!toggle) { return false; }
+
+        return toggle.checked;
+    }
+
+    /**
      * Template
      */
     template() {
         return _.div({class: 'widget widget--player-info'},
-            _.input({type: 'checkbox', class: 'widget widget--player-info__toggle'}),
+            _.input({type: 'checkbox', class: 'widget widget--player-info__toggle', checked: this.isExpanded}),
+            _.div({class: 'widget--player-info__area company'},
+                _.h4({class: 'widget--player-info__area__heading'}, 'Company'),
+                _.div({class: 'widget--player-info__area__icon'}, '🏭'),
+                _.div({class: 'widget--player-info__area__value'}, this.model.company.name + ': ' + this.model.company.capital)
+            ),
             _.div({class: 'widget--player-info__area personal-account'},
                 _.h4({class: 'widget--player-info__area__heading'}, 'Personal account'),
                 _.div({class: 'widget--player-info__area__icon'}, '💰'),
@@ -82,7 +80,7 @@ class PlayerInfo extends Crisp.View {
             _.div({class: 'widget--player-info__area calendar'},
                 _.h4({class: 'widget--player-info__area__heading'}, 'Calendar'),
                 _.div({class: 'widget--player-info__area__icon'}, '🗓'),
-                _.div({class: 'widget--player-info__area__value'})
+                _.div({class: 'widget--player-info__area__value'}, this.getTimeString())
             )
         );
     }

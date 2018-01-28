@@ -1,9 +1,19 @@
 'use strict';
 
+const MACHINE_PRICE = 200;
+const MACHINE_CAPACITY = 10;
+
 /**
  * The main company model
  */
 class Company extends Game.Models.Entity {
+    /**
+     * Constructor
+     */
+    constructor(params) {
+        super(params);
+    }
+
     /**
      * Structure
      */
@@ -14,6 +24,10 @@ class Company extends Game.Models.Entity {
         this.unitProduction = 5000;
         this.unitProductionCost = 10;
         this.demand = 10000;
+
+        this.inventory = 0;
+        this.machines = 0;
+        this.summaries = {};
     }
 
     /**
@@ -21,6 +35,30 @@ class Company extends Game.Models.Entity {
      */
     round(num) {
         return Math.round(num * 100) / 100;
+    }
+
+    /**
+     * Gets the current summary
+     */
+    get currentSummary() {
+        let time = Game.Services.TimeService.currentTime;
+        
+        if(!this.summaries[time.getFullYear()]) {
+            this.summaries[time.getFullYear()] = {};
+        }
+
+        if(!this.summaries[time.getFullYear()][time.getMonth() + 1]) {
+            this.summaries[time.getFullYear()][time.getMonth() + 1] = new Game.Models.Summary();
+        }
+            
+        return this.summaries[time.getFullYear()][time.getMonth() + 1];
+    }
+
+    /**
+     * Gets the production capacity
+     */
+    get productionCapacity() {
+        return this.machines * MACHINE_CAPACITY;
     }
 
     /**
@@ -95,6 +133,46 @@ class Company extends Game.Models.Entity {
         player.company = this;
 
         player.save();
+    }
+
+    /**
+     * Sells a unit
+     */
+    sellUnit() {
+        if(this.inventory < 1) { return; }
+        
+        this.inventory--;
+
+        this.capital += this.unitPrice;
+        this.currentSummary.sales += this.unitPrice;
+    }
+
+    /**
+     * Produces a number of units
+     */
+    produceUnits() {
+        if(this.capital < this.unitProductionCost * this.productionCapacity) {
+            return alert('You do not have enough capital to produce more units');
+        }
+
+        this.inventory += this.productionCapacity;
+
+        this.capital -= this.unitProductionCost * this.productionCapacity;
+        this.currentSummary.productionCost += this.unitProductionCost * this.productionCapacity;
+    }
+
+    /**
+     * Purchases a machine
+     */
+    purchaseMachine() {
+        if(this.capital < MACHINE_PRICE) {
+            return alert('You do not have enough capital to purchase more machines');
+        }
+
+        this.machines++;
+
+        this.capital -= MACHINE_PRICE;
+        this.currentSummary.productionCost += MACHINE_PRICE;
     }
 }
 

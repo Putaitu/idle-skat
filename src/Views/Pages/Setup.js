@@ -78,10 +78,16 @@ class Setup extends Crisp.View {
      * @returns {HTMLElement} Field element
      */
     renderInputField(key, label, description, readOnly) {
+        let type = 'text';
+
+        if(typeof this.model[key] === 'number') {
+            type = 'number';
+        }
+        
         return _.div({class: 'page--setup__user-input__field'},
             _.h4({class: 'page--setup__user-input__field__label'}, label || ''),
             _.div({class: 'page--setup__user-input__field__description'}, description || ''),
-            _.input({disabled: readOnly, class: 'widget widget--input', value: this.model[key] || ''})
+            _.input({disabled: readOnly, type: type, class: 'widget widget--input', value: this.model[key] || ''})
                 .on('input', (e) => {
                     if(readOnly) { return; }
 
@@ -114,7 +120,7 @@ class Setup extends Crisp.View {
      * Renders the calculations
      */
     renderCalculations() {
-        let calculations = this.element.querySelector('.page--setup__calculations');
+        let calculations = this.element.querySelector('.page--setup__calculations__inner');
 
         if(!calculations) { return; }
 
@@ -154,15 +160,18 @@ class Setup extends Crisp.View {
         return _.div({class: 'page page--setup'},
             _.div({class: 'page--setup__numbers'},
                 _.div({class: 'page--setup__user-input'},
-                    _.h2({class: 'page--setup__user-input__heading'}, 'Estimates'),
-                    this.renderInputField('name', 'Name'),
+                    _.h2({class: 'page--setup__user-input__heading'}, 'Registration'),
+                    this.renderInputField('name', 'Name', 'The name of your company'),
+                    _.h2({class: 'page--setup__user-input__heading'}, 'Business plan'),
                     this.renderInputField('capital', 'Capital', 'How much you, as the owner, will invest for the company\'s spending'),
                     this.renderInputField('unitPrice', 'Unit price', 'How much you want to charge for your product'),
                     this.renderInputField('unitProduction', 'Unit production', 'How many units you plan to produce in a year'),
                     this.renderInputField('unitProductionCost', 'Production cost', 'How much a single unit costs to make'),
                     this.renderInputField('demand', 'Demand', 'How many units people will buy')
                 ),
-                _.div({class: 'page--setup__calculations'})
+                _.div({class: 'page--setup__calculations'},
+                    _.div({class: 'page--setup__calculations__inner'})
+                )
             ),
             _.div({class: 'page--setup__actions'},
                 _.button({class: 'widget widget--button'}, 'Start game')
@@ -170,6 +179,11 @@ class Setup extends Crisp.View {
                         if(!this.sanityCheck()) { return; }
 
                         this.model.save();
+
+                        Game.Services.ConfigService.set('completedSetup', true);
+                        Game.Services.TimeService.startClock();
+
+                        Crisp.Router.init();
                     })
             )
         );

@@ -19,10 +19,17 @@ class ViewController {
     static index() {
         Crisp.View.clear(Crisp.View);
 
-        _.append(document.body,
-            new Game.Views.Widgets.PlayerInfo(),
-            new Game.Views.Pages.Setup() 
-        );
+        if(!Game.Services.ConfigService.get('completedSetup')) {
+            _.append(document.body,
+                new Game.Views.Widgets.PlayerInfo(),
+                new Game.Views.Pages.Setup() 
+            );
+        } else {
+            _.append(document.body,
+                new Game.Views.Widgets.PlayerInfo(),
+                new Game.Views.Pages.Level() 
+            );
+        }
     }
 }
 
