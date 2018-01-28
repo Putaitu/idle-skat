@@ -148,17 +148,17 @@ class Company extends Game.Models.Entity {
     }
 
     /**
-     * Produces a number of units
+     * Produces a unit
      */
-    produceUnits() {
-        if(this.capital < this.unitProductionCost * this.productionCapacity) {
+    produceUnit() {
+        if(this.capital < this.unitProductionCost) {
             return alert('You do not have enough capital to produce more units');
         }
 
-        this.inventory += this.productionCapacity;
+        this.inventory++;
 
-        this.capital -= this.unitProductionCost * this.productionCapacity;
-        this.currentSummary.productionCost += this.unitProductionCost * this.productionCapacity;
+        this.capital -= this.unitProductionCost;
+        this.currentSummary.productionCost += this.unitProductionCost;
     }
 
     /**

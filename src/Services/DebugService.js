@@ -18,6 +18,8 @@ class DebugService {
 
         if(isActive && !autoReloadInterval) {
             autoReloadInterval = setInterval(() => {
+                if(Game.isPaused) { return; }
+
                 this.reloadStyle();
                 this.reloadScript();
             }, 500);

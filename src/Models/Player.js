@@ -12,6 +12,7 @@ class Player extends Game.Models.Entity {
     structure() {
         this.personalAccount = 50000;
         this.company = new Game.Models.Company();
+        this.vatRecord = new Game.Models.VATRecord();
     }
 
     /**
@@ -21,6 +22,7 @@ class Player extends Game.Models.Entity {
         super(params);
 
         this.company = new Game.Models.Company(this.company);
+        this.vatRecord = new Game.Models.VATRecord(this.vatRecord);
     }
 
     /**

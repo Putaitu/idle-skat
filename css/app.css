@@ -403,7 +403,7 @@ html {
 
 body {
   font-family: sans-serif;
-  line-height: 1.5em; }
+  line-height: 1.5rem; }
 
 * {
   box-sizing: border-box; }
@@ -435,24 +435,44 @@ h1, h2, h3, h4, h5, h6 {
     appearance: none;
     border-bottom-left-radius: 0.5rem;
     background-color: darkgrey;
-    border-bottom-right-radius: 0.5rem; }
+    border-bottom-right-radius: 0.5rem;
+    z-index: 100; }
     .widget--player-info__toggle:focus {
       outline: none; }
     .widget--player-info__toggle:hover {
       background-color: lightgrey; }
-  .widget--player-info__area {
-    display: flex;
-    flex-wrap: wrap; }
-    .widget--player-info__area:not(:last-child) {
-      border-right: 1px solid lightgrey;
-      padding-right: 0.5rem;
-      margin-right: 0.5rem; }
-    .widget--player-info__area__icon {
-      margin-right: 0.5rem; }
-    .widget--player-info__area__heading {
-      white-space: nowrap; }
-    .widget--player-info__area__data {
-      flex-grow: 1;
+  .widget--player-info__area:not(:last-child) {
+    border-right: 1px solid lightgrey;
+    padding-right: 0.5rem;
+    margin-right: 0.5rem; }
+  .widget--player-info__area__icon {
+    margin-right: 0.5rem;
+    border-radius: 50%;
+    position: relative; }
+    .widget--player-info__area__icon.notification:after {
+      position: absolute;
+      border-radius: 50%;
+      content: '';
+      width: 1.5rem;
+      height: 1.5rem;
+      display: block;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: darkred;
+      z-index: -1;
+      pointer-events: none; }
+  .widget--player-info__area__heading {
+    white-space: nowrap;
+    width: 100%; }
+  .widget--player-info__area__data {
+    display: none; }
+  .widget--player-info__area__notifications {
+    list-style-type: none;
+    padding: 0.5rem;
+    background-color: darkred;
+    border-radius: 0.5rem; }
+    .widget--player-info__area__notifications:empty {
       display: none; }
   .widget--player-info__toggle:checked {
     height: 1rem;
@@ -465,7 +485,7 @@ h1, h2, h3, h4, h5, h6 {
   .widget--player-info__toggle:checked ~ .widget--player-info__area .widget--player-info__area__data {
     display: block; }
   .widget--player-info__toggle:checked ~ .widget--player-info__area .widget--player-info__area__icon {
-    margin: 0 0 0 0.5rem; }
+    display: none; }
   .widget--player-info__toggle:not(:checked) ~ .widget--player-info__area {
     display: flex; }
   .widget--player-info__toggle:not(:checked) ~ .widget--player-info__area .widget--player-info__area__heading {

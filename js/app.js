@@ -76,9 +76,31 @@ __webpack_require__(1);
  * Resets the game
  */
 window.reset = function reset() {
-    localStorage.clear();
+  localStorage.clear();
 
-    location.reload();
+  location.reload();
+};
+
+/**
+ * Pauses the game
+ */
+window.pause = function pause() {
+  Game.isPaused = true;
+};
+
+/**
+ * Plays the game
+ */
+window.play = function play() {
+  Game.isPaused = false;
+};
+
+/**
+ * Adds hours to a date
+ */
+Date.prototype.addHours = function (h) {
+  this.setTime(this.getTime() + h * 60 * 60 * 1000);
+  return this;
 };
 
 window._ = Crisp.Elements;
@@ -95,6 +117,7 @@ Game.Models.Entity = __webpack_require__(4);
 Game.Models.Player = __webpack_require__(5);
 Game.Models.Company = __webpack_require__(6);
 Game.Models.Summary = __webpack_require__(16);
+Game.Models.VATRecord = __webpack_require__(17);
 
 Game.Views = {};
 Game.Views.Widgets = {};
@@ -181,6 +204,10 @@ class DebugService {
 
         if (isActive && !autoReloadInterval) {
             autoReloadInterval = setInterval(() => {
+                if (Game.isPaused) {
+                    return;
+                }
+
                 this.reloadStyle();
                 this.reloadScript();
             }, 500);
@@ -294,6 +321,7 @@ class Player extends Game.Models.Entity {
     structure() {
         this.personalAccount = 50000;
         this.company = new Game.Models.Company();
+        this.vatRecord = new Game.Models.VATRecord();
     }
 
     /**
@@ -303,6 +331,7 @@ class Player extends Game.Models.Entity {
         super(params);
 
         this.company = new Game.Models.Company(this.company);
+        this.vatRecord = new Game.Models.VATRecord(this.vatRecord);
     }
 
     /**
@@ -492,17 +521,17 @@ class Company extends Game.Models.Entity {
     }
 
     /**
-     * Produces a number of units
+     * Produces a unit
      */
-    produceUnits() {
-        if (this.capital < this.unitProductionCost * this.productionCapacity) {
+    produceUnit() {
+        if (this.capital < this.unitProductionCost) {
             return alert('You do not have enough capital to produce more units');
         }
 
-        this.inventory += this.productionCapacity;
+        this.inventory++;
 
-        this.capital -= this.unitProductionCost * this.productionCapacity;
-        this.currentSummary.productionCost += this.unitProductionCost * this.productionCapacity;
+        this.capital -= this.unitProductionCost;
+        this.currentSummary.productionCost += this.unitProductionCost;
     }
 
     /**
@@ -542,9 +571,19 @@ class PlayerInfo extends Crisp.View {
 
         this.model = Game.Models.Player.current;
 
+        this.notifications = {
+            'company': {},
+            'personal-account': {},
+            'calendar': {}
+        };
+
         this.fetch();
 
         setInterval(() => {
+            if (Game.isPaused) {
+                return;
+            }
+
             this._render();
         }, 1000);
     }
@@ -598,10 +637,103 @@ class PlayerInfo extends Crisp.View {
     }
 
     /**
+     * Sets a notification
+     *
+     * @param {String} area
+     * @param {String} title
+     * @param {String} description
+     * @param {Function} onClick
+     */
+    static notify(area, title, description, onClick) {
+        let playerInfo = Crisp.View.get(PlayerInfo);
+
+        if (!playerInfo) {
+            return;
+        }
+
+        let key = btoa(title + description);
+
+        playerInfo.notifications[area][key] = {
+            title: title,
+            description: description,
+            onClick: onClick
+        };
+
+        playerInfo._render();
+    }
+
+    /**
+     * Clears a notification
+     *
+     * @param {String} area
+     * @param {String} key
+     */
+    static clearNotification(area, key) {
+        let playerInfo = Crisp.View.get(PlayerInfo);
+
+        if (!playerInfo) {
+            return;
+        }
+
+        delete playerInfo.notifications[area][key];
+
+        playerInfo._render();
+    }
+
+    /**
+     * Gets a notification string
+     *
+     * @param {String} area
+     *
+     * @returns {String} Notifications
+     */
+    getNotificationsString(area) {
+        if (Object.keys(this.notifications[area]).length < 1) {
+            return '';
+        }
+
+        let strings = [];
+
+        for (let key in this.notifications[area]) {
+            let notification = this.notifications[area][key];
+
+            strings.push(notification.title + '\n' + notification.description);
+        }
+
+        return strings.join('\n\n');
+    }
+
+    /**
+     * Renders notifications
+     *
+     * @param {String} area
+     *
+     * @returns {HTMLElement} Notifications
+     */
+    renderNotifications(area) {
+        return _.ul({ class: 'widget--player-info__area__notifications' }, _.each(this.notifications[area], (key, notification) => {
+            return _.li(_.h4(notification.title), _.if(notification.onClick, _.button({ class: 'widget widget--button' }, notification.description).click(() => {
+                notification.onClick(key);
+            })), _.if(!notification.onClick, notification.description));
+        }));
+    }
+
+    /**
+     * Checks if an area has any notifications
+     *
+     * @param {String} area
+     *
+     * @param {Boolean} Has notifications
+     */
+    hasNotifications(area) {
+        return Object.keys(this.notifications[area]).length > 0;
+    }
+
+    /**
      * Template
      */
     template() {
-        return _.div({ class: 'widget widget--player-info' }, _.input({ type: 'checkbox', class: 'widget widget--player-info__toggle', checked: this.isExpanded }), _.div({ class: 'widget--player-info__area company' }, _.h4({ class: 'widget--player-info__area__heading' }, 'Company'), _.div({ class: 'widget--player-info__area__icon' }, '🏭'), _.div({ class: 'widget--player-info__area__preview' }, this.model.company.name + ': ' + this.model.company.capital), _.div({ class: 'widget--player-info__area__data' }, 'Name: ' + this.model.company.name, '<br>', 'Capital: ' + this.model.company.capital)), _.div({ class: 'widget--player-info__area personal-account' }, _.h4({ class: 'widget--player-info__area__heading' }, 'Personal account'), _.div({ class: 'widget--player-info__area__icon' }, '💰'), _.div({ class: 'widget--player-info__area__preview' }, this.model.personalAccount.toString()), _.div({ class: 'widget--player-info__area__data' }, 'Balance: ' + this.model.personalAccount)), _.div({ class: 'widget--player-info__area calendar' }, _.h4({ class: 'widget--player-info__area__heading' }, 'Calendar'), _.div({ class: 'widget--player-info__area__icon' }, '🗓'), _.div({ class: 'widget--player-info__area__preview' }, this.getTimeString()), _.div({ class: 'widget--player-info__area__data' }, 'Time: ' + this.getTimeString())));
+        return _.div({ class: 'widget widget--player-info' }, _.input({ type: 'checkbox', class: 'widget widget--player-info__toggle', checked: this.isExpanded }), _.div({ class: 'widget--player-info__area company' }, _.h4({ class: 'widget--player-info__area__heading' }, 'Company'), _.div({ class: 'widget--player-info__area__icon' + (this.hasNotifications('company') ? ' notification' : '') }, '🏭'), _.div({ class: 'widget--player-info__area__preview' }, this.model.company.name + ': ' + this.model.company.capital), _.div({ class: 'widget--player-info__area__data' }, 'Name: ' + this.model.company.name, '<br>', 'Capital: ' + this.model.company.capital, this.renderNotifications('company'))), _.div({ class: 'widget--player-info__area personal-account' }, _.h4({ class: 'widget--player-info__area__heading' }, 'Personal account'), _.div({ class: 'widget--player-info__area__icon' + (this.hasNotifications('personal-account') ? ' notification' : '') }, '💰'), _.div({ class: 'widget--player-info__area__preview' }, this.model.personalAccount.toString()), _.div({ class: 'widget--player-info__area__data' }, 'Balance: ' + this.model.personalAccount, this.renderNotifications('personal-account'))), _.div({ class: 'widget--player-info__area calendar' }, _.h4({ class: 'widget--player-info__area__heading' }, 'Calendar'), _.div({ class: 'widget--player-info__area__icon' + (this.hasNotifications('calendar') ? ' notification' : '') }, '🗓'), _.div({ class: 'widget--player-info__area__preview' }, this.getTimeString()), _.div({ class: 'widget--player-info__area__data' }, 'Time: ' + this.getTimeString(), this.renderNotifications('calendar'))));
     }
 }
 
@@ -807,32 +939,110 @@ module.exports = ViewController;
 "use strict";
 
 
-const TIME_SPEED = 6000;
+const HOURS_PER_SECOND = 2;
 
 /**
  * The service for managing time
  */
 class TimeService {
-  /**
-   * Gets the start time
-   */
-  static get startTime() {
-    return new Date(Game.Services.ConfigService.get('startTime') || Date.now());
-  }
+    /**
+     * Starts the clock
+     */
+    static startClock() {
+        Game.Services.ConfigService.set('time', Date.now());
+        Game.Services.ConfigService.set('startTime', Date.now());
+    }
 
-  /**
-   * Starts the clock
-   */
-  static startClock() {
-    Game.Services.ConfigService.set('startTime', Date.now());
-  }
+    /**
+     * Ticks the time
+     */
+    static tick() {
+        let time = this.currentTime;
 
-  /**
-   * Gets the current time
-   */
-  static get currentTime() {
-    return new Date(new Date().getTime() + (new Date().getTime() - this.startTime.getTime()) * TIME_SPEED);
-  }
+        time.addHours(HOURS_PER_SECOND);
+
+        Game.Services.ConfigService.set('time', time.getTime());
+    }
+
+    /**
+     * Adds days to the current time
+     *
+     * @param {Number} amount
+     */
+    static addDays(amount) {
+        if (amount < 1) {
+            return;
+        }
+
+        let time = this.currentTime;
+
+        time.addDays(amount);
+
+        Game.Services.ConfigService.set('time', time.getTime());
+    }
+
+    /**
+     * Gets the start time
+     */
+    static get startTime() {
+        let unix = Game.Services.ConfigService.get('startTime');
+
+        if (!unix) {
+            return new Date();
+        }
+
+        return new Date(unix);
+    }
+
+    /**
+     * Gets the current time
+     */
+    static get currentTime() {
+        let unix = Game.Services.ConfigService.get('time');
+
+        if (!unix) {
+            return new Date();
+        }
+
+        return new Date(unix);
+    }
+
+    /**
+     * Gets the current year
+     */
+    static get currentYear() {
+        return this.currentTime.getFullYear();
+    }
+
+    /**
+     * Gets the previous quarter
+     */
+    static get previousQuarter() {
+        let quarter = this.currentQuarter - 1;
+
+        if (quarter <= 0) {
+            quarter = 4;
+        }
+
+        return quarter;
+    }
+
+    /**
+     * Gets the current quarter
+     */
+    static get currentQuarter() {
+        let month = this.currentTime.getMonth() + 1;
+
+        if (month >= 9) {
+            return 4;
+        } else if (month >= 6) {
+            return 3;
+        } else if (month >= 3) {
+            return 2;
+        } else {
+            return 1;
+        }
+    }
 }
 
 module.exports = TimeService;
@@ -851,11 +1061,15 @@ class Level extends Crisp.View {
     constructor(params) {
         super(params);
 
-        this.model = Game.Models.Player.current.company;
+        this.model = Game.Models.Player.current;
 
         this.fetch();
 
         setInterval(() => {
+            if (Game.isPaused) {
+                return;
+            }
+
             this.heartbeat();
         }, 1000);
     }
@@ -864,11 +1078,60 @@ class Level extends Crisp.View {
      * Heartbeat
      */
     heartbeat() {
-        this.model.sellUnit();
+        // Tick time 
+        Game.Services.TimeService.tick();
 
+        // Sell one unit every second
+        this.model.company.sellUnit();
+
+        // Automatically produce units
+        for (let i = 0; i < this.model.company.machines; i++) {
+            this.model.company.produceUnit();
+        }
+
+        // Check VAT payment
+        let checkPaymentQuarter = (paymentQuarter, quarter, year) => {
+            // Report VAT
+            if (!paymentQuarter.isReported) {
+                Game.Views.Widgets.PlayerInfo.notify('calendar', 'Report VAT (Q' + quarter + ' ' + year + ')', 'Report VAT', key => {
+                    this.model.vatRecord.reportQuarter(year, quarter);
+
+                    this.model.save();
+
+                    Game.Views.Widgets.PlayerInfo.clearNotification('calendar', key);
+                    Game.Views.Widgets.PlayerInfo.update();
+                });
+
+                // Pay VAT
+            } else if (!paymentQuarter.isPaid) {
+                Game.Views.Widgets.PlayerInfo.notify('calendar', 'Pay VAT (Q' + quarter + ' ' + year + ')', 'Pay VAT', key => {
+                    Game.Views.Widgets.PlayerInfo.clearNotification('calendar', key);
+                });
+            }
+        };
+
+        let previousQuarter = Game.Services.TimeService.previousQuarter;
+        let currentYear = Game.Services.TimeService.currentYear;
+
+        this.model.vatRecord.generatePayments();
+
+        for (let year in this.model.vatRecord.payments) {
+            let paymentYear = this.model.vatRecord.payments[year];
+
+            for (let quarter in paymentYear) {
+                let paymentQuarter = paymentYear[quarter];
+
+                if (quarter <= previousQuarter) {
+                    checkPaymentQuarter(paymentQuarter, quarter, year);
+                }
+            }
+        }
+
+        // Render the level
         this._render();
 
-        Game.Models.Player.current.save();
+        // Save the current state
+        this.model.save();
     }
 
     /**
@@ -884,18 +1147,18 @@ class Level extends Crisp.View {
     renderInputField(key, label, description, readOnly) {
         let type = 'text';
 
-        if (typeof this.model[key] === 'number') {
+        if (typeof this.model.company[key] === 'number') {
             type = 'number';
         }
 
-        return _.div({ class: 'page--level__user-input__field' }, _.h4({ class: 'page--level__user-input__field__label' }, label || ''), _.div({ class: 'page--level__user-input__field__description' }, description || ''), _.input({ disabled: readOnly, type: type, class: 'widget widget--input', value: this.model[key] || '' }).on('change', e => {
+        return _.div({ class: 'page--level__user-input__field' }, _.h4({ class: 'page--level__user-input__field__label' }, label || ''), _.div({ class: 'page--level__user-input__field__description' }, description || ''), _.input({ disabled: readOnly, type: type, class: 'widget widget--input', value: this.model.company[key] || '' }).on('change', e => {
             if (readOnly) {
                 return;
             }
 
-            this.model[key] = e.currentTarget.value;
+            this.model.company[key] = e.currentTarget.value;
 
-            Game.Models.Player.current.save();
+            this.model.save();
             Game.Views.Widgets.PlayerInfo.update();
 
             this.fetch();
@@ -914,10 +1177,10 @@ class Level extends Crisp.View {
      * @returns {HTMLElement} Field element
      */
     renderButton(key, label, description, action, onClick) {
-        return _.div({ class: 'page--level__user-input__field' }, _.h4({ class: 'page--level__user-input__field__label' }, (label || '') + ': ' + this.model[key]), _.div({ class: 'page--level__user-input__field__description' }, description || ''), _.button({ class: 'widget widget--button' }, action).on('click', e => {
+        return _.div({ class: 'page--level__user-input__field' }, _.h4({ class: 'page--level__user-input__field__label' }, (label || '') + ': ' + this.model.company[key]), _.div({ class: 'page--level__user-input__field__description' }, description || ''), _.button({ class: 'widget widget--button' }, action).on('click', e => {
             onClick();
 
-            Game.Models.Player.current.save();
+            this.model.save();
             Game.Views.Widgets.PlayerInfo.update();
 
             this.fetch();
@@ -939,10 +1202,10 @@ class Level extends Crisp.View {
      */
     template() {
         return _.div({ class: 'page page--level' }, _.div({ class: 'page--level__numbers' }, _.div({ class: 'page--level__user-input' }, this.renderInputField('unitPrice', 'Unit price'), this.renderButton('machines', 'Machines', 'Price: 200', 'Purchase', () => {
-            this.model.purchaseMachine();
-        }), this.renderButton('inventory', 'Inventory', 'Capacity: ' + this.model.productionCapacity + ' / Cost: ' + this.model.productionCapacity * this.model.unitProductionCost, 'Produce', () => {
-            this.model.produceUnits();
-        })), _.div({ class: 'page--level__calculations' }, _.div({ class: 'page--level__calculations__inner' }, this.renderCalculationField('Sales', this.model.currentSummary.sales || '0'), this.renderCalculationField('Production cost', this.model.currentSummary.productionCost || '0')))));
+            this.model.company.purchaseMachine();
+        }), this.renderButton('inventory', 'Inventory', 'Capacity: ' + this.model.company.productionCapacity + ' / Cost: ' + this.model.company.productionCapacity * this.model.company.unitProductionCost, 'Produce', () => {
+            this.model.company.produceUnit();
+        })), _.div({ class: 'page--level__calculations' }, _.div({ class: 'page--level__calculations__inner' }, this.renderCalculationField('Sales', this.model.company.currentSummary.sales || '0'), this.renderCalculationField('Production cost', this.model.company.currentSummary.productionCost || '0')))));
     }
 }
 
@@ -970,6 +1233,76 @@ class Summary extends Game.Models.Entity {
 }
 
 module.exports = Summary;
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * The record for keeping track of VAT payments
+ */
+
+class VATRecord extends Game.Models.Entity {
+    /**
+     * Structure
+     */
+    structure() {
+        this.payments = {};
+    }
+
+    /**
+     * Generates all payments
+     */
+    generatePayments() {
+        let firstYear = Game.Services.TimeService.startTime.getFullYear();
+        let targetYear = Game.Services.TimeService.currentYear;
+        let targetQuarter = Game.Services.TimeService.previousQuarter;
+
+        for (let year = firstYear; year <= targetYear; year++) {
+            if (!this.payments[year]) {
+                this.payments[year] = {};
+            }
+
+            let thisTargetQuarter = 4;
+
+            if (year === targetYear) {
+                thisTargetQuarter = targetQuarter;
+            }
+
+            for (let quarter = 1; quarter <= thisTargetQuarter; quarter++) {
+                if (!this.payments[year][quarter]) {
+                    this.payments[year][quarter] = {
+                        isPaid: false,
+                        isReported: false,
+                        amount: 0
+                    };
+                }
+            }
+        }
+
+        return this.payments;
+    }
+
+    /**
+     * Reports a quarter
+     *
+     * @param {Number} year
+     * @param {Number} quarter
+     */
+    reportQuarter(year, quarter) {
+        let amount = 0;
+
+        // TODO: Figure out amount
+
+        this.payments[year][quarter].isReported = true;
+        this.payments[year][quarter].amount = amount;
+    }
+}
+
+module.exports = VATRecord;
 
 /***/ })
 /******/ ]);

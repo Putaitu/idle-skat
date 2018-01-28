@@ -24,7 +24,8 @@
         border-bottom-left-radius: 0.5rem;
         background-color: darkgrey;
         border-bottom-right-radius: 0.5rem;
-        
+        z-index: 100;
+
         &:focus {
             outline: none;
         }
@@ -35,9 +36,6 @@
     }
     
     &__area {
-        display: flex;
-        flex-wrap: wrap;
-
         &:not(:last-child) {
             border-right: 1px solid lightgrey;
             padding-right: 0.5rem;
@@ -46,15 +44,43 @@
 
         &__icon {
             margin-right: 0.5rem;
+            border-radius: 50%; 
+            position: relative;
+
+            &.notification:after {
+                position: absolute;
+                border-radius: 50%;
+                content: '';
+                width: 1.5rem;
+                height: 1.5rem;
+                display: block;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background-color: darkred;
+                z-index: -1;
+                pointer-events: none;
+            }
         }
 
         &__heading {
             white-space: nowrap;
+            width: 100%;
         }
 
         &__data {
-            flex-grow: 1;
             display: none;
+        }
+
+        &__notifications {
+            list-style-type: none;
+            padding: 0.5rem;
+            background-color: darkred;
+            border-radius: 0.5rem;
+
+            &:empty {
+                display: none;
+            }
         }
     }
     
@@ -79,7 +105,7 @@
         }
 
         &__icon {
-            margin: 0 0 0 0.5rem;
+            display: none;
         }
     }
     
