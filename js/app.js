@@ -116,19 +116,19 @@ Game.Models = {};
 Game.Models.Entity = __webpack_require__(5);
 Game.Models.Player = __webpack_require__(6);
 Game.Models.Company = __webpack_require__(7);
-Game.Models.Report = __webpack_require__(18);
+Game.Models.Report = __webpack_require__(8);
 Game.Models.VATRecord = __webpack_require__(9);
-Game.Models.FinancialRecord = __webpack_require__(19);
+Game.Models.FinancialRecord = __webpack_require__(10);
 
 Game.Views = {};
 Game.Views.Widgets = {};
-Game.Views.Widgets.PlayerInfo = __webpack_require__(10);
+Game.Views.Widgets.PlayerInfo = __webpack_require__(11);
 Game.Views.Pages = {};
-Game.Views.Pages.Setup = __webpack_require__(11);
-Game.Views.Pages.Level = __webpack_require__(12);
+Game.Views.Pages.Setup = __webpack_require__(12);
+Game.Views.Pages.Level = __webpack_require__(13);
 
 Game.Controllers = {};
-Game.Controllers.ViewController = __webpack_require__(13);
+Game.Controllers.ViewController = __webpack_require__(14);
 
 /***/ }),
 /* 1 */
@@ -187,7 +187,7 @@ module.exports = ConfigService;
 "use strict";
 
 
-const HOURS_PER_SECOND = 2;
+const HOURS_PER_SECOND = 12;
 
 /**
  * The service for managing time
@@ -283,20 +283,29 @@ class TimeService {
     }
 
     /**
-     * Gets the current quarter
+     * Gets a quarter from a month
+     *
+     * @param {Number} month
+     *
+     * @returns {Number} Quarter
      */
-    static get currentQuarter() {
-        let month = this.currentTime.getMonth() + 1;
-
-        if (month >= 9) {
+    static getQuarterFromMonth(month) {
+        if (month > 9) {
             return 4;
-        } else if (month >= 6) {
+        } else if (month > 6) {
             return 3;
-        } else if (month >= 3) {
+        } else if (month > 3) {
             return 2;
         } else {
             return 1;
         }
+    }
+
+    /**
+     * Gets the current quarter
+     */
+    static get currentQuarter() {
+        return this.getQuarterFromMonth(this.currentTime.getMonth() + 1);
     }
 }
 
@@ -456,6 +465,7 @@ class Player extends Game.Models.Entity {
 
         this.company = new Game.Models.Company(this.company);
         this.vatRecord = new Game.Models.VATRecord(this.vatRecord);
+        this.financialRecord = new Game.Models.FinancialRecord(this.financialRecord);
     }
 
     /**
@@ -484,6 +494,35 @@ class Player extends Game.Models.Entity {
     save() {
         Game.Services.ConfigService.set('player', this);
     }
+
+    /**
+     * Reports VAT quarterly
+     *
+     * @param {Number} year
+     * @param {Number} quarter
+     */
+    reportQuarterlyVAT(year, quarter) {
+        let amount = 0;
+
+        let report = this.financialRecord.getQuarterlyReport(year, quarter);
+
+        amount += report.sales * 0.25; // Sales VAT
+        amount -= report.productionCost / 1.25 * 0.25; // Cost VAT
+
+        this.vatRecord.payments[year][quarter].isReported = true;
+        this.vatRecord.payments[year][quarter].amount = amount;
+    }
+
+    /**
+     * Pays VAT quarterly
+     *
+     * @param {Number} year
+     * @param {Number} quarter
+     */
+    payQuarterlyVAT(year, quarter) {
+        this.company.bankBalance -= this.vatRecord.payments[year][quarter].amount;
+        this.vatRecord.payments[year][quarter].isPaid = true;
+    }
 }
 
 module.exports = Player;
@@ -495,8 +534,7 @@ module.exports = Player;
 "use strict";
 
 
-const MACHINE_PRICE = 200;
-const MACHINE_CAPACITY = 10;
+const MACHINE_PRICE = 10000;
 
 /**
  * The main company model
@@ -515,6 +553,7 @@ class Company extends Game.Models.Entity {
     structure() {
         this.name = 'My Company A/S';
         this.capital = 20000;
+        this.bankBalance = 0;
         this.unitPrice = 20;
         this.unitProduction = 5000;
         this.unitProductionCost = 10;
@@ -529,13 +568,6 @@ class Company extends Game.Models.Entity {
      */
     round(num) {
         return Math.round(num * 100) / 100;
-    }
-
-    /**
-     * Gets the production capacity
-     */
-    get productionCapacity() {
-        return this.machines * MACHINE_CAPACITY;
     }
 
     /**
@@ -622,7 +654,7 @@ class Company extends Game.Models.Entity {
 
         this.inventory--;
 
-        this.capital += this.unitPrice;
+        this.bankBalance += this.unitPrice;
         Game.Models.Player.current.financialRecord.currentReport.sales += this.unitPrice;
     }
 
@@ -630,13 +662,13 @@ class Company extends Game.Models.Entity {
      * Produces a unit
      */
     produceUnit() {
-        if (this.capital < this.unitProductionCost) {
+        if (this.bankBalance < this.unitProductionCost) {
             return alert('You do not have enough capital to produce more units');
         }
 
         this.inventory++;
 
-        this.capital -= this.unitProductionCost;
+        this.bankBalance -= this.unitProductionCost;
         Game.Models.Player.current.financialRecord.currentReport.productionCost += this.unitProductionCost;
     }
 
@@ -644,13 +676,13 @@ class Company extends Game.Models.Entity {
      * Purchases a machine
      */
     purchaseMachine() {
-        if (this.capital < MACHINE_PRICE) {
+        if (this.bankBalance < MACHINE_PRICE) {
             return alert('You do not have enough capital to purchase more machines');
         }
 
         this.machines++;
 
-        this.capital -= MACHINE_PRICE;
+        this.bankBalance -= MACHINE_PRICE;
         Game.Models.Player.current.financialRecord.currentReport.productionCost += MACHINE_PRICE;
     }
 }
@@ -658,7 +690,49 @@ class Company extends Game.Models.Entity {
 module.exports = Company;
 
 /***/ }),
-/* 8 */,
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * A monthly report
+ */
+
+class Report extends Game.Models.Entity {
+  /**
+   * Constructor
+   */
+  constructor(params) {
+    super(params);
+
+    this.sales = parseInt(this.sales);
+    this.productionCost = parseInt(this.productionCost);
+  }
+
+  /**
+   * Structure
+   */
+  structure() {
+    this.sales = 0;
+    this.productionCost = 0;
+  }
+
+  /**
+   * Appends another report to this one
+   *
+   * @param {Report} report
+   */
+  append(report) {
+    this.sales += report.sales;
+    this.productionCost += report.productionCost;
+  }
+}
+
+module.exports = Report;
+
+/***/ }),
 /* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -681,13 +755,21 @@ class VATRecord extends Game.Models.Entity {
      * Generates all payments
      */
     generatePayments() {
-        let firstYear = Game.Services.TimeService.startTime.getFullYear();
+        let startTime = Game.Services.TimeService.startTime;
+        let firstYear = startTime.getFullYear();
+        let firstQuarter = Game.Services.TimeService.getQuarterFromMonth(startTime.getMonth() + 1);
         let targetYear = Game.Services.TimeService.currentYear;
-        let targetQuarter = Game.Services.TimeService.previousQuarter;
+        let targetQuarter = Game.Services.TimeService.currentQuarter - 1;
 
         for (let year = firstYear; year <= targetYear; year++) {
             if (!this.payments[year]) {
                 this.payments[year] = {};
+            }
+
+            let thisFirstQuarter = 1;
+
+            if (year === firstYear) {
+                thisFirstQuarter = firstQuarter;
             }
 
             let thisTargetQuarter = 4;
@@ -696,7 +778,7 @@ class VATRecord extends Game.Models.Entity {
                 thisTargetQuarter = targetQuarter;
             }
 
-            for (let quarter = 1; quarter <= thisTargetQuarter; quarter++) {
+            for (let quarter = thisFirstQuarter; quarter <= thisTargetQuarter; quarter++) {
                 if (!this.payments[year][quarter]) {
                     this.payments[year][quarter] = {
                         isPaid: false,
@@ -709,27 +791,102 @@ class VATRecord extends Game.Models.Entity {
 
         return this.payments;
     }
-
-    /**
-     * Reports a quarter
-     *
-     * @param {Number} year
-     * @param {Number} quarter
-     */
-    reportQuarter(year, quarter) {
-        let amount = 0;
-
-        // TODO: Figure out amount
-
-        this.payments[year][quarter].isReported = true;
-        this.payments[year][quarter].amount = amount;
-    }
 }
 
 module.exports = VATRecord;
 
 /***/ }),
 /* 10 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * A class for keeping track of reports
+ */
+
+class FinancialRecord extends Game.Models.Entity {
+    /**
+     * Structure
+     */
+    structure() {
+        this.reports = {};
+    }
+
+    /**
+     * Generate reports
+     */
+    generateReports() {
+        let firstYear = Game.Services.TimeService.startTime.getFullYear();
+        let firstMonth = Game.Services.TimeService.startTime.getMonth() + 1;
+        let targetYear = Game.Services.TimeService.currentYear;
+        let targetMonth = Game.Services.TimeService.currentMonth;
+
+        for (let year = firstYear; year <= targetYear; year++) {
+            if (!this.reports[year]) {
+                this.reports[year] = {};
+            }
+
+            let thisFirstMonth = 1;
+            let thisTargetMonth = 12;
+
+            if (year === firstYear) {
+                thisFirstMonth = firstMonth;
+            }
+
+            if (year === targetYear) {
+                thisTargetMonth = targetMonth;
+            }
+
+            for (let month = thisFirstMonth; month <= thisTargetMonth; month++) {
+                if (!this.reports[year][month]) {
+                    this.reports[year][month] = new Game.Models.Report();
+                }
+            }
+        }
+
+        return this.reports;
+    }
+
+    /**
+     * Gets quarterly report
+     *
+     * @param {Number} year
+     * @param {Number} quarter
+     *
+     * @returns {Object} Quarterly report
+     */
+    getQuarterlyReport(year, quarter) {
+        this.generateReports();
+
+        let firstMonth = quarter * 3 - 2;
+        let targetMonth = firstMonth + 3;
+
+        let report = new Game.Models.Report();
+
+        for (let month = firstMonth; month < targetMonth; month++) {
+            report.append(this.reports[year][month]);
+        }
+
+        return report;
+    }
+
+    /**
+     * Gets the current report
+     */
+    get currentReport() {
+        this.generateReports();
+
+        return this.reports[Game.Services.TimeService.currentYear][Game.Services.TimeService.currentMonth];
+    }
+
+}
+
+module.exports = FinancialRecord;
+
+/***/ }),
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -910,14 +1067,14 @@ class PlayerInfo extends Crisp.View {
      * Template
      */
     template() {
-        return _.div({ class: 'widget widget--player-info' }, _.input({ type: 'checkbox', class: 'widget widget--player-info__toggle', checked: this.isExpanded }), _.div({ class: 'widget--player-info__area company' }, _.h4({ class: 'widget--player-info__area__heading' }, 'Company'), _.div({ class: 'widget--player-info__area__icon' + (this.hasNotifications('company') ? ' notification' : '') }, '🏭'), _.div({ class: 'widget--player-info__area__preview' }, this.model.company.name + ': ' + this.model.company.capital), _.div({ class: 'widget--player-info__area__data' }, 'Name: ' + this.model.company.name, '<br>', 'Capital: ' + this.model.company.capital, this.renderNotifications('company'))), _.div({ class: 'widget--player-info__area personal-account' }, _.h4({ class: 'widget--player-info__area__heading' }, 'Personal account'), _.div({ class: 'widget--player-info__area__icon' + (this.hasNotifications('personal-account') ? ' notification' : '') }, '💰'), _.div({ class: 'widget--player-info__area__preview' }, this.model.personalAccount.toString()), _.div({ class: 'widget--player-info__area__data' }, 'Balance: ' + this.model.personalAccount, this.renderNotifications('personal-account'))), _.div({ class: 'widget--player-info__area calendar' }, _.h4({ class: 'widget--player-info__area__heading' }, 'Calendar'), _.div({ class: 'widget--player-info__area__icon' + (this.hasNotifications('calendar') ? ' notification' : '') }, '🗓'), _.div({ class: 'widget--player-info__area__preview' }, this.getTimeString()), _.div({ class: 'widget--player-info__area__data' }, 'Time: ' + this.getTimeString(), this.renderNotifications('calendar'))));
+        return _.div({ class: 'widget widget--player-info' }, _.input({ type: 'checkbox', class: 'widget widget--player-info__toggle', checked: this.isExpanded }), _.div({ class: 'widget--player-info__area company' }, _.h4({ class: 'widget--player-info__area__heading' }, 'Company'), _.div({ class: 'widget--player-info__area__icon' + (this.hasNotifications('company') ? ' notification' : '') }, '🏭'), _.div({ class: 'widget--player-info__area__preview' }, this.model.company.name + ': ' + this.model.company.bankBalance + ' kr.'), _.div({ class: 'widget--player-info__area__data' }, 'Name: ' + this.model.company.name, '<br>', 'Bank balance: ' + this.model.company.bankBalance + ' kr.', this.renderNotifications('company'))), _.div({ class: 'widget--player-info__area personal-account' }, _.h4({ class: 'widget--player-info__area__heading' }, 'Personal account'), _.div({ class: 'widget--player-info__area__icon' + (this.hasNotifications('personal-account') ? ' notification' : '') }, '💰'), _.div({ class: 'widget--player-info__area__preview' }, this.model.personalAccount + ' kr.'), _.div({ class: 'widget--player-info__area__data' }, 'Balance: ' + this.model.personalAccount + ' kr.', this.renderNotifications('personal-account'))), _.div({ class: 'widget--player-info__area calendar' }, _.h4({ class: 'widget--player-info__area__heading' }, 'Calendar'), _.div({ class: 'widget--player-info__area__icon' + (this.hasNotifications('calendar') ? ' notification' : '') }, '🗓'), _.div({ class: 'widget--player-info__area__preview' }, this.getTimeString()), _.div({ class: 'widget--player-info__area__data' }, 'Time: ' + this.getTimeString(), this.renderNotifications('calendar'))));
     }
 }
 
 module.exports = PlayerInfo;
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1049,10 +1206,12 @@ class Setup extends Crisp.View {
      * Template
      */
     template() {
-        return _.div({ class: 'page page--setup' }, _.div({ class: 'page--setup__numbers' }, _.div({ class: 'page--setup__user-input' }, _.h2({ class: 'page--setup__user-input__heading' }, 'Registration'), this.renderInputField('name', 'Name', 'The name of your company'), _.h2({ class: 'page--setup__user-input__heading' }, 'Business plan'), this.renderInputField('capital', 'Capital', 'How much you, as the owner, will invest for the company\'s spending'), this.renderInputField('unitPrice', 'Unit price', 'How much you want to charge for your product'), this.renderInputField('unitProduction', 'Unit production', 'How many units you plan to produce in a year'), this.renderInputField('unitProductionCost', 'Production cost', 'How much a single unit costs to make', true), this.renderInputField('demand', 'Demand', 'How many units people will buy')), _.div({ class: 'page--setup__calculations' }, _.div({ class: 'page--setup__calculations__inner' }))), _.div({ class: 'page--setup__actions' }, _.button({ class: 'widget widget--button' }, 'Start game').click(e => {
+        return _.div({ class: 'page page--setup' }, _.div({ class: 'page--setup__numbers' }, _.div({ class: 'page--setup__user-input' }, _.h2({ class: 'page--setup__user-input__heading' }, 'Registration'), this.renderInputField('name', 'Name', 'The name of your company'), _.h2({ class: 'page--setup__user-input__heading' }, 'Business plan'), this.renderInputField('capital', 'Capital', 'How much you, as the owner, will invest for the company\'s spending'), this.renderInputField('unitPrice', 'Unit price', 'How much you want to charge for your product'), this.renderInputField('unitProduction', 'Unit production', 'How many units you plan to produce in a year'), this.renderInputField('unitProductionCost', 'Production cost', 'How much a single unit costs to make', true), this.renderInputField('demand', 'Demand estimate', 'How many units you assume people will buy in a year')), _.div({ class: 'page--setup__calculations' }, _.div({ class: 'page--setup__calculations__inner' }))), _.div({ class: 'page--setup__actions' }, _.button({ class: 'widget widget--button' }, 'Start game').click(e => {
             if (!this.sanityCheck()) {
                 return;
             }
+
+            this.model.bankBalance = this.model.capital;
 
             this.model.save();
 
@@ -1067,7 +1226,7 @@ class Setup extends Crisp.View {
 module.exports = Setup;
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1113,7 +1272,7 @@ class Level extends Crisp.View {
             // Report VAT
             if (!paymentQuarter.isReported) {
                 Game.Views.Widgets.PlayerInfo.notify('calendar', 'Report VAT (Q' + quarter + ' ' + year + ')', 'Report VAT', key => {
-                    this.model.vatRecord.reportQuarter(year, quarter);
+                    this.model.reportQuarterlyVAT(year, quarter);
 
                     this.model.save();
 
@@ -1123,8 +1282,13 @@ class Level extends Crisp.View {
 
                 // Pay VAT
             } else if (!paymentQuarter.isPaid) {
-                Game.Views.Widgets.PlayerInfo.notify('calendar', 'Pay VAT (Q' + quarter + ' ' + year + ')', 'Pay VAT', key => {
+                Game.Views.Widgets.PlayerInfo.notify('calendar', 'Pay VAT (Q' + quarter + ' ' + year + '): ' + paymentQuarter.amount + ' kr.', 'Pay VAT', key => {
+                    this.model.payQuarterlyVAT(year, quarter);
+
+                    this.model.save();
+
                     Game.Views.Widgets.PlayerInfo.clearNotification('calendar', key);
+                    Game.Views.Widgets.PlayerInfo.update();
                 });
             }
         };
@@ -1140,7 +1304,7 @@ class Level extends Crisp.View {
             for (let quarter in paymentYear) {
                 let paymentQuarter = paymentYear[quarter];
 
-                if (quarter <= previousQuarter) {
+                if (quarter <= previousQuarter && year == currentYear || year < currentYear) {
                     checkPaymentQuarter(paymentQuarter, quarter, year);
                 }
             }
@@ -1220,18 +1384,18 @@ class Level extends Crisp.View {
      * Template
      */
     template() {
-        return _.div({ class: 'page page--level' }, _.div({ class: 'page--level__numbers' }, _.div({ class: 'page--level__user-input' }, this.renderInputField('unitPrice', 'Unit price'), this.renderButton('machines', 'Machines', 'Price: 200', 'Purchase', () => {
+        return _.div({ class: 'page page--level' }, _.div({ class: 'page--level__numbers' }, _.div({ class: 'page--level__user-input' }, this.renderInputField('unitPrice', 'Unit price'), this.renderButton('machines', 'Machines', 'Price: 10000 kr.', 'Purchase', () => {
             this.model.company.purchaseMachine();
-        }), this.renderButton('inventory', 'Inventory', 'Capacity: ' + this.model.company.productionCapacity + ' / Cost: ' + this.model.company.productionCapacity * this.model.company.unitProductionCost, 'Produce', () => {
+        }), this.renderButton('inventory', 'Inventory', 'Cost: ' + this.model.company.unitProductionCost + ' kr.', 'Produce', () => {
             this.model.company.produceUnit();
-        })), _.div({ class: 'page--level__calculations' }, _.div({ class: 'page--level__calculations__inner' }, this.renderCalculationField('Sales', this.model.financialRecord.currentReport.sales || '0'), this.renderCalculationField('Production cost', this.model.financialRecord.currentReport.productionCost || '0')))));
+        })), _.div({ class: 'page--level__calculations' }, _.div({ class: 'page--level__calculations__inner' }, this.renderCalculationField('Sales', this.model.financialRecord.currentReport.sales + ' kr.'), this.renderCalculationField('Production cost', this.model.financialRecord.currentReport.productionCost + ' kr.')))));
     }
 }
 
 module.exports = Level;
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1268,107 +1432,6 @@ class ViewController {
 ViewController.init();
 
 module.exports = ViewController;
-
-/***/ }),
-/* 14 */,
-/* 15 */,
-/* 16 */,
-/* 17 */,
-/* 18 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-/**
- * A monthly report
- */
-
-class Report extends Game.Models.Entity {
-  /**
-   * Constructor
-   */
-  constructor(params) {
-    super(params);
-
-    this.sales = parseInt(this.sales);
-    this.productionCost = parseInt(this.productionCost);
-  }
-
-  /**
-   * Structure
-   */
-  structure() {
-    this.sales = 0;
-    this.productionCost = 0;
-  }
-}
-
-module.exports = Report;
-
-/***/ }),
-/* 19 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-/**
- * A class for keeping track of reports
- */
-
-class FinancialRecord extends Game.Models.Entity {
-    /**
-     * Structure
-     */
-    structure() {
-        this.reports = {};
-    }
-
-    /**
-     * Generate reports
-     */
-    generateReports() {
-        let firstYear = Game.Services.TimeService.startTime.getFullYear();
-        let firstMonth = Game.Services.TimeService.startTime.getMonth() + 1;
-        let targetYear = Game.Services.TimeService.currentYear;
-        let targetMonth = Game.Services.TimeService.currentMonth;
-
-        for (let year = firstYear; year <= targetYear; year++) {
-            if (!this.reports[year]) {
-                this.reports[year] = {};
-            }
-
-            let thisFirstMonth = 1;
-            let thisTargetMonth = 12;
-
-            if (year === targetYear) {
-                thisFirstMonth = firstMonth;
-                thisTargetMonth = targetMonth;
-            }
-
-            for (let month = thisFirstMonth; month <= thisTargetMonth; month++) {
-                if (!this.reports[year][month]) {
-                    this.reports[year][month] = new Game.Models.Report();
-                }
-            }
-        }
-
-        return this.reports;
-    }
-
-    /**
-     * Gets the current report
-     */
-    get currentReport() {
-        this.generateReports();
-
-        return this.reports[Game.Services.TimeService.currentYear][Game.Services.TimeService.currentMonth];
-    }
-
-}
-
-module.exports = FinancialRecord;
 
 /***/ })
 /******/ ]);

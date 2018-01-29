@@ -24,6 +24,7 @@ class Player extends Game.Models.Entity {
 
         this.company = new Game.Models.Company(this.company);
         this.vatRecord = new Game.Models.VATRecord(this.vatRecord);
+        this.financialRecord = new Game.Models.FinancialRecord(this.financialRecord);
     }
 
     /**
@@ -51,6 +52,35 @@ class Player extends Game.Models.Entity {
      */
     save() {
         Game.Services.ConfigService.set('player', this);
+    }
+    
+    /**
+     * Reports VAT quarterly
+     *
+     * @param {Number} year
+     * @param {Number} quarter
+     */
+    reportQuarterlyVAT(year, quarter) {
+        let amount = 0;
+
+        let report = this.financialRecord.getQuarterlyReport(year, quarter);     
+
+        amount += report.sales * 0.25; // Sales VAT
+        amount -= report.productionCost / 1.25 * 0.25; // Cost VAT
+
+        this.vatRecord.payments[year][quarter].isReported = true; 
+        this.vatRecord.payments[year][quarter].amount = amount;
+    }
+    
+    /**
+     * Pays VAT quarterly
+     *
+     * @param {Number} year
+     * @param {Number} quarter
+     */
+    payQuarterlyVAT(year, quarter) {
+        this.company.bankBalance -= this.vatRecord.payments[year][quarter].amount;
+        this.vatRecord.payments[year][quarter].isPaid = true; 
     }
 }
 

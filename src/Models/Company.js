@@ -1,7 +1,6 @@
 'use strict';
 
-const MACHINE_PRICE = 200;
-const MACHINE_CAPACITY = 10;
+const MACHINE_PRICE = 10000;
 
 /**
  * The main company model
@@ -20,6 +19,7 @@ class Company extends Game.Models.Entity {
     structure() {
         this.name = 'My Company A/S';
         this.capital = 20000;
+        this.bankBalance = 0;
         this.unitPrice = 20;
         this.unitProduction = 5000;
         this.unitProductionCost = 10;
@@ -34,13 +34,6 @@ class Company extends Game.Models.Entity {
      */
     round(num) {
         return Math.round(num * 100) / 100;
-    }
-
-    /**
-     * Gets the production capacity
-     */
-    get productionCapacity() {
-        return this.machines * MACHINE_CAPACITY;
     }
 
     /**
@@ -125,7 +118,7 @@ class Company extends Game.Models.Entity {
         
         this.inventory--;
 
-        this.capital += this.unitPrice;
+        this.bankBalance += this.unitPrice;
         Game.Models.Player.current.financialRecord.currentReport.sales += this.unitPrice;
     }
 
@@ -133,13 +126,13 @@ class Company extends Game.Models.Entity {
      * Produces a unit
      */
     produceUnit() {
-        if(this.capital < this.unitProductionCost) {
+        if(this.bankBalance < this.unitProductionCost) {
             return alert('You do not have enough capital to produce more units');
         }
 
         this.inventory++;
 
-        this.capital -= this.unitProductionCost;
+        this.bankBalance -= this.unitProductionCost;
         Game.Models.Player.current.financialRecord.currentReport.productionCost += this.unitProductionCost;
     }
 
@@ -147,13 +140,13 @@ class Company extends Game.Models.Entity {
      * Purchases a machine
      */
     purchaseMachine() {
-        if(this.capital < MACHINE_PRICE) {
+        if(this.bankBalance < MACHINE_PRICE) {
             return alert('You do not have enough capital to purchase more machines');
         }
 
         this.machines++;
 
-        this.capital -= MACHINE_PRICE;
+        this.bankBalance -= MACHINE_PRICE;
         Game.Models.Player.current.financialRecord.currentReport.productionCost += MACHINE_PRICE;
     }
 }

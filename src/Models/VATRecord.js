@@ -15,13 +15,21 @@ class VATRecord extends Game.Models.Entity {
      * Generates all payments
      */
     generatePayments() {
-        let firstYear = Game.Services.TimeService.startTime.getFullYear();
+        let startTime = Game.Services.TimeService.startTime;
+        let firstYear = startTime.getFullYear();
+        let firstQuarter = Game.Services.TimeService.getQuarterFromMonth(startTime.getMonth() + 1);
         let targetYear = Game.Services.TimeService.currentYear;
-        let targetQuarter = Game.Services.TimeService.previousQuarter;
+        let targetQuarter = Game.Services.TimeService.currentQuarter - 1;
 
         for(let year = firstYear; year <= targetYear; year++) {
             if(!this.payments[year]) {
                 this.payments[year] = {};
+            }
+
+            let thisFirstQuarter = 1;
+
+            if(year === firstYear) {
+                thisFirstQuarter = firstQuarter;
             }
 
             let thisTargetQuarter = 4;
@@ -30,7 +38,7 @@ class VATRecord extends Game.Models.Entity {
                 thisTargetQuarter = targetQuarter;
             }
 
-            for(let quarter = 1; quarter <= thisTargetQuarter; quarter++) {
+            for(let quarter = thisFirstQuarter; quarter <= thisTargetQuarter; quarter++) {
                 if(!this.payments[year][quarter]) {
                     this.payments[year][quarter] = {
                         isPaid: false,
@@ -42,21 +50,6 @@ class VATRecord extends Game.Models.Entity {
         }
 
         return this.payments; 
-    }
-
-    /**
-     * Reports a quarter
-     *
-     * @param {Number} year
-     * @param {Number} quarter
-     */
-    reportQuarter(year, quarter) {
-        let amount = 0;
-
-        // TODO: Figure out amount
-
-        this.payments[year][quarter].isReported = true; 
-        this.payments[year][quarter].amount = amount;
     }
 }
 

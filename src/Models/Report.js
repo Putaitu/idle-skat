@@ -21,6 +21,16 @@ class Report extends Game.Models.Entity {
         this.sales = 0;
         this.productionCost = 0;
     }
+
+    /**
+     * Appends another report to this one
+     *
+     * @param {Report} report
+     */
+    append(report) {
+        this.sales += report.sales;
+        this.productionCost += report.productionCost;
+    }
 }
 
 module.exports = Report;

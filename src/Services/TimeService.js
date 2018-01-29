@@ -1,6 +1,6 @@
 'use strict';
 
-const HOURS_PER_SECOND = 2; 
+const HOURS_PER_SECOND = 12; 
 
 /**
  * The service for managing time
@@ -90,20 +90,29 @@ class TimeService {
     }
 
     /**
-     * Gets the current quarter
+     * Gets a quarter from a month
+     *
+     * @param {Number} month
+     *
+     * @returns {Number} Quarter
      */
-    static get currentQuarter() {
-        let month = this.currentTime.getMonth() + 1;
-        
-        if(month >= 9) {
+    static getQuarterFromMonth(month) {
+        if(month > 9) {
             return 4;
-        } else if(month >= 6) {
+        } else if(month > 6) {
             return 3;
-        } else if(month >= 3) {
+        } else if(month > 3) {
             return 2;
         } else {
             return 1;
         }
+    }
+
+    /**
+     * Gets the current quarter
+     */
+    static get currentQuarter() {
+        return this.getQuarterFromMonth(this.currentTime.getMonth() + 1)
     }
 }
 

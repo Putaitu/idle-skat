@@ -167,7 +167,7 @@ class Setup extends Crisp.View {
                     this.renderInputField('unitPrice', 'Unit price', 'How much you want to charge for your product'),
                     this.renderInputField('unitProduction', 'Unit production', 'How many units you plan to produce in a year'),
                     this.renderInputField('unitProductionCost', 'Production cost', 'How much a single unit costs to make', true),
-                    this.renderInputField('demand', 'Demand', 'How many units people will buy')
+                    this.renderInputField('demand', 'Demand estimate', 'How many units you assume people will buy in a year')
                 ),
                 _.div({class: 'page--setup__calculations'},
                     _.div({class: 'page--setup__calculations__inner'})
@@ -178,6 +178,8 @@ class Setup extends Crisp.View {
                     .click((e) => {
                         if(!this.sanityCheck()) { return; }
 
+                        this.model.bankBalance = this.model.capital;
+                        
                         this.model.save();
 
                         Game.Services.ConfigService.set('completedSetup', true);

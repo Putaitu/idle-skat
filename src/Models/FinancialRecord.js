@@ -28,8 +28,11 @@ class FinancialRecord extends Game.Models.Entity {
             let thisFirstMonth = 1;
             let thisTargetMonth = 12;
 
-            if(year === targetYear) {
+            if(year === firstYear) {
                 thisFirstMonth = firstMonth;
+            }
+
+            if(year === targetYear) {
                 thisTargetMonth = targetMonth;
             }
 
@@ -42,7 +45,30 @@ class FinancialRecord extends Game.Models.Entity {
 
         return this.reports; 
     }
-    
+
+    /**
+     * Gets quarterly report
+     *
+     * @param {Number} year
+     * @param {Number} quarter
+     *
+     * @returns {Object} Quarterly report
+     */
+    getQuarterlyReport(year, quarter) {
+        this.generateReports();
+
+        let firstMonth = quarter * 3 - 2;
+        let targetMonth = firstMonth + 3;
+        
+        let report = new Game.Models.Report();
+
+        for(let month = firstMonth; month < targetMonth; month++) {
+            report.append(this.reports[year][month]);
+        }
+
+        return report; 
+    }
+
     /**
      * Gets the current report
      */

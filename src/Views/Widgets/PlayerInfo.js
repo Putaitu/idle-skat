@@ -176,20 +176,20 @@ class PlayerInfo extends Crisp.View {
             _.div({class: 'widget--player-info__area company'},
                 _.h4({class: 'widget--player-info__area__heading'}, 'Company'),
                 _.div({class: 'widget--player-info__area__icon' + (this.hasNotifications('company') ? ' notification' : '')}, '🏭'),
-                _.div({class: 'widget--player-info__area__preview'}, this.model.company.name + ': ' + this.model.company.capital),
+                _.div({class: 'widget--player-info__area__preview'}, this.model.company.name + ': ' + this.model.company.bankBalance + ' kr.'),
                 _.div({class: 'widget--player-info__area__data'},
                     'Name: ' + this.model.company.name,
                     '<br>',
-                    'Capital: ' + this.model.company.capital,
+                    'Bank balance: ' + this.model.company.bankBalance + ' kr.',
                     this.renderNotifications('company')
                 )
             ),
             _.div({class: 'widget--player-info__area personal-account'},
                 _.h4({class: 'widget--player-info__area__heading'}, 'Personal account'),
                 _.div({class: 'widget--player-info__area__icon' + (this.hasNotifications('personal-account') ? ' notification' : '')}, '💰'),
-                _.div({class: 'widget--player-info__area__preview'}, this.model.personalAccount.toString()),
+                _.div({class: 'widget--player-info__area__preview'}, this.model.personalAccount + ' kr.'),
                 _.div({class: 'widget--player-info__area__data'},
-                    'Balance: ' + this.model.personalAccount,
+                    'Balance: ' + this.model.personalAccount + ' kr.',
                     this.renderNotifications('personal-account')
                 )
             ),

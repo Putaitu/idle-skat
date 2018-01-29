@@ -38,7 +38,7 @@ class Level extends Crisp.View {
             // Report VAT
             if(!paymentQuarter.isReported) {
                 Game.Views.Widgets.PlayerInfo.notify('calendar', 'Report VAT (Q' + quarter + ' ' + year + ')', 'Report VAT', (key) => {
-                    this.model.vatRecord.reportQuarter(year, quarter);
+                    this.model.reportQuarterlyVAT(year, quarter);
 
                     this.model.save();
 
@@ -48,8 +48,13 @@ class Level extends Crisp.View {
 
             // Pay VAT
             } else if(!paymentQuarter.isPaid) {
-                Game.Views.Widgets.PlayerInfo.notify('calendar', 'Pay VAT (Q' + quarter + ' ' + year + ')', 'Pay VAT', (key) => {
+                Game.Views.Widgets.PlayerInfo.notify('calendar', 'Pay VAT (Q' + quarter + ' ' + year + '): ' + paymentQuarter.amount + ' kr.', 'Pay VAT', (key) => {
+                    this.model.payQuarterlyVAT(year, quarter);
+
+                    this.model.save();
+                    
                     Game.Views.Widgets.PlayerInfo.clearNotification('calendar', key);
+                    Game.Views.Widgets.PlayerInfo.update();
                 });
 
             }
@@ -66,7 +71,10 @@ class Level extends Crisp.View {
             for(let quarter in paymentYear) {
                 let paymentQuarter = paymentYear[quarter];
 
-                if(quarter <= previousQuarter) {
+                if(
+                    (quarter <= previousQuarter && year == currentYear) ||
+                    year < currentYear
+                ) {
                     checkPaymentQuarter(paymentQuarter, quarter, year);
                 }
             }
@@ -161,13 +169,13 @@ class Level extends Crisp.View {
             _.div({class: 'page--level__numbers'},
                 _.div({class: 'page--level__user-input'},
                     this.renderInputField('unitPrice', 'Unit price'),
-                    this.renderButton('machines', 'Machines', 'Price: 200', 'Purchase', () => { this.model.company.purchaseMachine(); }),
-                    this.renderButton('inventory', 'Inventory', 'Capacity: ' + this.model.company.productionCapacity + ' / Cost: ' + (this.model.company.productionCapacity * this.model.company.unitProductionCost), 'Produce', () => { this.model.company.produceUnit(); }),
+                    this.renderButton('machines', 'Machines', 'Price: 10000 kr.', 'Purchase', () => { this.model.company.purchaseMachine(); }),
+                    this.renderButton('inventory', 'Inventory', 'Cost: ' + this.model.company.unitProductionCost + ' kr.', 'Produce', () => { this.model.company.produceUnit(); }),
                 ),
                 _.div({class: 'page--level__calculations'},
                     _.div({class: 'page--level__calculations__inner'},
-                        this.renderCalculationField('Sales', this.model.financialRecord.currentReport.sales || '0'),
-                        this.renderCalculationField('Production cost', this.model.financialRecord.currentReport.productionCost || '0') 
+                        this.renderCalculationField('Sales', this.model.financialRecord.currentReport.sales + ' kr.'),
+                        this.renderCalculationField('Production cost', this.model.financialRecord.currentReport.productionCost + ' kr.') 
                     )
                 )
             )
