@@ -63,6 +63,12 @@
             }
         }
 
+        &.personal-account &__preview {
+            font-weight: bold;
+            color: gold;
+            font-size: 2rem;
+        }
+
         &__heading {
             white-space: nowrap;
             width: 100%;

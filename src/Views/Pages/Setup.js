@@ -135,8 +135,8 @@ class Setup extends Crisp.View {
             ),
             this.renderCalculationField(
                 'Cost',
-                this.model.unitProduction + ' × ' + this.model.unitProductionCost + ' = ' + this.model.estimatedYearlyProductionCost,
-                this.model.estimatedYearlyProductionCost + ' / 125% × 25% = ' + this.model.estimatedYearlyProductionCostVAT
+                -this.model.unitProduction + ' × ' + -this.model.unitProductionCost + ' = ' + -this.model.estimatedYearlyProductionCost,
+                -this.model.estimatedYearlyProductionCost + ' / 125% × 25% = ' + -this.model.estimatedYearlyProductionCostVAT
             ),
             this.renderCalculationField(
                 'Income',
@@ -147,7 +147,7 @@ class Setup extends Crisp.View {
                 this.model.estimatedYearlyBSkat + ' (' + this.model.estimatedMonthlyBSkat + ' per month)'
             ),
             this.renderCalculationField(
-                'VAT',
+                'VAT payable',
                 this.model.estimatedYearlySalesVAT + ' - ' + this.model.estimatedYearlyProductionCostVAT + ' = ' + this.model.estimatedYearlyVAT
             )
         );
@@ -166,7 +166,7 @@ class Setup extends Crisp.View {
                     this.renderInputField('capital', 'Capital', 'How much you, as the owner, will invest for the company\'s spending'),
                     this.renderInputField('unitPrice', 'Unit price', 'How much you want to charge for your product'),
                     this.renderInputField('unitProduction', 'Unit production', 'How many units you plan to produce in a year'),
-                    this.renderInputField('unitProductionCost', 'Production cost', 'How much a single unit costs to make'),
+                    this.renderInputField('unitProductionCost', 'Production cost', 'How much a single unit costs to make', true),
                     this.renderInputField('demand', 'Demand', 'How many units people will buy')
                 ),
                 _.div({class: 'page--setup__calculations'},

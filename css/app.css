@@ -462,6 +462,10 @@ h1, h2, h3, h4, h5, h6 {
       background-color: darkred;
       z-index: -1;
       pointer-events: none; }
+  .widget--player-info__area.personal-account .widget--player-info__area__preview {
+    font-weight: bold;
+    color: gold;
+    font-size: 2rem; }
   .widget--player-info__area__heading {
     white-space: nowrap;
     width: 100%; }

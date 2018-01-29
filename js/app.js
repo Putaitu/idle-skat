@@ -109,25 +109,25 @@ window.Game = {};
 
 Game.Services = {};
 Game.Services.ConfigService = __webpack_require__(2);
-Game.Services.TimeService = __webpack_require__(14);
-Game.Services.DebugService = __webpack_require__(3);
+Game.Services.TimeService = __webpack_require__(3);
+Game.Services.DebugService = __webpack_require__(4);
 
 Game.Models = {};
-Game.Models.Entity = __webpack_require__(4);
-Game.Models.Player = __webpack_require__(5);
-Game.Models.Company = __webpack_require__(6);
-Game.Models.Summary = __webpack_require__(16);
-Game.Models.VATRecord = __webpack_require__(17);
+Game.Models.Entity = __webpack_require__(5);
+Game.Models.Player = __webpack_require__(6);
+Game.Models.Company = __webpack_require__(7);
+Game.Models.Summary = __webpack_require__(8);
+Game.Models.VATRecord = __webpack_require__(9);
 
 Game.Views = {};
 Game.Views.Widgets = {};
-Game.Views.Widgets.PlayerInfo = __webpack_require__(7);
+Game.Views.Widgets.PlayerInfo = __webpack_require__(10);
 Game.Views.Pages = {};
-Game.Views.Pages.Setup = __webpack_require__(8);
-Game.Views.Pages.Level = __webpack_require__(15);
+Game.Views.Pages.Setup = __webpack_require__(11);
+Game.Views.Pages.Level = __webpack_require__(12);
 
 Game.Controllers = {};
-Game.Controllers.ViewController = __webpack_require__(9);
+Game.Controllers.ViewController = __webpack_require__(13);
 
 /***/ }),
 /* 1 */
@@ -181,6 +181,121 @@ module.exports = ConfigService;
 
 /***/ }),
 /* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+const HOURS_PER_SECOND = 2;
+
+/**
+ * The service for managing time
+ */
+class TimeService {
+    /**
+     * Starts the clock
+     */
+    static startClock() {
+        Game.Services.ConfigService.set('time', Date.now());
+        Game.Services.ConfigService.set('startTime', Date.now());
+    }
+
+    /**
+     * Ticks the time
+     */
+    static tick() {
+        let time = this.currentTime;
+
+        time.addHours(HOURS_PER_SECOND);
+
+        Game.Services.ConfigService.set('time', time.getTime());
+    }
+
+    /**
+     * Adds days to the current time
+     *
+     * @param {Number} amount
+     */
+    static addDays(amount) {
+        if (amount < 1) {
+            return;
+        }
+
+        let time = this.currentTime;
+
+        time.addDays(amount);
+
+        Game.Services.ConfigService.set('time', time.getTime());
+    }
+
+    /**
+     * Gets the start time
+     */
+    static get startTime() {
+        let unix = Game.Services.ConfigService.get('startTime');
+
+        if (!unix) {
+            return new Date();
+        }
+
+        return new Date(unix);
+    }
+
+    /**
+     * Gets the current time
+     */
+    static get currentTime() {
+        let unix = Game.Services.ConfigService.get('time');
+
+        if (!unix) {
+            return new Date();
+        }
+
+        return new Date(unix);
+    }
+
+    /**
+     * Gets the current year
+     */
+    static get currentYear() {
+        return this.currentTime.getFullYear();
+    }
+
+    /**
+     * Gets the previous quarter
+     */
+    static get previousQuarter() {
+        let quarter = this.currentQuarter - 1;
+
+        if (quarter <= 0) {
+            quarter = 4;
+        }
+
+        return quarter;
+    }
+
+    /**
+     * Gets the current quarter
+     */
+    static get currentQuarter() {
+        let month = this.currentTime.getMonth() + 1;
+
+        if (month >= 9) {
+            return 4;
+        } else if (month >= 6) {
+            return 3;
+        } else if (month >= 3) {
+            return 2;
+        } else {
+            return 1;
+        }
+    }
+}
+
+module.exports = TimeService;
+
+/***/ }),
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -254,7 +369,7 @@ class DebugService {
 module.exports = DebugService;
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -303,7 +418,7 @@ class Entity {
 module.exports = Entity;
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -365,7 +480,7 @@ class Player extends Game.Models.Entity {
 module.exports = Player;
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -552,7 +667,110 @@ class Company extends Game.Models.Entity {
 module.exports = Company;
 
 /***/ }),
-/* 7 */
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * A monthly summary
+ */
+
+class Summary extends Game.Models.Entity {
+  /**
+   * Constructor
+   */
+  constructor(params) {
+    super(params);
+
+    this.sales = parseInt(this.sales);
+    this.productionCost = parseInt(this.productionCost);
+  }
+
+  /**
+   * Structure
+   */
+  structure() {
+    this.sales = 0;
+    this.productionCost = 0;
+  }
+}
+
+module.exports = Summary;
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * The record for keeping track of VAT payments
+ */
+
+class VATRecord extends Game.Models.Entity {
+    /**
+     * Structure
+     */
+    structure() {
+        this.payments = {};
+    }
+
+    /**
+     * Generates all payments
+     */
+    generatePayments() {
+        let firstYear = Game.Services.TimeService.startTime.getFullYear();
+        let targetYear = Game.Services.TimeService.currentYear;
+        let targetQuarter = Game.Services.TimeService.previousQuarter;
+
+        for (let year = firstYear; year <= targetYear; year++) {
+            if (!this.payments[year]) {
+                this.payments[year] = {};
+            }
+
+            let thisTargetQuarter = 4;
+
+            if (year === targetYear) {
+                thisTargetQuarter = targetQuarter;
+            }
+
+            for (let quarter = 1; quarter <= thisTargetQuarter; quarter++) {
+                if (!this.payments[year][quarter]) {
+                    this.payments[year][quarter] = {
+                        isPaid: false,
+                        isReported: false,
+                        amount: 0
+                    };
+                }
+            }
+        }
+
+        return this.payments;
+    }
+
+    /**
+     * Reports a quarter
+     *
+     * @param {Number} year
+     * @param {Number} quarter
+     */
+    reportQuarter(year, quarter) {
+        let amount = 0;
+
+        // TODO: Figure out amount
+
+        this.payments[year][quarter].isReported = true;
+        this.payments[year][quarter].amount = amount;
+    }
+}
+
+module.exports = VATRecord;
+
+/***/ }),
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -740,7 +958,7 @@ class PlayerInfo extends Crisp.View {
 module.exports = PlayerInfo;
 
 /***/ }),
-/* 8 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -865,14 +1083,14 @@ class Setup extends Crisp.View {
 
         calculations.innerHTML = '';
 
-        _.append(calculations, _.h2({ class: 'page--setup__calculations__heading' }, 'Calculations'), this.renderCalculationField('Sales', this.model.demand + ' × ' + this.model.unitPrice + ' = ' + this.model.estimatedYearlySales, this.model.estimatedYearlySales + ' × 25% = ' + this.model.estimatedYearlySalesVAT), this.renderCalculationField('Cost', this.model.unitProduction + ' × ' + this.model.unitProductionCost + ' = ' + this.model.estimatedYearlyProductionCost, this.model.estimatedYearlyProductionCost + ' / 125% × 25% = ' + this.model.estimatedYearlyProductionCostVAT), this.renderCalculationField('Income', this.model.estimatedYearlyIncome), this.renderCalculationField('B-skat', this.model.estimatedYearlyBSkat + ' (' + this.model.estimatedMonthlyBSkat + ' per month)'), this.renderCalculationField('VAT', this.model.estimatedYearlySalesVAT + ' - ' + this.model.estimatedYearlyProductionCostVAT + ' = ' + this.model.estimatedYearlyVAT));
+        _.append(calculations, _.h2({ class: 'page--setup__calculations__heading' }, 'Calculations'), this.renderCalculationField('Sales', this.model.demand + ' × ' + this.model.unitPrice + ' = ' + this.model.estimatedYearlySales, this.model.estimatedYearlySales + ' × 25% = ' + this.model.estimatedYearlySalesVAT), this.renderCalculationField('Cost', -this.model.unitProduction + ' × ' + -this.model.unitProductionCost + ' = ' + -this.model.estimatedYearlyProductionCost, -this.model.estimatedYearlyProductionCost + ' / 125% × 25% = ' + -this.model.estimatedYearlyProductionCostVAT), this.renderCalculationField('Income', this.model.estimatedYearlyIncome), this.renderCalculationField('B-skat', this.model.estimatedYearlyBSkat + ' (' + this.model.estimatedMonthlyBSkat + ' per month)'), this.renderCalculationField('VAT payable', this.model.estimatedYearlySalesVAT + ' - ' + this.model.estimatedYearlyProductionCostVAT + ' = ' + this.model.estimatedYearlyVAT));
     }
 
     /**
      * Template
      */
     template() {
-        return _.div({ class: 'page page--setup' }, _.div({ class: 'page--setup__numbers' }, _.div({ class: 'page--setup__user-input' }, _.h2({ class: 'page--setup__user-input__heading' }, 'Registration'), this.renderInputField('name', 'Name', 'The name of your company'), _.h2({ class: 'page--setup__user-input__heading' }, 'Business plan'), this.renderInputField('capital', 'Capital', 'How much you, as the owner, will invest for the company\'s spending'), this.renderInputField('unitPrice', 'Unit price', 'How much you want to charge for your product'), this.renderInputField('unitProduction', 'Unit production', 'How many units you plan to produce in a year'), this.renderInputField('unitProductionCost', 'Production cost', 'How much a single unit costs to make'), this.renderInputField('demand', 'Demand', 'How many units people will buy')), _.div({ class: 'page--setup__calculations' }, _.div({ class: 'page--setup__calculations__inner' }))), _.div({ class: 'page--setup__actions' }, _.button({ class: 'widget widget--button' }, 'Start game').click(e => {
+        return _.div({ class: 'page page--setup' }, _.div({ class: 'page--setup__numbers' }, _.div({ class: 'page--setup__user-input' }, _.h2({ class: 'page--setup__user-input__heading' }, 'Registration'), this.renderInputField('name', 'Name', 'The name of your company'), _.h2({ class: 'page--setup__user-input__heading' }, 'Business plan'), this.renderInputField('capital', 'Capital', 'How much you, as the owner, will invest for the company\'s spending'), this.renderInputField('unitPrice', 'Unit price', 'How much you want to charge for your product'), this.renderInputField('unitProduction', 'Unit production', 'How many units you plan to produce in a year'), this.renderInputField('unitProductionCost', 'Production cost', 'How much a single unit costs to make', true), this.renderInputField('demand', 'Demand', 'How many units people will buy')), _.div({ class: 'page--setup__calculations' }, _.div({ class: 'page--setup__calculations__inner' }))), _.div({ class: 'page--setup__actions' }, _.button({ class: 'widget widget--button' }, 'Start game').click(e => {
             if (!this.sanityCheck()) {
                 return;
             }
@@ -890,165 +1108,7 @@ class Setup extends Crisp.View {
 module.exports = Setup;
 
 /***/ }),
-/* 9 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-/**
- * The view controller
- */
-
-class ViewController {
-    /**
-     * Initialise routes
-     */
-    static init() {
-        Crisp.Router.route('/', this.index);
-
-        Crisp.Router.init();
-    }
-
-    /**
-     * Index route
-     */
-    static index() {
-        Crisp.View.clear(Crisp.View);
-
-        if (!Game.Services.ConfigService.get('completedSetup')) {
-            _.append(document.body, new Game.Views.Widgets.PlayerInfo(), new Game.Views.Pages.Setup());
-        } else {
-            _.append(document.body, new Game.Views.Widgets.PlayerInfo(), new Game.Views.Pages.Level());
-        }
-    }
-}
-
-ViewController.init();
-
-module.exports = ViewController;
-
-/***/ }),
-/* 10 */,
-/* 11 */,
-/* 12 */,
-/* 13 */,
-/* 14 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-const HOURS_PER_SECOND = 2;
-
-/**
- * The service for managing time
- */
-class TimeService {
-    /**
-     * Starts the clock
-     */
-    static startClock() {
-        Game.Services.ConfigService.set('time', Date.now());
-        Game.Services.ConfigService.set('startTime', Date.now());
-    }
-
-    /**
-     * Ticks the time
-     */
-    static tick() {
-        let time = this.currentTime;
-
-        time.addHours(HOURS_PER_SECOND);
-
-        Game.Services.ConfigService.set('time', time.getTime());
-    }
-
-    /**
-     * Adds days to the current time
-     *
-     * @param {Number} amount
-     */
-    static addDays(amount) {
-        if (amount < 1) {
-            return;
-        }
-
-        let time = this.currentTime;
-
-        time.addDays(amount);
-
-        Game.Services.ConfigService.set('time', time.getTime());
-    }
-
-    /**
-     * Gets the start time
-     */
-    static get startTime() {
-        let unix = Game.Services.ConfigService.get('startTime');
-
-        if (!unix) {
-            return new Date();
-        }
-
-        return new Date(unix);
-    }
-
-    /**
-     * Gets the current time
-     */
-    static get currentTime() {
-        let unix = Game.Services.ConfigService.get('time');
-
-        if (!unix) {
-            return new Date();
-        }
-
-        return new Date(unix);
-    }
-
-    /**
-     * Gets the current year
-     */
-    static get currentYear() {
-        return this.currentTime.getFullYear();
-    }
-
-    /**
-     * Gets the previous quarter
-     */
-    static get previousQuarter() {
-        let quarter = this.currentQuarter - 1;
-
-        if (quarter <= 0) {
-            quarter = 4;
-        }
-
-        return quarter;
-    }
-
-    /**
-     * Gets the current quarter
-     */
-    static get currentQuarter() {
-        let month = this.currentTime.getMonth() + 1;
-
-        if (month >= 9) {
-            return 4;
-        } else if (month >= 6) {
-            return 3;
-        } else if (month >= 3) {
-            return 2;
-        } else {
-            return 1;
-        }
-    }
-}
-
-module.exports = TimeService;
-
-/***/ }),
-/* 15 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1212,97 +1272,43 @@ class Level extends Crisp.View {
 module.exports = Level;
 
 /***/ }),
-/* 16 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 /**
- * A monthly summary
+ * The view controller
  */
 
-class Summary extends Game.Models.Entity {
-  /**
-   * Structure
-   */
-  structure() {
-    this.sales = 0;
-    this.productionCost = 0;
-  }
-}
-
-module.exports = Summary;
-
-/***/ }),
-/* 17 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-/**
- * The record for keeping track of VAT payments
- */
-
-class VATRecord extends Game.Models.Entity {
+class ViewController {
     /**
-     * Structure
+     * Initialise routes
      */
-    structure() {
-        this.payments = {};
+    static init() {
+        Crisp.Router.route('/', this.index);
+
+        Crisp.Router.init();
     }
 
     /**
-     * Generates all payments
+     * Index route
      */
-    generatePayments() {
-        let firstYear = Game.Services.TimeService.startTime.getFullYear();
-        let targetYear = Game.Services.TimeService.currentYear;
-        let targetQuarter = Game.Services.TimeService.previousQuarter;
+    static index() {
+        Crisp.View.clear(Crisp.View);
 
-        for (let year = firstYear; year <= targetYear; year++) {
-            if (!this.payments[year]) {
-                this.payments[year] = {};
-            }
-
-            let thisTargetQuarter = 4;
-
-            if (year === targetYear) {
-                thisTargetQuarter = targetQuarter;
-            }
-
-            for (let quarter = 1; quarter <= thisTargetQuarter; quarter++) {
-                if (!this.payments[year][quarter]) {
-                    this.payments[year][quarter] = {
-                        isPaid: false,
-                        isReported: false,
-                        amount: 0
-                    };
-                }
-            }
+        if (!Game.Services.ConfigService.get('completedSetup')) {
+            _.append(document.body, new Game.Views.Widgets.PlayerInfo(), new Game.Views.Pages.Setup());
+        } else {
+            _.append(document.body, new Game.Views.Widgets.PlayerInfo(), new Game.Views.Pages.Level());
         }
-
-        return this.payments;
-    }
-
-    /**
-     * Reports a quarter
-     *
-     * @param {Number} year
-     * @param {Number} quarter
-     */
-    reportQuarter(year, quarter) {
-        let amount = 0;
-
-        // TODO: Figure out amount
-
-        this.payments[year][quarter].isReported = true;
-        this.payments[year][quarter].amount = amount;
     }
 }
 
-module.exports = VATRecord;
+ViewController.init();
+
+module.exports = ViewController;
 
 /***/ })
 /******/ ]);
