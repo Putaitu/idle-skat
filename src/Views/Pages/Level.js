@@ -166,8 +166,8 @@ class Level extends Crisp.View {
                 ),
                 _.div({class: 'page--level__calculations'},
                     _.div({class: 'page--level__calculations__inner'},
-                        this.renderCalculationField('Sales', this.model.company.currentSummary.sales || '0'),
-                        this.renderCalculationField('Production cost', this.model.company.currentSummary.productionCost || '0') 
+                        this.renderCalculationField('Sales', this.model.financialRecord.currentReport.sales || '0'),
+                        this.renderCalculationField('Production cost', this.model.financialRecord.currentReport.productionCost || '0') 
                     )
                 )
             )

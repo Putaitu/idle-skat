@@ -1,9 +1,9 @@
 'use strict';
 
 /**
- * A monthly summary
+ * A monthly report
  */
-class Summary extends Game.Models.Entity {
+class Report extends Game.Models.Entity {
     /**
      * Constructor
      */
@@ -23,4 +23,4 @@ class Summary extends Game.Models.Entity {
     }
 }
 
-module.exports = Summary;
+module.exports = Report;

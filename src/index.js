@@ -46,8 +46,9 @@ Game.Models = {};
 Game.Models.Entity = require('./Models/Entity');
 Game.Models.Player = require('./Models/Player');
 Game.Models.Company = require('./Models/Company');
-Game.Models.Summary = require('./Models/Summary');
+Game.Models.Report = require('./Models/Report');
 Game.Models.VATRecord = require('./Models/VATRecord');
+Game.Models.FinancialRecord = require('./Models/FinancialRecord');
 
 Game.Views = {};
 Game.Views.Widgets = {};

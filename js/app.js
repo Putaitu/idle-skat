@@ -116,8 +116,9 @@ Game.Models = {};
 Game.Models.Entity = __webpack_require__(5);
 Game.Models.Player = __webpack_require__(6);
 Game.Models.Company = __webpack_require__(7);
-Game.Models.Summary = __webpack_require__(8);
+Game.Models.Report = __webpack_require__(18);
 Game.Models.VATRecord = __webpack_require__(9);
+Game.Models.FinancialRecord = __webpack_require__(19);
 
 Game.Views = {};
 Game.Views.Widgets = {};
@@ -259,6 +260,13 @@ class TimeService {
      */
     static get currentYear() {
         return this.currentTime.getFullYear();
+    }
+
+    /**
+     * Gets the current month
+     */
+    static get currentMonth() {
+        return this.currentTime.getMonth() + 1;
     }
 
     /**
@@ -437,6 +445,7 @@ class Player extends Game.Models.Entity {
         this.personalAccount = 50000;
         this.company = new Game.Models.Company();
         this.vatRecord = new Game.Models.VATRecord();
+        this.financialRecord = new Game.Models.FinancialRecord();
     }
 
     /**
@@ -513,7 +522,6 @@ class Company extends Game.Models.Entity {
 
         this.inventory = 0;
         this.machines = 0;
-        this.summaries = {};
     }
 
     /**
@@ -521,23 +529,6 @@ class Company extends Game.Models.Entity {
      */
     round(num) {
         return Math.round(num * 100) / 100;
-    }
-
-    /**
-     * Gets the current summary
-     */
-    get currentSummary() {
-        let time = Game.Services.TimeService.currentTime;
-
-        if (!this.summaries[time.getFullYear()]) {
-            this.summaries[time.getFullYear()] = {};
-        }
-
-        if (!this.summaries[time.getFullYear()][time.getMonth() + 1]) {
-            this.summaries[time.getFullYear()][time.getMonth() + 1] = new Game.Models.Summary();
-        }
-
-        return this.summaries[time.getFullYear()][time.getMonth() + 1];
     }
 
     /**
@@ -632,7 +623,7 @@ class Company extends Game.Models.Entity {
         this.inventory--;
 
         this.capital += this.unitPrice;
-        this.currentSummary.sales += this.unitPrice;
+        Game.Models.Player.current.financialRecord.currentReport.sales += this.unitPrice;
     }
 
     /**
@@ -646,7 +637,7 @@ class Company extends Game.Models.Entity {
         this.inventory++;
 
         this.capital -= this.unitProductionCost;
-        this.currentSummary.productionCost += this.unitProductionCost;
+        Game.Models.Player.current.financialRecord.currentReport.productionCost += this.unitProductionCost;
     }
 
     /**
@@ -660,46 +651,14 @@ class Company extends Game.Models.Entity {
         this.machines++;
 
         this.capital -= MACHINE_PRICE;
-        this.currentSummary.productionCost += MACHINE_PRICE;
+        Game.Models.Player.current.financialRecord.currentReport.productionCost += MACHINE_PRICE;
     }
 }
 
 module.exports = Company;
 
 /***/ }),
-/* 8 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-/**
- * A monthly summary
- */
-
-class Summary extends Game.Models.Entity {
-  /**
-   * Constructor
-   */
-  constructor(params) {
-    super(params);
-
-    this.sales = parseInt(this.sales);
-    this.productionCost = parseInt(this.productionCost);
-  }
-
-  /**
-   * Structure
-   */
-  structure() {
-    this.sales = 0;
-    this.productionCost = 0;
-  }
-}
-
-module.exports = Summary;
-
-/***/ }),
+/* 8 */,
 /* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -1265,7 +1224,7 @@ class Level extends Crisp.View {
             this.model.company.purchaseMachine();
         }), this.renderButton('inventory', 'Inventory', 'Capacity: ' + this.model.company.productionCapacity + ' / Cost: ' + this.model.company.productionCapacity * this.model.company.unitProductionCost, 'Produce', () => {
             this.model.company.produceUnit();
-        })), _.div({ class: 'page--level__calculations' }, _.div({ class: 'page--level__calculations__inner' }, this.renderCalculationField('Sales', this.model.company.currentSummary.sales || '0'), this.renderCalculationField('Production cost', this.model.company.currentSummary.productionCost || '0')))));
+        })), _.div({ class: 'page--level__calculations' }, _.div({ class: 'page--level__calculations__inner' }, this.renderCalculationField('Sales', this.model.financialRecord.currentReport.sales || '0'), this.renderCalculationField('Production cost', this.model.financialRecord.currentReport.productionCost || '0')))));
     }
 }
 
@@ -1309,6 +1268,107 @@ class ViewController {
 ViewController.init();
 
 module.exports = ViewController;
+
+/***/ }),
+/* 14 */,
+/* 15 */,
+/* 16 */,
+/* 17 */,
+/* 18 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * A monthly report
+ */
+
+class Report extends Game.Models.Entity {
+  /**
+   * Constructor
+   */
+  constructor(params) {
+    super(params);
+
+    this.sales = parseInt(this.sales);
+    this.productionCost = parseInt(this.productionCost);
+  }
+
+  /**
+   * Structure
+   */
+  structure() {
+    this.sales = 0;
+    this.productionCost = 0;
+  }
+}
+
+module.exports = Report;
+
+/***/ }),
+/* 19 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * A class for keeping track of reports
+ */
+
+class FinancialRecord extends Game.Models.Entity {
+    /**
+     * Structure
+     */
+    structure() {
+        this.reports = {};
+    }
+
+    /**
+     * Generate reports
+     */
+    generateReports() {
+        let firstYear = Game.Services.TimeService.startTime.getFullYear();
+        let firstMonth = Game.Services.TimeService.startTime.getMonth() + 1;
+        let targetYear = Game.Services.TimeService.currentYear;
+        let targetMonth = Game.Services.TimeService.currentMonth;
+
+        for (let year = firstYear; year <= targetYear; year++) {
+            if (!this.reports[year]) {
+                this.reports[year] = {};
+            }
+
+            let thisFirstMonth = 1;
+            let thisTargetMonth = 12;
+
+            if (year === targetYear) {
+                thisFirstMonth = firstMonth;
+                thisTargetMonth = targetMonth;
+            }
+
+            for (let month = thisFirstMonth; month <= thisTargetMonth; month++) {
+                if (!this.reports[year][month]) {
+                    this.reports[year][month] = new Game.Models.Report();
+                }
+            }
+        }
+
+        return this.reports;
+    }
+
+    /**
+     * Gets the current report
+     */
+    get currentReport() {
+        this.generateReports();
+
+        return this.reports[Game.Services.TimeService.currentYear][Game.Services.TimeService.currentMonth];
+    }
+
+}
+
+module.exports = FinancialRecord;
 
 /***/ })
 /******/ ]);

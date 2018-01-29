@@ -68,6 +68,13 @@ class TimeService {
     static get currentYear() {
         return this.currentTime.getFullYear();
     }
+    
+    /**
+     * Gets the current month
+     */
+    static get currentMonth() {
+        return this.currentTime.getMonth() + 1;
+    }
 
     /**
      * Gets the previous quarter

@@ -27,7 +27,6 @@ class Company extends Game.Models.Entity {
 
         this.inventory = 0;
         this.machines = 0;
-        this.summaries = {};
     }
 
     /**
@@ -35,23 +34,6 @@ class Company extends Game.Models.Entity {
      */
     round(num) {
         return Math.round(num * 100) / 100;
-    }
-
-    /**
-     * Gets the current summary
-     */
-    get currentSummary() {
-        let time = Game.Services.TimeService.currentTime;
-        
-        if(!this.summaries[time.getFullYear()]) {
-            this.summaries[time.getFullYear()] = {};
-        }
-
-        if(!this.summaries[time.getFullYear()][time.getMonth() + 1]) {
-            this.summaries[time.getFullYear()][time.getMonth() + 1] = new Game.Models.Summary();
-        }
-            
-        return this.summaries[time.getFullYear()][time.getMonth() + 1];
     }
 
     /**
@@ -144,7 +126,7 @@ class Company extends Game.Models.Entity {
         this.inventory--;
 
         this.capital += this.unitPrice;
-        this.currentSummary.sales += this.unitPrice;
+        Game.Models.Player.current.financialRecord.currentReport.sales += this.unitPrice;
     }
 
     /**
@@ -158,7 +140,7 @@ class Company extends Game.Models.Entity {
         this.inventory++;
 
         this.capital -= this.unitProductionCost;
-        this.currentSummary.productionCost += this.unitProductionCost;
+        Game.Models.Player.current.financialRecord.currentReport.productionCost += this.unitProductionCost;
     }
 
     /**
@@ -172,7 +154,7 @@ class Company extends Game.Models.Entity {
         this.machines++;
 
         this.capital -= MACHINE_PRICE;
-        this.currentSummary.productionCost += MACHINE_PRICE;
+        Game.Models.Player.current.financialRecord.currentReport.productionCost += MACHINE_PRICE;
     }
 }
 

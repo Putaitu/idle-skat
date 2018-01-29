@@ -13,6 +13,7 @@ class Player extends Game.Models.Entity {
         this.personalAccount = 50000;
         this.company = new Game.Models.Company();
         this.vatRecord = new Game.Models.VATRecord();
+        this.financialRecord = new Game.Models.FinancialRecord();  
     }
 
     /**
