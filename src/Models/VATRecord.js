@@ -5,6 +5,13 @@
  */
 class VATRecord extends Game.Models.Entity {
     /**
+     * Constructor
+     */
+    constructor(params) {
+        super(params);
+    }
+
+    /**
      * Structure
      */
     structure() {
@@ -39,12 +46,8 @@ class VATRecord extends Game.Models.Entity {
             }
 
             for(let quarter = thisFirstQuarter; quarter <= thisTargetQuarter; quarter++) {
-                if(!this.payments[year][quarter]) {
-                    this.payments[year][quarter] = {
-                        isPaid: false,
-                        isReported: false,
-                        amount: 0
-                    };
+                if((this.payments[year][quarter] || {}) instanceof Game.Models.VATPayment === false) {
+                    this.payments[year][quarter] = new Game.Models.VATPayment(this.payments[year][quarter]);
                 }
             }
         }

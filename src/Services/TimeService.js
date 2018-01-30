@@ -35,7 +35,7 @@ class TimeService {
 
         let time = this.currentTime;
 
-        time.addDays(amount);
+        time.addHours(amount * 24);
 
         Game.Services.ConfigService.set('time', time.getTime());
     }

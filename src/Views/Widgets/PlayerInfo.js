@@ -77,9 +77,10 @@ class PlayerInfo extends Crisp.View {
      * @param {String} area
      * @param {String} title
      * @param {String} description
+     * @param {String} buttonLabel
      * @param {Function} onClick
      */
-    static notify(area, title, description, onClick) {
+    static notify(area, title, description, buttonLabel, onClick) {
         let playerInfo = Crisp.View.get(PlayerInfo);
 
         if(!playerInfo) { return; }
@@ -89,6 +90,7 @@ class PlayerInfo extends Crisp.View {
         playerInfo.notifications[area][key] = {
             title: title, 
             description: description,
+            buttonLabel: buttonLabel,
             onClick: onClick
         };
     
@@ -144,12 +146,12 @@ class PlayerInfo extends Crisp.View {
             _.each(this.notifications[area], (key, notification) => {
                 return _.li(
                     _.h4(notification.title),
-                    _.if(notification.onClick,
-                        _.button({class: 'widget widget--button'}, notification.description)
-                            .click(() => { notification.onClick(key); })
-                    ),
-                    _.if(!notification.onClick,
+                    _.if(notification.description,
                         notification.description
+                    ),
+                    _.if(notification.onClick,
+                        _.button({class: 'widget widget--button'}, notification.buttonLabel)
+                            .click(() => { notification.onClick(key); })
                     )
                 );
             })    

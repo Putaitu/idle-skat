@@ -390,16 +390,16 @@ template {
   display: none; }
 
 html {
-  font-size: 16px; }
+  font-size: 1.2vw; }
   @media (max-width: 991px) {
     html {
-      font-size: 15px; } }
+      font-size: 1.8vw; } }
   @media (max-width: 768px) {
     html {
-      font-size: 14px; } }
+      font-size: 2.5vw; } }
   @media (max-width: 575px) {
     html {
-      font-size: 13px; } }
+      font-size: 3.5vw; } }
 
 body {
   font-family: sans-serif;
@@ -495,6 +495,31 @@ h1, h2, h3, h4, h5, h6 {
   .widget--player-info__toggle:not(:checked) ~ .widget--player-info__area .widget--player-info__area__heading {
     display: none; }
 
+.widget--debug-menu {
+  position: fixed;
+  top: 0;
+  right: 0;
+  background-color: darkgrey;
+  display: flex;
+  flex-direction: column; }
+  .widget--debug-menu__button {
+    display: none; }
+  .widget--debug-menu__toggle {
+    height: 1rem;
+    width: 1rem;
+    display: block;
+    margin: 0 0 0 auto;
+    background-color: lightgrey;
+    border: 0;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none; }
+  .widget--debug-menu__toggle:checked ~ .widget--debug-menu__button {
+    display: block;
+    margin: 0.5rem 1rem; }
+    .widget--debug-menu__toggle:checked ~ .widget--debug-menu__button:last-of-type {
+      margin-bottom: 1rem; }
+
 .widget--button {
   line-height: 2rem;
   padding: 0 1rem;
@@ -514,6 +539,55 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 2rem;
   padding: 0 0.5rem;
   border-radius: 1rem; }
+
+.drawers {
+  position: fixed;
+  left: 0;
+  padding: 0.5rem; }
+  .drawers.top {
+    top: 0; }
+  .drawers.bottom {
+    bottom: 0; }
+  .drawers:after {
+    content: '';
+    display: block;
+    clear: both; }
+
+.drawer {
+  position: relative;
+  float: left;
+  margin-right: 1rem;
+  border-radius: 1rem;
+  background-color: dimgrey;
+  color: white; }
+  .drawer__label {
+    line-height: 2rem;
+    padding: 0 0.5rem; }
+  .drawer__content {
+    display: none; }
+  .drawer__toggle {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    display: block;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 2rem;
+    left: 0;
+    cursor: pointer; }
+    .drawer__toggle:focus {
+      outline: none; }
+  .drawer__label {
+    text-transform: uppercase;
+    font-weight: bold;
+    margin: 0 0.5rem; }
+  .drawer__toggle:checked ~ .drawer__content {
+    display: block;
+    padding: 1rem; }
+  .drawer--financial-record .widget--button {
+    margin-right: 1rem; }
 
 .page {
   width: calc(100% - 2rem);

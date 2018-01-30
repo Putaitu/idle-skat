@@ -57,6 +57,29 @@ class DebugService {
             }
         }
     }
+    
+    /**
+     * Resets the game
+     */
+    static reset() {
+        localStorage.clear();
+        
+        location.reload();
+    }
+
+    /**
+     * Pauses the game
+     */
+    static pause() {
+        Game.isPaused = true; 
+    }
+
+    /**
+     * Plays the game
+     */
+    static play() {
+        Game.isPaused = false; 
+    }
 }
 
 module.exports = DebugService;

@@ -1,5 +1,9 @@
 'use strict';
 
+const MACHINE_DELAY = 4;
+
+let machineCounter = 0;
+
 class Level extends Crisp.View {
     /**
      * Constrcutor
@@ -29,15 +33,24 @@ class Level extends Crisp.View {
         this.model.company.sellUnit();
 
         // Automatically produce units
-        for(let i = 0; i < this.model.company.machines; i++) {
-            this.model.company.produceUnit();
+        machineCounter++;
+        
+        if(machineCounter >= MACHINE_DELAY) {
+            for(let i = 0; i < this.model.company.machines; i++) {
+                this.model.company.produceUnit();
+            }
+
+            machineCounter = 0;
         }
 
         // Check VAT payment
-        let checkPaymentQuarter = (paymentQuarter, quarter, year) => {
+        let checkPayment = (payment, quarter, year) => {
+            // Update fine
+            payment.updateFine();
+            
             // Report VAT
-            if(!paymentQuarter.isReported) {
-                Game.Views.Widgets.PlayerInfo.notify('calendar', 'Report VAT (Q' + quarter + ' ' + year + ')', 'Report VAT', (key) => {
+            if(!payment.isReported) {
+                Game.Views.Widgets.PlayerInfo.notify('calendar', 'Report VAT for Q' + quarter + ' ' + year, 'Payment is due at ' + payment.dueAt.prettyPrint(), 'Report VAT', (key) => {
                     this.model.reportQuarterlyVAT(year, quarter);
 
                     this.model.save();
@@ -47,8 +60,8 @@ class Level extends Crisp.View {
                 });
 
             // Pay VAT
-            } else if(!paymentQuarter.isPaid) {
-                Game.Views.Widgets.PlayerInfo.notify('calendar', 'Pay VAT (Q' + quarter + ' ' + year + '): ' + paymentQuarter.amount + ' kr.', 'Pay VAT', (key) => {
+            } else if(!payment.isPaid) {
+                Game.Views.Widgets.PlayerInfo.notify('calendar', 'Pay VAT for Q' + quarter + ' ' + year, 'Payment of ' + payment.amount + ' kr. is due at ' + payment.dueAt.prettyPrint(), 'Pay VAT', (key) => {
                     this.model.payQuarterlyVAT(year, quarter);
 
                     this.model.save();
@@ -69,13 +82,11 @@ class Level extends Crisp.View {
             let paymentYear = this.model.vatRecord.payments[year];
         
             for(let quarter in paymentYear) {
-                let paymentQuarter = paymentYear[quarter];
-
                 if(
                     (quarter <= previousQuarter && year == currentYear) ||
                     year < currentYear
                 ) {
-                    checkPaymentQuarter(paymentQuarter, quarter, year);
+                    checkPayment(paymentYear[quarter], quarter, year);
                 }
             }
         }

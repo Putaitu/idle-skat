@@ -26,8 +26,12 @@ class ViewController {
             );
         } else {
             _.append(document.body,
+                new Game.Views.Widgets.DebugMenu(),
                 new Game.Views.Widgets.PlayerInfo(),
                 new Game.Views.Pages.Level() 
+            );
+            _.append(_.find('.drawers.bottom'), 
+                new Game.Views.Drawers.FinancialRecordDrawer()
             );
         }
     }

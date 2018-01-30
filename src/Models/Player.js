@@ -79,8 +79,17 @@ class Player extends Game.Models.Entity {
      * @param {Number} quarter
      */
     payQuarterlyVAT(year, quarter) {
-        this.company.bankBalance -= this.vatRecord.payments[year][quarter].amount;
-        this.vatRecord.payments[year][quarter].isPaid = true; 
+        let payment = this.vatRecord.payments[year][quarter];
+        let amount = payment.amount;
+
+        if(payment.fine > 0) {
+            amount += payment.fine;
+
+            alert('A late fee of ' + payment.fine + ' kr. has been added');
+        }
+
+        this.company.bankBalance -= amount;
+        payment.isPaid = true; 
     }
 }
 

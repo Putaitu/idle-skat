@@ -1,0 +1,33 @@
+.widget--debug-menu {
+    position: fixed;
+    top: 0;
+    right: 0;
+    background-color: darkgrey;
+    display: flex;
+    flex-direction: column;
+
+    &__button {
+        display: none;
+    }
+    
+    &__toggle {
+        height: 1rem;
+        width: 1rem;
+        display: block;
+        margin: 0 0 0 auto;
+        background-color: lightgrey;
+        border: 0;
+        cursor: pointer;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+    
+    &__toggle:checked ~ &__button {
+        display: block;
+        margin: 0.5rem 1rem;
+
+        &:last-of-type {
+            margin-bottom: 1rem;
+        }
+    }
+}

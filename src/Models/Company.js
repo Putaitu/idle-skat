@@ -127,7 +127,7 @@ class Company extends Game.Models.Entity {
      */
     produceUnit() {
         if(this.bankBalance < this.unitProductionCost) {
-            return alert('You do not have enough capital to produce more units');
+            return alert('You do not have enough money to produce more units');
         }
 
         this.inventory++;
@@ -141,7 +141,7 @@ class Company extends Game.Models.Entity {
      */
     purchaseMachine() {
         if(this.bankBalance < MACHINE_PRICE) {
-            return alert('You do not have enough capital to purchase more machines');
+            return alert('You do not have enough money to purchase more machines');
         }
 
         this.machines++;
