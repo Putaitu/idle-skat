@@ -17,6 +17,13 @@ class Drawer extends Crisp.View {
      * Renders the content of the drawer
      */
     renderContent() {}
+    
+    /**
+     * Renders the preview of the drawer
+     */
+    renderPreview() {
+        return _.label({class: 'drawer__preview__label'}, this.name.replace('Drawer', '').replace(/([A-Z])/g, ' $1').trim());
+    }
 
     /**
      * Updates this drawer
@@ -34,8 +41,8 @@ class Drawer extends Crisp.View {
      */
     template() {
         return _.div({class: 'drawer drawer-' + this.name.replace('Drawer', '').replace(/([A-Z])/g, '-$1').trim().toLowerCase()},
-            _.label({class: 'drawer__label'}, this.name.replace('Drawer', '').replace(/([A-Z])/g, ' $1').trim()),
             _.input({type: 'checkbox', class: 'drawer__toggle'}),
+            this.renderPreview(),
             this.renderContent()
         );
     }

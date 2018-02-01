@@ -26,9 +26,14 @@
     background-color: dimgrey;
     color: white;
 
-    &__label {
-        line-height: 2rem;
-        padding: 0 0.5rem;
+    &__preview {
+        &__label {
+            line-height: 2rem;
+            padding: 0 0.5rem;
+            text-transform: uppercase;
+            font-weight: bold;
+            margin: 0 0.5rem;
+        }
     }
 
     &__content {
@@ -47,21 +52,19 @@
         height: 2rem;
         left: 0;
         cursor: pointer;
-   
+  
         &:focus {
             outline: none;
         }
     }
    
-    &__label {
-        text-transform: uppercase;
-        font-weight: bold;
-        margin: 0 0.5rem;
-    }
-    
     &__toggle:checked ~ &__content {
         display: block;
         padding: 1rem;
+    }
+    
+    &__toggle:checked ~ &__preview {
+        display: none;
     }
 
     &--financial-record .widget--button {

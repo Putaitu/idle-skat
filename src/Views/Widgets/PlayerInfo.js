@@ -14,8 +14,7 @@ class PlayerInfo extends Crisp.View {
         
         this.notifications = {
             'company': {},
-            'personal-account': {},
-            'calendar': {}
+            'personal-account': {}
         }
             
         this.fetch();
@@ -193,15 +192,6 @@ class PlayerInfo extends Crisp.View {
                 _.div({class: 'widget--player-info__area__data'},
                     'Balance: ' + this.model.personalAccount + ' kr.',
                     this.renderNotifications('personal-account')
-                )
-            ),
-            _.div({class: 'widget--player-info__area calendar'},
-                _.h4({class: 'widget--player-info__area__heading'}, 'Calendar'),
-                _.div({class: 'widget--player-info__area__icon' + (this.hasNotifications('calendar') ? ' notification' : '')}, '🗓'),
-                _.div({class: 'widget--player-info__area__preview'}, this.getTimeString()),
-                _.div({class: 'widget--player-info__area__data'},
-                    'Time: ' + this.getTimeString(),
-                    this.renderNotifications('calendar')
                 )
             )
         );

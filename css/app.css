@@ -560,9 +560,12 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 1rem;
   background-color: dimgrey;
   color: white; }
-  .drawer__label {
+  .drawer__preview__label {
     line-height: 2rem;
-    padding: 0 0.5rem; }
+    padding: 0 0.5rem;
+    text-transform: uppercase;
+    font-weight: bold;
+    margin: 0 0.5rem; }
   .drawer__content {
     display: none; }
   .drawer__toggle {
@@ -579,13 +582,11 @@ h1, h2, h3, h4, h5, h6 {
     cursor: pointer; }
     .drawer__toggle:focus {
       outline: none; }
-  .drawer__label {
-    text-transform: uppercase;
-    font-weight: bold;
-    margin: 0 0.5rem; }
   .drawer__toggle:checked ~ .drawer__content {
     display: block;
     padding: 1rem; }
+  .drawer__toggle:checked ~ .drawer__preview {
+    display: none; }
   .drawer--financial-record .widget--button {
     margin-right: 1rem; }
 

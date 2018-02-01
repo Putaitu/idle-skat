@@ -116,22 +116,22 @@ Game.Models.Player = __webpack_require__(6);
 Game.Models.Company = __webpack_require__(7);
 Game.Models.Report = __webpack_require__(8);
 Game.Models.VATRecord = __webpack_require__(9);
-Game.Models.VATPayment = __webpack_require__(19);
-Game.Models.FinancialRecord = __webpack_require__(10);
+Game.Models.VATPayment = __webpack_require__(10);
+Game.Models.FinancialRecord = __webpack_require__(11);
 
 Game.Views = {};
 Game.Views.Widgets = {};
-Game.Views.Widgets.PlayerInfo = __webpack_require__(11);
-Game.Views.Widgets.DebugMenu = __webpack_require__(20);
+Game.Views.Widgets.PlayerInfo = __webpack_require__(12);
+Game.Views.Widgets.DebugMenu = __webpack_require__(13);
 Game.Views.Drawers = {};
-Game.Views.Drawers.Drawer = __webpack_require__(21);
-Game.Views.Drawers.FinancialRecordDrawer = __webpack_require__(22);
+Game.Views.Drawers.Drawer = __webpack_require__(14);
+Game.Views.Drawers.FinancialRecordDrawer = __webpack_require__(15);
 Game.Views.Pages = {};
-Game.Views.Pages.Setup = __webpack_require__(12);
-Game.Views.Pages.Level = __webpack_require__(13);
+Game.Views.Pages.Setup = __webpack_require__(16);
+Game.Views.Pages.Level = __webpack_require__(17);
 
 Game.Controllers = {};
-Game.Controllers.ViewController = __webpack_require__(14);
+Game.Controllers.ViewController = __webpack_require__(18);
 
 /***/ }),
 /* 1 */
@@ -841,6 +841,59 @@ module.exports = VATRecord;
 
 
 /**
+ * A class for keeping track of VAT payments
+ */
+
+class VATPayment extends Game.Models.Entity {
+    /**
+     * Constructor
+     */
+    constructor(params) {
+        super(params);
+
+        if (this.dueAt) {
+            this.dueAt = new Date(this.dueAt);
+        } else {
+            this.dueAt = Game.Services.TimeService.currentTime;
+            this.dueAt.setMonth(this.dueAt.getMonth() + 3);
+        }
+    }
+
+    /**
+     * Structure
+     */
+    structure() {
+        this.isPaid = false;
+        this.isReported = false;
+        this.dueAt = null;
+        this.fine = 0;
+        this.amount = 0;
+    }
+
+    /**
+     * Update fine
+     */
+    updateFine() {
+        if (this.isPaid || !this.dueAt) {
+            return;
+        }
+
+        let diffDays = Math.ceil((Game.Services.TimeService.currentTime.getTime() - this.dueAt.getTime()) / (1000 * 3600 * 24));
+
+        this.fine = Math.floor(diffDays * 100);
+    }
+}
+
+module.exports = VATPayment;
+
+/***/ }),
+/* 11 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
  * A class for keeping track of reports
  */
 
@@ -924,7 +977,7 @@ class FinancialRecord extends Game.Models.Entity {
 module.exports = FinancialRecord;
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -945,8 +998,7 @@ class PlayerInfo extends Crisp.View {
 
         this.notifications = {
             'company': {},
-            'personal-account': {},
-            'calendar': {}
+            'personal-account': {}
         };
 
         this.fetch();
@@ -1107,14 +1159,144 @@ class PlayerInfo extends Crisp.View {
      * Template
      */
     template() {
-        return _.div({ class: 'widget widget--player-info' }, _.input({ type: 'checkbox', class: 'widget widget--player-info__toggle', checked: this.isExpanded }), _.div({ class: 'widget--player-info__area company' }, _.h4({ class: 'widget--player-info__area__heading' }, 'Company'), _.div({ class: 'widget--player-info__area__icon' + (this.hasNotifications('company') ? ' notification' : '') }, '🏭'), _.div({ class: 'widget--player-info__area__preview' }, this.model.company.name + ': ' + this.model.company.bankBalance + ' kr.'), _.div({ class: 'widget--player-info__area__data' }, 'Name: ' + this.model.company.name, '<br>', 'Bank balance: ' + this.model.company.bankBalance + ' kr.', this.renderNotifications('company'))), _.div({ class: 'widget--player-info__area personal-account' }, _.h4({ class: 'widget--player-info__area__heading' }, 'Personal account'), _.div({ class: 'widget--player-info__area__icon' + (this.hasNotifications('personal-account') ? ' notification' : '') }, '💰'), _.div({ class: 'widget--player-info__area__preview' }, this.model.personalAccount + ' kr.'), _.div({ class: 'widget--player-info__area__data' }, 'Balance: ' + this.model.personalAccount + ' kr.', this.renderNotifications('personal-account'))), _.div({ class: 'widget--player-info__area calendar' }, _.h4({ class: 'widget--player-info__area__heading' }, 'Calendar'), _.div({ class: 'widget--player-info__area__icon' + (this.hasNotifications('calendar') ? ' notification' : '') }, '🗓'), _.div({ class: 'widget--player-info__area__preview' }, this.getTimeString()), _.div({ class: 'widget--player-info__area__data' }, 'Time: ' + this.getTimeString(), this.renderNotifications('calendar'))));
+        return _.div({ class: 'widget widget--player-info' }, _.input({ type: 'checkbox', class: 'widget widget--player-info__toggle', checked: this.isExpanded }), _.div({ class: 'widget--player-info__area company' }, _.h4({ class: 'widget--player-info__area__heading' }, 'Company'), _.div({ class: 'widget--player-info__area__icon' + (this.hasNotifications('company') ? ' notification' : '') }, '🏭'), _.div({ class: 'widget--player-info__area__preview' }, this.model.company.name + ': ' + this.model.company.bankBalance + ' kr.'), _.div({ class: 'widget--player-info__area__data' }, 'Name: ' + this.model.company.name, '<br>', 'Bank balance: ' + this.model.company.bankBalance + ' kr.', this.renderNotifications('company'))), _.div({ class: 'widget--player-info__area personal-account' }, _.h4({ class: 'widget--player-info__area__heading' }, 'Personal account'), _.div({ class: 'widget--player-info__area__icon' + (this.hasNotifications('personal-account') ? ' notification' : '') }, '💰'), _.div({ class: 'widget--player-info__area__preview' }, this.model.personalAccount + ' kr.'), _.div({ class: 'widget--player-info__area__data' }, 'Balance: ' + this.model.personalAccount + ' kr.', this.renderNotifications('personal-account'))));
     }
 }
 
 module.exports = PlayerInfo;
 
 /***/ }),
-/* 12 */
+/* 13 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+class DebugMenu extends Crisp.View {
+    /**
+     * Constructor
+     */
+    constructor(params) {
+        super(params);
+
+        this.fetch();
+    }
+
+    /**
+     * Renders a button
+     *
+     * @param {String} label
+     * @param {Function} onClick
+     */
+    renderButton(label, onClick) {
+        return _.button({ class: 'widget widget--button widget--debug-menu__button' }, label).click(() => {
+            onClick();
+        });
+    }
+
+    /**
+     * Template
+     */
+    template() {
+        return _.div({ class: 'widget widget--debug-menu' }, _.input({ type: 'checkbox', class: 'widget--debug-menu__toggle' }), this.renderButton('Reset', Game.Services.DebugService.reset), this.renderButton('Pause', Game.Services.DebugService.pause), this.renderButton('Play', Game.Services.DebugService.play), this.renderButton('Skip 30 days', () => {
+            Game.Services.TimeService.addDays(30);
+        }));
+    }
+}
+
+module.exports = DebugMenu;
+
+/***/ }),
+/* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * A drawer for information that should be tucked away
+ */
+
+class Drawer extends Crisp.View {
+  /**
+   * Constructor
+   */
+  constructor(params) {
+    super(params);
+
+    this.fetch();
+  }
+
+  /**
+   * Renders the content of the drawer
+   */
+  renderContent() {}
+
+  /**
+   * Renders the preview of the drawer
+   */
+  renderPreview() {
+    return _.label({ class: 'drawer__preview__label' }, this.name.replace('Drawer', '').replace(/([A-Z])/g, ' $1').trim());
+  }
+
+  /**
+   * Updates this drawer
+   */
+  static update() {
+    let drawer = Crisp.View.get(this.constructor);
+
+    if (!drawer) {
+      return;
+    }
+
+    drawer._render();
+  }
+
+  /**
+   * Template
+   */
+  template() {
+    return _.div({ class: 'drawer drawer-' + this.name.replace('Drawer', '').replace(/([A-Z])/g, '-$1').trim().toLowerCase() }, _.input({ type: 'checkbox', class: 'drawer__toggle' }), this.renderPreview(), this.renderContent());
+  }
+}
+
+module.exports = Drawer;
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * A drawer for the financial record
+ */
+
+class FinancialRecordDrawer extends Game.Views.Drawers.Drawer {
+    /**
+     * Gets the drawer position
+     */
+    get position() {
+        return 'bottom';
+    }
+
+    /**
+     * Renders this drawer
+     */
+    renderContent() {
+        return _.div({ class: 'drawer__content' }, _.each(Game.Models.Player.current.financialRecord.reports, (year, months) => {
+            return [_.h4(year), _.each(months, (month, report) => {
+                return _.button({ class: 'widget widget--button' }, month);
+            })];
+        }));
+    }
+}
+
+module.exports = FinancialRecordDrawer;
+
+/***/ }),
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1266,7 +1448,7 @@ class Setup extends Crisp.View {
 module.exports = Setup;
 
 /***/ }),
-/* 13 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1446,7 +1628,7 @@ class Level extends Crisp.View {
 module.exports = Level;
 
 /***/ }),
-/* 14 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1484,186 +1666,6 @@ class ViewController {
 ViewController.init();
 
 module.exports = ViewController;
-
-/***/ }),
-/* 15 */,
-/* 16 */,
-/* 17 */,
-/* 18 */,
-/* 19 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-/**
- * A class for keeping track of VAT payments
- */
-
-class VATPayment extends Game.Models.Entity {
-    /**
-     * Constructor
-     */
-    constructor(params) {
-        super(params);
-
-        if (this.dueAt) {
-            this.dueAt = new Date(this.dueAt);
-        } else {
-            this.dueAt = Game.Services.TimeService.currentTime;
-            this.dueAt.setMonth(this.dueAt.getMonth() + 3);
-        }
-    }
-
-    /**
-     * Structure
-     */
-    structure() {
-        this.isPaid = false;
-        this.isReported = false;
-        this.dueAt = null;
-        this.fine = 0;
-        this.amount = 0;
-    }
-
-    /**
-     * Update fine
-     */
-    updateFine() {
-        if (this.isPaid || !this.dueAt) {
-            return;
-        }
-
-        let diffDays = Math.ceil((Game.Services.TimeService.currentTime.getTime() - this.dueAt.getTime()) / (1000 * 3600 * 24));
-
-        this.fine = Math.floor(diffDays * 100);
-    }
-}
-
-module.exports = VATPayment;
-
-/***/ }),
-/* 20 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-class DebugMenu extends Crisp.View {
-    /**
-     * Constructor
-     */
-    constructor(params) {
-        super(params);
-
-        this.fetch();
-    }
-
-    /**
-     * Renders a button
-     *
-     * @param {String} label
-     * @param {Function} onClick
-     */
-    renderButton(label, onClick) {
-        return _.button({ class: 'widget widget--button widget--debug-menu__button' }, label).click(() => {
-            onClick();
-        });
-    }
-
-    /**
-     * Template
-     */
-    template() {
-        return _.div({ class: 'widget widget--debug-menu' }, _.input({ type: 'checkbox', class: 'widget--debug-menu__toggle' }), this.renderButton('Reset', Game.Services.DebugService.reset), this.renderButton('Pause', Game.Services.DebugService.pause), this.renderButton('Play', Game.Services.DebugService.play), this.renderButton('Skip 30 days', () => {
-            Game.Services.TimeService.addDays(30);
-        }));
-    }
-}
-
-module.exports = DebugMenu;
-
-/***/ }),
-/* 21 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-/**
- * A drawer for information that should be tucked away
- */
-
-class Drawer extends Crisp.View {
-  /**
-   * Constructor
-   */
-  constructor(params) {
-    super(params);
-
-    this.fetch();
-  }
-
-  /**
-   * Renders the content of the drawer
-   */
-  renderContent() {}
-
-  /**
-   * Updates this drawer
-   */
-  static update() {
-    let drawer = Crisp.View.get(this.constructor);
-
-    if (!drawer) {
-      return;
-    }
-
-    drawer._render();
-  }
-
-  /**
-   * Template
-   */
-  template() {
-    return _.div({ class: 'drawer drawer-' + this.name.replace('Drawer', '').replace(/([A-Z])/g, '-$1').trim().toLowerCase() }, _.label({ class: 'drawer__label' }, this.name.replace('Drawer', '').replace(/([A-Z])/g, ' $1').trim()), _.input({ type: 'checkbox', class: 'drawer__toggle' }), this.renderContent());
-  }
-}
-
-module.exports = Drawer;
-
-/***/ }),
-/* 22 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-/**
- * A drawer for the financial record
- */
-
-class FinancialRecordDrawer extends Game.Views.Drawers.Drawer {
-    /**
-     * Gets the drawer position
-     */
-    get position() {
-        return 'bottom';
-    }
-
-    /**
-     * Renders this drawer
-     */
-    renderContent() {
-        return _.div({ class: 'drawer__content' }, _.each(Game.Models.Player.current.financialRecord.reports, (year, months) => {
-            return [_.h4(year), _.each(months, (month, report) => {
-                return _.button({ class: 'widget widget--button' }, month);
-            })];
-        }));
-    }
-}
-
-module.exports = FinancialRecordDrawer;
 
 /***/ })
 /******/ ]);
