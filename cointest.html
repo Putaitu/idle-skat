@@ -27,13 +27,12 @@
         </style>
     </head>
     <body>
-        <button onclick="createCoin();">GIMME CASH!</button>
-        <button onclick="window.interval = setInterval(createCoin, 100);">AUTO CASH!</button>
-        <button onclick="clearInterval(window.interval);">STOP AUTO CASH!</button>
+        <button onclick="createCoins(10);">GIMME CASH!</button>
 
         <div id="container">Loading...</div>
 
         <script src="./lib/three/three.min.js"></script>
+        <script src="./lib/three/three.objloader.js"></script>
         <script src="./lib/ammo/ammo.js"></script>
 
         <script>
@@ -71,6 +70,7 @@
 
                 createFloor();
 
+                createMountain();
             }
 
             function initGraphics() {
@@ -141,7 +141,35 @@
 
             }
 
-            function createCoin() {
+            function createMountain() {
+                // instantiate a loader
+                var loader = new THREE.OBJLoader();
+
+                // load a resource
+                loader.load(
+                    // resource URL
+                    'cointest.obj',
+                    // called when resource is loaded
+                    function ( object ) {
+                        scene.add( object );
+
+                    },
+                    // called when loading is in progresses
+                    function ( xhr ) {
+
+                        console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+
+                    },
+                    // called when loading has errors
+                    function ( error ) {
+
+                        console.log( 'An error happened' );
+
+                    }
+                ); 
+            }
+
+            function createCoins(amount) {
                 var pos = new THREE.Vector3();
                 var quat = new THREE.Quaternion();
 
@@ -149,18 +177,18 @@
                 var sz = 1.2;
                 var sx = 0.6;
                 var sy = sz * 0.5;
-                pos.set( 0, sy * 0.5, 1 );
+                pos.set( 0, 5, 0);
                 quat.set( 0, 0, 0, 1 );
 
                 var material = createMaterial();
 
-                var brick = new THREE.Mesh( new THREE.CylinderGeometry( 1, 1, 0.1, 16), material );
-                var shape = new Ammo.btBoxShape( new Ammo.btVector3( 0.5, 0.05, 0.5 ) );
-                shape.setMargin( margin );
+                for(var i = 0; i < amount; i++) {
+                    var brick = new THREE.Mesh( new THREE.CylinderGeometry( 1, 1, 0.1, 16), material );
+                    var shape = new Ammo.btBoxShape( new Ammo.btVector3( 0.5, 0.05, 0.5 ) );
+                    shape.setMargin( margin );
 
-                createRigidBody( brick, shape, mass, pos, quat );
-
-                camera.position.add(new THREE.Vector3(0, 0, 0.1));
+                    createRigidBody( brick, shape, mass, pos, quat );
+                }
             }
 
             function createFloor() {
