@@ -32,7 +32,6 @@
         <div id="container">Loading...</div>
 
         <script src="./lib/three/three.min.js"></script>
-        <script src="./lib/three/three.objloader.js"></script>
         <script src="./lib/ammo/ammo.js"></script>
 
         <script>
@@ -69,8 +68,6 @@
                 initPhysics();
 
                 createFloor();
-
-                createMountain();
             }
 
             function initGraphics() {
@@ -139,34 +136,6 @@
                 physicsWorld.setGravity( new Ammo.btVector3( 0, gravityConstant, 0 ) );
                 physicsWorld.getWorldInfo().set_m_gravity( new Ammo.btVector3( 0, gravityConstant, 0 ) );
 
-            }
-
-            function createMountain() {
-                // instantiate a loader
-                var loader = new THREE.OBJLoader();
-
-                // load a resource
-                loader.load(
-                    // resource URL
-                    'cointest.obj',
-                    // called when resource is loaded
-                    function ( object ) {
-                        scene.add( object );
-
-                    },
-                    // called when loading is in progresses
-                    function ( xhr ) {
-
-                        console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-
-                    },
-                    // called when loading has errors
-                    function ( error ) {
-
-                        console.log( 'An error happened' );
-
-                    }
-                ); 
             }
 
             function createCoins(amount) {

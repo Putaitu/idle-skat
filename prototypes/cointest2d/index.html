@@ -1,0 +1,111 @@
+
+<!doctype html>
+
+<html>
+    <head>
+        <meta charset="utf-8">
+
+        <title>Cointest 2D</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <style>
+            @keyframes falling-coin {
+                0% {
+                    transform: translateY(-300px);
+                    opacity: 0;
+                }
+                    
+                20% {
+                    opacity: 1;
+                }
+                
+                100% {
+                    transform: none;
+                }
+            }
+
+            button {
+                position: absolute;
+                top: 1rem;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+
+            .canvas {
+                height: 100vh;
+                pointer-events: none;
+                transform-origin: bottom;
+                transition: transform 0.5s;
+            }
+
+            .stack {
+                transition: height 1s step-start;
+                background-repeat: repeat-y;
+            }
+
+            .coin {
+                animation: 1s falling-coin;
+            }
+
+            .coin, .stack {
+                left: calc(50% - (348px / 2));
+                background-image: url('./coin.png');
+                height: 36px;
+                width: 348px;
+                position: absolute;
+                bottom: 0;
+            }
+        </style>
+
+        <script>
+            var currentHeight = 1;
+
+            function setStackHeight(stack, height) {
+                setTimeout(() => {
+                    stack.setAttribute('style', 'height: calc(' + height + ' * 36px);');
+                }, 1000);
+            }
+
+            function addCoin() {
+                let stack = document.querySelector('.stack');
+               
+                let coin = document.createElement('div');
+                coin.className = 'coin';
+                coin.setAttribute('style', 'bottom: calc(' + currentHeight + ' *36px);');
+                document.querySelector('.canvas').appendChild(coin);
+                    
+                currentHeight++;
+               
+                setStackHeight(stack, currentHeight);
+
+                let canvas = document.querySelector('.canvas');
+                let currentScale = parseFloat(canvas.getAttribute('style').match(/[0-9.]+/)[0]);
+
+                currentScale *= 0.95;
+
+                canvas.setAttribute('style', 'transform: scale(' + currentScale + ');');
+            }
+
+            function test(amount) {
+                let iterations = 0;
+                let interval = setInterval(() => {
+                    addCoin();
+
+                    iterations++;
+
+                    if(iterations >= (amount || 5)) {
+                        clearInterval(interval);
+                    }
+                }, 100);
+            }
+        </script>
+    </head>
+
+    <body>
+        <button onclick="test();">TEST</button>
+        
+        <div class="canvas" style="transform: scale(1);">
+            <div class="stack" style="height: calc(1 * 36px);"></div>
+        </div>
+    </body>
+</html>
