@@ -39,8 +39,9 @@
             }
 
             .stack {
-                transition: height 1s step-start;
+                transition: height 1s step-start, transform 0.5s ease;
                 background-repeat: repeat-y;
+                transform-origin: bottom;
             }
 
             .coin {
@@ -55,19 +56,79 @@
                 position: absolute;
                 bottom: 0;
             }
+
+            .stack:not(.current):after {
+                content: '';
+                display: block;
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+            }
+
+            .stack:not(.current).right:after {
+                background-image: linear-gradient(to right, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0));
+            }
+            
+            .stack:not(.current).left:after {
+                background-image: linear-gradient(to left, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0));
+            }
         </style>
 
         <script>
-            var currentHeight = 1;
+            var currentHeight = 0;
 
-            function setStackHeight(stack, height) {
+            function setStackHeight(stack, height, callback) {
                 setTimeout(() => {
+                    if(!stack.classList.contains('current')) { return callback(); }
+
                     stack.setAttribute('style', 'height: calc(' + height + ' * 36px);');
+                    callback();
                 }, 1000);
             }
 
+            function distributeStacks() {
+                let stacks = document.querySelectorAll('.stack:not(.current)');
+
+                if(!stacks) { return; }
+
+                for(let i = 0; i < stacks.length; i++) {
+                    let num = i + 1;
+                    let scale = 1 - (num * 0.05);
+                    let isEven = (num % 2) === 0;
+                    let translateX = num * 150;
+                    let zIndex = num * -1;
+                    
+                    if(isEven) {
+                        translateX *= -1;
+                    }
+
+                    stacks[i].className = 'stack ' + (isEven ? 'left' : 'right');
+
+                    stacks[i].setAttribute('style',
+                        'height: calc(50 * 36px);' + 
+                        'transform: scale(' + scale + ') translateX(' + translateX + 'px);' +
+                        'z-index: ' + zIndex + ';'
+                    );
+                }
+            }
+
             function addCoin() {
-                let stack = document.querySelector('.stack');
+                let stack = document.querySelector('.stack.current');
+                
+                if(currentHeight >= 50) {
+                    currentHeight = 0;
+
+                    stack.className = 'stack';
+
+                    stack = document.createElement('div');
+                    stack.className = 'stack current';
+
+                    document.querySelector('.canvas').appendChild(stack);
+
+                    distributeStacks();
+                }
                
                 let coin = document.createElement('div');
                 coin.className = 'coin';
@@ -76,12 +137,18 @@
                     
                 currentHeight++;
                
-                setStackHeight(stack, currentHeight);
+                setStackHeight(stack, currentHeight, () => {
+                    coin.parentElement.removeChild(coin);
+                });
 
                 let canvas = document.querySelector('.canvas');
                 let currentScale = parseFloat(canvas.getAttribute('style').match(/[0-9.]+/)[0]);
 
-                currentScale *= 0.95;
+                currentScale -= 0.02;
+
+                if(currentScale < 0.2) {
+                    currentScale = 0.2;
+                }
 
                 canvas.setAttribute('style', 'transform: scale(' + currentScale + ');');
             }
@@ -102,10 +169,10 @@
     </head>
 
     <body>
-        <button onclick="test();">TEST</button>
+        <button onclick="test(500);">TEST</button>
         
         <div class="canvas" style="transform: scale(1);">
-            <div class="stack" style="height: calc(1 * 36px);"></div>
+            <div class="stack current" style="height: calc(0 * 36px);"></div>
         </div>
     </body>
 </html>
