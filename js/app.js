@@ -81,6 +81,24 @@ Date.prototype.addHours = function (h) {
 };
 
 /**
+ * Gets quarter from a date
+ */
+Date.prototype.getQuarter = function () {
+    let month = this.getMonth() + 1;
+
+    if (month <= 3) {
+        return 1;
+    }
+    if (month <= 6) {
+        return 2;
+    }
+    if (month <= 9) {
+        return 3;
+    }
+    return 4;
+};
+
+/**
  * Pretty prints a date
  */
 Date.prototype.prettyPrint = function () {
@@ -105,11 +123,17 @@ window._ = Crisp.Elements;
 
 window.Game = {};
 
+// -------------------
+// Services
+// -------------------
 Game.Services = {};
 Game.Services.ConfigService = __webpack_require__(2);
 Game.Services.TimeService = __webpack_require__(3);
 Game.Services.DebugService = __webpack_require__(4);
 
+// -------------------
+// Models
+// -------------------
 Game.Models = {};
 Game.Models.Entity = __webpack_require__(5);
 Game.Models.Player = __webpack_require__(6);
@@ -119,18 +143,33 @@ Game.Models.VATRecord = __webpack_require__(9);
 Game.Models.VATPayment = __webpack_require__(10);
 Game.Models.FinancialRecord = __webpack_require__(11);
 
+// -------------------
+// Views
+// -------------------
 Game.Views = {};
+
 Game.Views.Widgets = {};
 Game.Views.Widgets.PlayerInfo = __webpack_require__(12);
 Game.Views.Widgets.DebugMenu = __webpack_require__(13);
+
+Game.Views.Modals = {};
+Game.Views.Modals.Modal = __webpack_require__(24);
+Game.Views.Modals.VATReportingTool = __webpack_require__(25);
+
 Game.Views.Drawers = {};
 Game.Views.Drawers.Drawer = __webpack_require__(14);
 Game.Views.Drawers.FinancialRecordDrawer = __webpack_require__(15);
+Game.Views.Drawers.VATRecordDrawer = __webpack_require__(23);
+
 Game.Views.Pages = {};
 Game.Views.Pages.Setup = __webpack_require__(16);
 Game.Views.Pages.Level = __webpack_require__(17);
 
+// -------------------
+// Controllers
+// -------------------
 Game.Controllers = {};
+
 Game.Controllers.ViewController = __webpack_require__(18);
 
 /***/ }),
@@ -880,6 +919,7 @@ class VATPayment extends Game.Models.Entity {
 
         let diffDays = Math.ceil((Game.Services.TimeService.currentTime.getTime() - this.dueAt.getTime()) / (1000 * 3600 * 24));
 
+        // 100 kr. per day fine
         this.fine = Math.floor(diffDays * 100);
     }
 }
@@ -1218,46 +1258,64 @@ module.exports = DebugMenu;
  */
 
 class Drawer extends Crisp.View {
-  /**
-   * Constructor
-   */
-  constructor(params) {
-    super(params);
+    /**
+     * Constructor
+     */
+    constructor(params) {
+        super(params);
 
-    this.fetch();
-  }
-
-  /**
-   * Renders the content of the drawer
-   */
-  renderContent() {}
-
-  /**
-   * Renders the preview of the drawer
-   */
-  renderPreview() {
-    return _.label({ class: 'drawer__preview__label' }, this.name.replace('Drawer', '').replace(/([A-Z])/g, ' $1').trim());
-  }
-
-  /**
-   * Updates this drawer
-   */
-  static update() {
-    let drawer = Crisp.View.get(this.constructor);
-
-    if (!drawer) {
-      return;
+        this.fetch();
     }
 
-    drawer._render();
-  }
+    /**
+     * Gets whether or not this view is expanded
+     */
+    get isExpanded() {
+        let toggle = this.element.querySelector('.drawer__toggle');
 
-  /**
-   * Template
-   */
-  template() {
-    return _.div({ class: 'drawer drawer-' + this.name.replace('Drawer', '').replace(/([A-Z])/g, '-$1').trim().toLowerCase() }, _.input({ type: 'checkbox', class: 'drawer__toggle' }), this.renderPreview(), this.renderContent());
-  }
+        if (!toggle) {
+            return false;
+        }
+
+        return toggle.checked;
+    }
+
+    /**
+     * Renders the content of the drawer
+     */
+    renderContent() {}
+
+    /**
+     * Renders the preview of the drawer
+     */
+    renderPreview() {
+        return _.div({ class: 'drawer__preview' }, _.label({ class: 'drawer__preview__label' }, this.name.replace('Drawer', '').replace(/([A-Z])/g, ' $1').trim()));
+    }
+
+    /**
+     * Updates this drawer (static)
+     */
+    static update() {
+        let drawer = Crisp.View.get(this);
+
+        if (!drawer) {
+            return;
+        }
+
+        drawer.update();
+    }
+
+    /**
+     * Updates this drawer
+     */
+    update() {}
+
+    /**
+     * Template
+     */
+    template() {
+        return _.div({ class: 'drawer drawer-' + this.name.replace('Drawer', '').replace(/([A-Z])/g, '-$1').trim().toLowerCase() }, _.input({ type: 'checkbox', class: 'drawer__toggle', checked: this.isExpanded }), this.renderPreview(), this.renderContent());
+    }
 }
 
 module.exports = Drawer;
@@ -1270,7 +1328,7 @@ module.exports = Drawer;
 
 
 /**
- * A drawer for the financial record
+ * A drawer for the financial record and paying B tax
  */
 
 class FinancialRecordDrawer extends Game.Views.Drawers.Drawer {
@@ -1287,6 +1345,10 @@ class FinancialRecordDrawer extends Game.Views.Drawers.Drawer {
     renderContent() {
         return _.div({ class: 'drawer__content' }, _.each(Game.Models.Player.current.financialRecord.reports, (year, months) => {
             return [_.h4(year), _.each(months, (month, report) => {
+                if (report.bTaxIsPaid) {
+                    return;
+                }
+
                 return _.button({ class: 'widget widget--button' }, month);
             })];
         }));
@@ -1499,49 +1561,11 @@ class Level extends Crisp.View {
             machineCounter = 0;
         }
 
-        // Check VAT payment
-        let checkPayment = (payment, quarter, year) => {
-            // Update fine
-            payment.updateFine();
+        // Update the VAT record drawer
+        Game.Views.Drawers.VATRecordDrawer.update();
 
-            // Report VAT
-            if (!payment.isReported) {
-                Game.Views.Widgets.PlayerInfo.notify('calendar', 'Report VAT for Q' + quarter + ' ' + year, 'Payment is due at ' + payment.dueAt.prettyPrint(), 'Report VAT', key => {
-                    this.model.reportQuarterlyVAT(year, quarter);
-
-                    this.model.save();
-
-                    Game.Views.Widgets.PlayerInfo.clearNotification('calendar', key);
-                    Game.Views.Widgets.PlayerInfo.update();
-                });
-
-                // Pay VAT
-            } else if (!payment.isPaid) {
-                Game.Views.Widgets.PlayerInfo.notify('calendar', 'Pay VAT for Q' + quarter + ' ' + year, 'Payment of ' + payment.amount + ' kr. is due at ' + payment.dueAt.prettyPrint(), 'Pay VAT', key => {
-                    this.model.payQuarterlyVAT(year, quarter);
-
-                    this.model.save();
-
-                    Game.Views.Widgets.PlayerInfo.clearNotification('calendar', key);
-                    Game.Views.Widgets.PlayerInfo.update();
-                });
-            }
-        };
-
-        let previousQuarter = Game.Services.TimeService.previousQuarter;
-        let currentYear = Game.Services.TimeService.currentYear;
-
-        this.model.vatRecord.generatePayments();
-
-        for (let year in this.model.vatRecord.payments) {
-            let paymentYear = this.model.vatRecord.payments[year];
-
-            for (let quarter in paymentYear) {
-                if (quarter <= previousQuarter && year == currentYear || year < currentYear) {
-                    checkPayment(paymentYear[quarter], quarter, year);
-                }
-            }
-        }
+        // Update the financial record drawer
+        Game.Views.Drawers.FinancialRecordDrawer.update();
 
         // Render the level
         this._render();
@@ -1658,7 +1682,7 @@ class ViewController {
             _.append(document.body, new Game.Views.Widgets.PlayerInfo(), new Game.Views.Pages.Setup());
         } else {
             _.append(document.body, new Game.Views.Widgets.DebugMenu(), new Game.Views.Widgets.PlayerInfo(), new Game.Views.Pages.Level());
-            _.append(_.find('.drawers.bottom'), new Game.Views.Drawers.FinancialRecordDrawer());
+            _.append(_.find('.drawers.bottom'), new Game.Views.Drawers.FinancialRecordDrawer(), new Game.Views.Drawers.VATRecordDrawer());
         }
     }
 }
@@ -1666,6 +1690,245 @@ class ViewController {
 ViewController.init();
 
 module.exports = ViewController;
+
+/***/ }),
+/* 19 */,
+/* 20 */,
+/* 21 */,
+/* 22 */,
+/* 23 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * The drawer for VAT reminders and calculations
+ */
+
+class VATRecordDrawer extends Game.Views.Drawers.Drawer {
+    /**
+     * Constructor
+     */
+    constructor(params) {
+        params = params || {};
+
+        params.dueReports = [];
+        params.duePayments = [];
+
+        params.model = Game.Models.Player.current.vatRecord;
+
+        super(params);
+    }
+
+    /**
+     * Gets the drawer position
+     */
+    get position() {
+        return 'bottom';
+    }
+
+    /**
+     * Renders the preview of this drawer
+     */
+    renderPreview() {
+        return _.div({ class: 'drawer__preview' }, _.label({ class: 'drawer__preview__label' }, 'VAT Record'), _.if(this.dueReports.length > 0 || this.duePayments.length > 0, _.div({ class: 'drawer__preview__notification' }, this.dueReports.length + this.duePayments.length)));
+    }
+
+    /**
+     * Updates this drawer
+     */
+    update() {
+        this.model.generatePayments();
+
+        this.checkPayments();
+
+        this.fetch();
+    }
+
+    /**
+     * Checks a payment for any due dates
+     *
+     * @param {Number} year
+     * @param {Number} quarter
+     * @param {VATPayment} payment
+     */
+    checkPayment(year, quarter, payment) {}
+
+    /**
+     * Checks all payments
+     */
+    checkPayments() {
+        this.duePayments = [];
+
+        let previousQuarter = Game.Services.TimeService.previousQuarter;
+        let currentYear = Game.Services.TimeService.currentYear;
+
+        for (let year in this.model.payments) {
+            let paymentYear = this.model.payments[year];
+
+            for (let quarter in paymentYear) {
+                if (quarter <= previousQuarter && year == currentYear || year < currentYear) {
+                    let payment = paymentYear[quarter];
+
+                    payment.updateFine();
+
+                    if (!payment.isReported || !payment.isPaid) {
+                        this.duePayments.push(payment);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Renders this drawer
+     */
+    renderContent() {
+        return _.div({ class: 'drawer__content' }, _.each(this.model.payments, (year, quarters) => {
+            return [_.h4(year), _.each(quarters, (quarter, payment) => {
+                if (payment.isPaid || !payment.dueAt) {
+                    return;
+                }
+
+                return _.button({ class: 'widget widget--button' }, quarter).click(() => {
+                    if (!payment.isReported) {
+                        new Game.Views.Modals.VATReportingTool({
+                            year: year,
+                            quarter: quarter
+                        });
+                    } else {
+                        Game.Models.Player.current.payQuarterlyVAT(year, quarter);
+                    }
+                });
+            })];
+        }));
+    }
+}
+
+module.exports = VATRecordDrawer;
+
+/***/ }),
+/* 24 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * A modal
+ */
+
+class Modal extends Crisp.View {
+    /**
+     * Constructor
+     */
+    constructor(params) {
+        super(params);
+
+        this.fetch();
+
+        for (let modal of Crisp.View.getAll(Modal)) {
+            if (modal === this) {
+                continue;
+            }
+
+            modal.remove();
+        }
+
+        _.append(document.body, this);
+    }
+
+    /**
+     * Renders the header
+     */
+    renderHeader() {}
+
+    /**
+     * Renders the body
+     */
+    renderBody() {}
+
+    /**
+     * Renders the footer
+     */
+    renderFooter() {}
+
+    /**
+     * Closes this modal
+     */
+    close() {
+        this.remove();
+    }
+
+    /**
+     * Gets the class name
+     */
+    get className() {
+        return this.name.replace(/([A-Z])/g, '-$1').toLowerCase().substring(1);
+    }
+
+    /**
+     * Template
+     */
+    template() {
+        return _.div({ class: 'modal modal--' + this.className }, _.div({ class: 'modal__dialog' }, _.button({ class: 'modal__close widget widget--button' }).click(() => {
+            this.close();
+        }), _.div({ class: 'modal__header' }, this.renderHeader()), _.div({ class: 'modal__body' }, this.renderBody()), _.div({ class: 'modal__footer' }, this.renderFooter())));
+    }
+}
+
+module.exports = Modal;
+
+/***/ }),
+/* 25 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * The VAT reporting tool
+ */
+
+class VATReportingTool extends Game.Views.Modals.Modal {
+  /**
+   * Gets the class name
+   */
+  get className() {
+    return 'vat-reporting-tool';
+  }
+
+  /**
+   * Gets the model
+   */
+  get model() {
+    return Game.Models.Player.current.vatRecord.payments[this.year][this.quarter];
+  }
+
+  /**
+   * Gets the quarterly report
+   */
+  getQuarterlyReport() {
+    return Game.Models.Player.current.financialRecord.getQuarterlyReport(this.year, this.quarter);
+  }
+
+  /**
+   * Renders the header
+   */
+  renderHeader() {
+    return _.h1('Report VAT for ' + this.year + ' Q' + this.quarter);
+  }
+
+  /**
+   * Renders the body
+   */
+  renderBody() {
+    return _.div({ class: this.className + '__calculation' });
+  }
+}
+
+module.exports = VATReportingTool;
 
 /***/ })
 /******/ ]);

@@ -37,6 +37,7 @@ class VATPayment extends Game.Models.Entity {
 
         let diffDays = Math.ceil((Game.Services.TimeService.currentTime.getTime() - this.dueAt.getTime()) / (1000 * 3600 * 24)); 
 
+        // 100 kr. per day fine
         this.fine = Math.floor(diffDays * 100); 
     }
 }

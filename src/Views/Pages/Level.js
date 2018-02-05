@@ -43,53 +43,11 @@ class Level extends Crisp.View {
             machineCounter = 0;
         }
 
-        // Check VAT payment
-        let checkPayment = (payment, quarter, year) => {
-            // Update fine
-            payment.updateFine();
-            
-            // Report VAT
-            if(!payment.isReported) {
-                Game.Views.Widgets.PlayerInfo.notify('calendar', 'Report VAT for Q' + quarter + ' ' + year, 'Payment is due at ' + payment.dueAt.prettyPrint(), 'Report VAT', (key) => {
-                    this.model.reportQuarterlyVAT(year, quarter);
+        // Update the VAT record drawer
+        Game.Views.Drawers.VATRecordDrawer.update();
 
-                    this.model.save();
-
-                    Game.Views.Widgets.PlayerInfo.clearNotification('calendar', key);
-                    Game.Views.Widgets.PlayerInfo.update();
-                });
-
-            // Pay VAT
-            } else if(!payment.isPaid) {
-                Game.Views.Widgets.PlayerInfo.notify('calendar', 'Pay VAT for Q' + quarter + ' ' + year, 'Payment of ' + payment.amount + ' kr. is due at ' + payment.dueAt.prettyPrint(), 'Pay VAT', (key) => {
-                    this.model.payQuarterlyVAT(year, quarter);
-
-                    this.model.save();
-                    
-                    Game.Views.Widgets.PlayerInfo.clearNotification('calendar', key);
-                    Game.Views.Widgets.PlayerInfo.update();
-                });
-
-            }
-        };
-        
-        let previousQuarter = Game.Services.TimeService.previousQuarter;
-        let currentYear = Game.Services.TimeService.currentYear;
-        
-        this.model.vatRecord.generatePayments();
-        
-        for(let year in this.model.vatRecord.payments) {
-            let paymentYear = this.model.vatRecord.payments[year];
-        
-            for(let quarter in paymentYear) {
-                if(
-                    (quarter <= previousQuarter && year == currentYear) ||
-                    year < currentYear
-                ) {
-                    checkPayment(paymentYear[quarter], quarter, year);
-                }
-            }
-        }
+        // Update the financial record drawer
+        Game.Views.Drawers.FinancialRecordDrawer.update();
 
         // Render the level
         this._render();

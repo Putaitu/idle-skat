@@ -1,0 +1,47 @@
+@keyframes modal__fade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+@keyframes modal__fly-in {
+    0% { transform: translateY(-3rem); }
+    100% { transform: none; }
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.25);
+    animation: modal__fade-in 0.5s ease;
+
+    &__close {
+        padding: 0;
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        color: dimgrey;
+        width: 2rem;
+        height: 2rem;
+        display: block;
+
+        &:after {
+            content: '✖';
+            display: block;
+        }
+    }
+
+    &__dialog {
+        animation: modal__fly-in 0.5s ease;
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
+        height: calc(100% - 2rem);
+        width: calc(100% - 2rem);
+        border-radius: 2rem;
+        border: 1px solid dimgrey;
+        background-color: lightgrey;
+    }
+}

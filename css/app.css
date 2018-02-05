@@ -1,3 +1,4 @@
+@charset "UTF-8";
 /*! normalize.css v7.0.0 | MIT License | github.com/necolas/normalize.css */
 /* Document
    ========================================================================== */
@@ -566,6 +567,19 @@ h1, h2, h3, h4, h5, h6 {
     text-transform: uppercase;
     font-weight: bold;
     margin: 0 0.5rem; }
+  .drawer__preview__notification {
+    background-color: red;
+    color: white;
+    font-weight: bold;
+    line-height: 1rem;
+    width: 1rem;
+    text-align: center;
+    border-radius: 50%;
+    margin: 0.25rem;
+    font-size: 0.8rem;
+    position: absolute;
+    top: -0.5rem;
+    right: -0.5rem; }
   .drawer__content {
     display: none; }
   .drawer__toggle {
@@ -578,17 +592,71 @@ h1, h2, h3, h4, h5, h6 {
     top: 0;
     width: 100%;
     height: 2rem;
-    left: 0;
+    right: 0;
     cursor: pointer; }
     .drawer__toggle:focus {
       outline: none; }
+    .drawer__toggle:checked {
+      width: 2rem; }
   .drawer__toggle:checked ~ .drawer__content {
     display: block;
     padding: 1rem; }
-  .drawer__toggle:checked ~ .drawer__preview {
+  .drawer__toggle:checked ~ .drawer__preview * {
     display: none; }
-  .drawer--financial-record .widget--button {
-    margin-right: 1rem; }
+  .drawer__toggle:checked ~ .drawer__preview:after {
+    content: '\2716';
+    display: block;
+    line-height: 2rem;
+    height: 2rem;
+    width: 2rem;
+    position: absolute;
+    right: 0;
+    top: 0;
+    text-align: center;
+    pointer-events: none; }
+
+@keyframes modal__fade-in {
+  0% {
+    opacity: 0; }
+  100% {
+    opacity: 1; } }
+
+@keyframes modal__fly-in {
+  0% {
+    transform: translateY(-3rem); }
+  100% {
+    transform: none; } }
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.25);
+  animation: modal__fade-in 0.5s ease; }
+  .modal__close {
+    padding: 0;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    color: dimgrey;
+    width: 2rem;
+    height: 2rem;
+    display: block; }
+    .modal__close:after {
+      content: '\2716';
+      display: block; }
+  .modal__dialog {
+    animation: modal__fly-in 0.5s ease;
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    height: calc(100% - 2rem);
+    width: calc(100% - 2rem);
+    border-radius: 2rem;
+    border: 1px solid dimgrey;
+    background-color: lightgrey; }
 
 .page {
   width: calc(100% - 2rem);

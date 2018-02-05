@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * A drawer for the financial record
+ * A drawer for the financial record and paying B tax
  */
 class FinancialRecordDrawer extends Game.Views.Drawers.Drawer {
     /**
@@ -20,6 +20,8 @@ class FinancialRecordDrawer extends Game.Views.Drawers.Drawer {
                 return [
                     _.h4(year),
                     _.each(months, (month, report) => {
+                        if(report.bTaxIsPaid) { return; }
+
                         return _.button({class: 'widget widget--button'}, month);
                     })
                 ];

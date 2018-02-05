@@ -11,6 +11,18 @@ Date.prototype.addHours = function(h) {
 }
 
 /**
+ * Gets quarter from a date
+ */
+Date.prototype.getQuarter = function() {
+    let month = this.getMonth() + 1;
+
+    if(month <= 3) { return 1; }
+    if(month <= 6) { return 2; }
+    if(month <= 9) { return 3; }
+    return 4;
+}
+
+/**
  * Pretty prints a date
  */
 Date.prototype.prettyPrint = function() {
@@ -35,11 +47,17 @@ window._ = Crisp.Elements;
 
 window.Game = {};
 
+// -------------------
+// Services
+// -------------------
 Game.Services = {};
 Game.Services.ConfigService = require('./Services/ConfigService');
 Game.Services.TimeService = require('./Services/TimeService');
 Game.Services.DebugService = require('./Services/DebugService');
 
+// -------------------
+// Models
+// -------------------
 Game.Models = {};
 Game.Models.Entity = require('./Models/Entity');
 Game.Models.Player = require('./Models/Player');
@@ -49,16 +67,31 @@ Game.Models.VATRecord = require('./Models/VATRecord');
 Game.Models.VATPayment = require('./Models/VATPayment');
 Game.Models.FinancialRecord = require('./Models/FinancialRecord');
 
+// -------------------
+// Views
+// -------------------
 Game.Views = {};
+
 Game.Views.Widgets = {};
 Game.Views.Widgets.PlayerInfo = require('./Views/Widgets/PlayerInfo');
 Game.Views.Widgets.DebugMenu = require('./Views/Widgets/DebugMenu');
+
+Game.Views.Modals = {};
+Game.Views.Modals.Modal = require('./Views/Modals/Modal');
+Game.Views.Modals.VATReportingTool = require('./Views/Modals/VATReportingTool');
+
 Game.Views.Drawers = {};
 Game.Views.Drawers.Drawer = require('./Views/Drawers/Drawer.js');
 Game.Views.Drawers.FinancialRecordDrawer = require('./Views/Drawers/FinancialRecordDrawer.js');
+Game.Views.Drawers.VATRecordDrawer = require('./Views/Drawers/VATRecordDrawer.js');
+
 Game.Views.Pages = {};
 Game.Views.Pages.Setup = require('./Views/Pages/Setup');
 Game.Views.Pages.Level = require('./Views/Pages/Level');
 
+// -------------------
+// Controllers
+// -------------------
 Game.Controllers = {};
+
 Game.Controllers.ViewController = require('./Controllers/ViewController');

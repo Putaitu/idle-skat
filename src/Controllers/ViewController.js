@@ -31,7 +31,8 @@ class ViewController {
                 new Game.Views.Pages.Level() 
             );
             _.append(_.find('.drawers.bottom'), 
-                new Game.Views.Drawers.FinancialRecordDrawer()
+                new Game.Views.Drawers.FinancialRecordDrawer(),
+                new Game.Views.Drawers.VATRecordDrawer()
             );
         }
     }
