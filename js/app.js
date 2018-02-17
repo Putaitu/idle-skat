@@ -153,24 +153,24 @@ Game.Views.Widgets.PlayerInfo = __webpack_require__(12);
 Game.Views.Widgets.DebugMenu = __webpack_require__(13);
 
 Game.Views.Modals = {};
-Game.Views.Modals.Modal = __webpack_require__(24);
-Game.Views.Modals.VATReportingTool = __webpack_require__(25);
+Game.Views.Modals.Modal = __webpack_require__(14);
+Game.Views.Modals.VATReportingTool = __webpack_require__(15);
 
 Game.Views.Drawers = {};
-Game.Views.Drawers.Drawer = __webpack_require__(14);
-Game.Views.Drawers.FinancialRecordDrawer = __webpack_require__(15);
-Game.Views.Drawers.VATRecordDrawer = __webpack_require__(23);
+Game.Views.Drawers.Drawer = __webpack_require__(16);
+Game.Views.Drawers.FinancialRecordDrawer = __webpack_require__(17);
+Game.Views.Drawers.VATRecordDrawer = __webpack_require__(18);
 
 Game.Views.Pages = {};
-Game.Views.Pages.Setup = __webpack_require__(16);
-Game.Views.Pages.Level = __webpack_require__(17);
+Game.Views.Pages.Setup = __webpack_require__(19);
+Game.Views.Pages.Level = __webpack_require__(20);
 
 // -------------------
 // Controllers
 // -------------------
 Game.Controllers = {};
 
-Game.Controllers.ViewController = __webpack_require__(18);
+Game.Controllers.ViewController = __webpack_require__(21);
 
 /***/ }),
 /* 1 */
@@ -1254,6 +1254,128 @@ module.exports = DebugMenu;
 
 
 /**
+ * A modal
+ */
+
+class Modal extends Crisp.View {
+    /**
+     * Constructor
+     */
+    constructor(params) {
+        super(params);
+
+        this.fetch();
+
+        for (let modal of Crisp.View.getAll(Modal)) {
+            if (modal === this) {
+                continue;
+            }
+
+            modal.remove();
+        }
+
+        _.append(document.body, this);
+    }
+
+    /**
+     * Renders the header
+     */
+    renderHeader() {}
+
+    /**
+     * Renders the body
+     */
+    renderBody() {}
+
+    /**
+     * Renders the footer
+     */
+    renderFooter() {}
+
+    /**
+     * Closes this modal
+     */
+    close() {
+        this.remove();
+    }
+
+    /**
+     * Gets the class name
+     */
+    get className() {
+        return this.name.replace(/([A-Z])/g, '-$1').toLowerCase().substring(1);
+    }
+
+    /**
+     * Template
+     */
+    template() {
+        return _.div({ class: 'modal modal--' + this.className }, _.div({ class: 'modal__dialog' }, _.button({ class: 'modal__close widget widget--button' }).click(() => {
+            this.close();
+        }), _.div({ class: 'modal__header' }, this.renderHeader()), _.div({ class: 'modal__body' }, this.renderBody()), _.div({ class: 'modal__footer' }, this.renderFooter())));
+    }
+}
+
+module.exports = Modal;
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * The VAT reporting tool
+ */
+
+class VATReportingTool extends Game.Views.Modals.Modal {
+  /**
+   * Gets the class name
+   */
+  get className() {
+    return 'vat-reporting-tool';
+  }
+
+  /**
+   * Gets the model
+   */
+  get model() {
+    return Game.Models.Player.current.vatRecord.payments[this.year][this.quarter];
+  }
+
+  /**
+   * Gets the quarterly report
+   */
+  getQuarterlyReport() {
+    return Game.Models.Player.current.financialRecord.getQuarterlyReport(this.year, this.quarter);
+  }
+
+  /**
+   * Renders the header
+   */
+  renderHeader() {
+    return _.h1('Report VAT for ' + this.year + ' Q' + this.quarter);
+  }
+
+  /**
+   * Renders the body
+   */
+  renderBody() {
+    return _.div({ class: this.className + '__calculation' });
+  }
+}
+
+module.exports = VATReportingTool;
+
+/***/ }),
+/* 16 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
  * A drawer for information that should be tucked away
  */
 
@@ -1321,7 +1443,7 @@ class Drawer extends Crisp.View {
 module.exports = Drawer;
 
 /***/ }),
-/* 15 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1358,7 +1480,120 @@ class FinancialRecordDrawer extends Game.Views.Drawers.Drawer {
 module.exports = FinancialRecordDrawer;
 
 /***/ }),
-/* 16 */
+/* 18 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * The drawer for VAT reminders and calculations
+ */
+
+class VATRecordDrawer extends Game.Views.Drawers.Drawer {
+    /**
+     * Constructor
+     */
+    constructor(params) {
+        params = params || {};
+
+        params.dueReports = [];
+        params.duePayments = [];
+
+        params.model = Game.Models.Player.current.vatRecord;
+
+        super(params);
+    }
+
+    /**
+     * Gets the drawer position
+     */
+    get position() {
+        return 'bottom';
+    }
+
+    /**
+     * Renders the preview of this drawer
+     */
+    renderPreview() {
+        return _.div({ class: 'drawer__preview' }, _.label({ class: 'drawer__preview__label' }, 'VAT Record'), _.if(this.dueReports.length > 0 || this.duePayments.length > 0, _.div({ class: 'drawer__preview__notification' }, this.dueReports.length + this.duePayments.length)));
+    }
+
+    /**
+     * Updates this drawer
+     */
+    update() {
+        this.model.generatePayments();
+
+        this.checkPayments();
+
+        this.fetch();
+    }
+
+    /**
+     * Checks a payment for any due dates
+     *
+     * @param {Number} year
+     * @param {Number} quarter
+     * @param {VATPayment} payment
+     */
+    checkPayment(year, quarter, payment) {}
+
+    /**
+     * Checks all payments
+     */
+    checkPayments() {
+        this.duePayments = [];
+
+        let previousQuarter = Game.Services.TimeService.previousQuarter;
+        let currentYear = Game.Services.TimeService.currentYear;
+
+        for (let year in this.model.payments) {
+            let paymentYear = this.model.payments[year];
+
+            for (let quarter in paymentYear) {
+                if (quarter <= previousQuarter && year == currentYear || year < currentYear) {
+                    let payment = paymentYear[quarter];
+
+                    payment.updateFine();
+
+                    if (!payment.isReported || !payment.isPaid) {
+                        this.duePayments.push(payment);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Renders this drawer
+     */
+    renderContent() {
+        return _.div({ class: 'drawer__content' }, _.each(this.model.payments, (year, quarters) => {
+            return [_.h4(year), _.each(quarters, (quarter, payment) => {
+                if (payment.isPaid || !payment.dueAt) {
+                    return;
+                }
+
+                return _.button({ class: 'widget widget--button' }, quarter).click(() => {
+                    if (!payment.isReported) {
+                        new Game.Views.Modals.VATReportingTool({
+                            year: year,
+                            quarter: quarter
+                        });
+                    } else {
+                        Game.Models.Player.current.payQuarterlyVAT(year, quarter);
+                    }
+                });
+            })];
+        }));
+    }
+}
+
+module.exports = VATRecordDrawer;
+
+/***/ }),
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1510,7 +1745,7 @@ class Setup extends Crisp.View {
 module.exports = Setup;
 
 /***/ }),
-/* 17 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1652,7 +1887,7 @@ class Level extends Crisp.View {
 module.exports = Level;
 
 /***/ }),
-/* 18 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1690,245 +1925,6 @@ class ViewController {
 ViewController.init();
 
 module.exports = ViewController;
-
-/***/ }),
-/* 19 */,
-/* 20 */,
-/* 21 */,
-/* 22 */,
-/* 23 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-/**
- * The drawer for VAT reminders and calculations
- */
-
-class VATRecordDrawer extends Game.Views.Drawers.Drawer {
-    /**
-     * Constructor
-     */
-    constructor(params) {
-        params = params || {};
-
-        params.dueReports = [];
-        params.duePayments = [];
-
-        params.model = Game.Models.Player.current.vatRecord;
-
-        super(params);
-    }
-
-    /**
-     * Gets the drawer position
-     */
-    get position() {
-        return 'bottom';
-    }
-
-    /**
-     * Renders the preview of this drawer
-     */
-    renderPreview() {
-        return _.div({ class: 'drawer__preview' }, _.label({ class: 'drawer__preview__label' }, 'VAT Record'), _.if(this.dueReports.length > 0 || this.duePayments.length > 0, _.div({ class: 'drawer__preview__notification' }, this.dueReports.length + this.duePayments.length)));
-    }
-
-    /**
-     * Updates this drawer
-     */
-    update() {
-        this.model.generatePayments();
-
-        this.checkPayments();
-
-        this.fetch();
-    }
-
-    /**
-     * Checks a payment for any due dates
-     *
-     * @param {Number} year
-     * @param {Number} quarter
-     * @param {VATPayment} payment
-     */
-    checkPayment(year, quarter, payment) {}
-
-    /**
-     * Checks all payments
-     */
-    checkPayments() {
-        this.duePayments = [];
-
-        let previousQuarter = Game.Services.TimeService.previousQuarter;
-        let currentYear = Game.Services.TimeService.currentYear;
-
-        for (let year in this.model.payments) {
-            let paymentYear = this.model.payments[year];
-
-            for (let quarter in paymentYear) {
-                if (quarter <= previousQuarter && year == currentYear || year < currentYear) {
-                    let payment = paymentYear[quarter];
-
-                    payment.updateFine();
-
-                    if (!payment.isReported || !payment.isPaid) {
-                        this.duePayments.push(payment);
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Renders this drawer
-     */
-    renderContent() {
-        return _.div({ class: 'drawer__content' }, _.each(this.model.payments, (year, quarters) => {
-            return [_.h4(year), _.each(quarters, (quarter, payment) => {
-                if (payment.isPaid || !payment.dueAt) {
-                    return;
-                }
-
-                return _.button({ class: 'widget widget--button' }, quarter).click(() => {
-                    if (!payment.isReported) {
-                        new Game.Views.Modals.VATReportingTool({
-                            year: year,
-                            quarter: quarter
-                        });
-                    } else {
-                        Game.Models.Player.current.payQuarterlyVAT(year, quarter);
-                    }
-                });
-            })];
-        }));
-    }
-}
-
-module.exports = VATRecordDrawer;
-
-/***/ }),
-/* 24 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-/**
- * A modal
- */
-
-class Modal extends Crisp.View {
-    /**
-     * Constructor
-     */
-    constructor(params) {
-        super(params);
-
-        this.fetch();
-
-        for (let modal of Crisp.View.getAll(Modal)) {
-            if (modal === this) {
-                continue;
-            }
-
-            modal.remove();
-        }
-
-        _.append(document.body, this);
-    }
-
-    /**
-     * Renders the header
-     */
-    renderHeader() {}
-
-    /**
-     * Renders the body
-     */
-    renderBody() {}
-
-    /**
-     * Renders the footer
-     */
-    renderFooter() {}
-
-    /**
-     * Closes this modal
-     */
-    close() {
-        this.remove();
-    }
-
-    /**
-     * Gets the class name
-     */
-    get className() {
-        return this.name.replace(/([A-Z])/g, '-$1').toLowerCase().substring(1);
-    }
-
-    /**
-     * Template
-     */
-    template() {
-        return _.div({ class: 'modal modal--' + this.className }, _.div({ class: 'modal__dialog' }, _.button({ class: 'modal__close widget widget--button' }).click(() => {
-            this.close();
-        }), _.div({ class: 'modal__header' }, this.renderHeader()), _.div({ class: 'modal__body' }, this.renderBody()), _.div({ class: 'modal__footer' }, this.renderFooter())));
-    }
-}
-
-module.exports = Modal;
-
-/***/ }),
-/* 25 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-/**
- * The VAT reporting tool
- */
-
-class VATReportingTool extends Game.Views.Modals.Modal {
-  /**
-   * Gets the class name
-   */
-  get className() {
-    return 'vat-reporting-tool';
-  }
-
-  /**
-   * Gets the model
-   */
-  get model() {
-    return Game.Models.Player.current.vatRecord.payments[this.year][this.quarter];
-  }
-
-  /**
-   * Gets the quarterly report
-   */
-  getQuarterlyReport() {
-    return Game.Models.Player.current.financialRecord.getQuarterlyReport(this.year, this.quarter);
-  }
-
-  /**
-   * Renders the header
-   */
-  renderHeader() {
-    return _.h1('Report VAT for ' + this.year + ' Q' + this.quarter);
-  }
-
-  /**
-   * Renders the body
-   */
-  renderBody() {
-    return _.div({ class: this.className + '__calculation' });
-  }
-}
-
-module.exports = VATReportingTool;
 
 /***/ })
 /******/ ]);
