@@ -1,8 +1,71 @@
 svg {
-    height: 200px; // the contents will scale to fit because of viewBox
+    height: 10rem;
+    display: block;
+    transition: transform 0.5s ease;
 }
 
-text {
-    fill: black;
-    font-size: 1%;
+p {
+    transition: d 0.5s ease;
+}
+
+.row {
+    position: relative;
+}
+
+.sales-vat, .cost-vat {
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    animation-fill-mode: forwards;
+    animation-duration: 2s;
+}
+
+.sales-vat.animating {
+    animation-name: sales-vat;
+}
+
+@keyframes sales-vat {
+    0% {
+        transform: none;
+        opacity: 0;
+    }
+
+    25% {
+        opacity: 1;
+    }
+
+    50% {
+        transform: translateX(10rem);
+        opacity: 1;
+    }
+    
+    100% {
+        transform: translateX(10rem);
+        opacity: 1;
+    }
+}
+
+.cost-vat.animating {
+    animation-name: cost-vat;
+}
+
+@keyframes cost-vat {
+    0% {
+        transform: none;
+        opacity: 0;
+    }
+
+    25% {
+        opacity: 1;
+    }
+
+    50% {
+        transform: translateX(10rem);
+    }
+    
+    100% {
+        transform: translate(10rem, -10rem);
+        opacity: 1;
+    }
 }

@@ -1,3 +1,8 @@
+'use strict';
+
+/**
+ * A flexible pie chart
+ */
 class PieChart extends Crisp.View {
     /**
      * Constructor
@@ -22,6 +27,19 @@ class PieChart extends Crisp.View {
             x: Math.cos(2 * Math.PI * percent),
             y: Math.sin(2 * Math.PI * percent)
         };
+    }
+
+    /**
+     * Sets translation
+     *
+     * @param {Number} x
+     * @param {Number} y
+     */
+    setTranslation(x, y) {
+        x = x || 0;
+        y = y || 0;
+
+        this.element.setAttribute('transform', 'translate(' + x + ', ' + y + ')');
     }
 
     /**
@@ -50,7 +68,7 @@ class PieChart extends Crisp.View {
      * @param {Number} value2
      * @param {Number} amount
      */
-    lerp(value1, value2, amount) {
+    static lerp(value1, value2, amount) {
         amount = amount < 0 ? 0 : amount;
         amount = amount > 1 ? 1 : amount;
         
@@ -58,26 +76,43 @@ class PieChart extends Crisp.View {
     }
 
     /**
-     * Animates all model from 0 to their configured values
+     * Sets the percentage and colour of a slice
      *
-     * @param {Number} speed
+     * @param {String} name
+     * @param {Number} percent
+     * @param {Number} duration
+     * @param {String} color
      */
-    animate(speed) {
-        let finalModel = JSON.parse(JSON.stringify(this.model));
-        let amount = 0;
-        let time = Date.now();
+    setSlice(name, percent, duration, color) {
+        let startPercent = this.model[name] ? this.model[name].percent : 0;
+        let startColor = color || (this.model[name] ? this.model[name].color : 'transparent');
 
-        speed = speed || 1;
-        
+        this.model[name] = {
+            percent: startPercent,
+            color: startColor
+        };
+
+        duration = duration || 0;
+
+        let amount = 0;
+        let time = Date.now();    
+
+        if(duration <= 0) {
+            this.model[name].percent = percent;
+            this.model[name].color = color || startColor;
+            _.replace(this.element, this.renderSlices());
+            return;
+        }
+
         let tick = () => {
-            amount += (Date.now() - time) * 0.001 * speed;
+            let delta = (Date.now() - time) / 1000;
+            amount += delta / duration;
+
             time = Date.now();
 
-            for(let name in this.model) {
-                this.model[name].percent = this.lerp(0, finalModel[name].percent, amount);
-            }
+            this.model[name].percent = PieChart.lerp(startPercent, percent, amount);
 
-            this._render();
+            _.replace(this.element, this.renderSlices());
 
             if(amount >= 1) { return; }
 
@@ -86,58 +121,42 @@ class PieChart extends Crisp.View {
 
         requestAnimationFrame(() => { tick(); });
     }
-
+   
     /**
-     * Sets the percentage and colour of a slice
+     * Renders the slices
      *
-     * @param {String} name
-     * @param {Number} percent
-     * @param {String} color
+     * @returns {Array} Slices
      */
-    setSlice(name, percent, color) {
-        this.model[name] = {
-            percent: percent,
-            color: color
-        };
+    renderSlices() {
+        let percent = 0;
+        let sliceIndex = 0;
 
-        this._render();
+        return _.each(this.model, (name, slice) => {
+            let start = this.getCoordinate(percent);
+
+            percent += slice.percent;
+            
+            let end = this.getCoordinate(percent);
+
+            let largeArc = slice.percent > 0.5 ? 1 : 0;
+
+            let pathData = 
+                'M ' + start.x + ' ' + start.y + ' ' + 
+                'A 1 1 0 ' + largeArc + ' 1 ' + end.x + ' ' + end.y + 
+                'L 0 0';
+
+            sliceIndex++;
+
+            return _.path({d: pathData, fill: slice.color, 'data-percent': slice.percent, 'data-name': name});
+        });
     }
 
     /**
      * Template
      */
     template() {
-        let percent = 0;
-        let sliceIndex = 0;
-
-        return _.div({class: 'pie-chart'},
-            _.svg({viewBox: '-1 -1 2 2'},
-                _.each(this.model, (key, slice) => {
-                    let start = this.getCoordinate(percent);
-
-                    percent += slice.percent;
-                    
-                    let end = this.getCoordinate(percent);
-
-                    let largeArc = slice.percent > 0.5 ? 1 : 0;
-
-                    let pathData = 
-                        'M ' + start.x + ' ' + start.y + ' ' + 
-                        'A 1 1 0 ' + largeArc + ' 1 ' + end.x + ' ' + end.y + 
-                        'L 0 0';
-
-                    sliceIndex++;
-
-                    return _.path({d: pathData, fill: slice.color});
-                })
-            ),
-            _.div({class: 'pie-chart__labels'},
-                _.each(this.model, (key, slice) => {
-                    if(!slice.label) { return; }
-
-                    return _.div({class: 'pie-chart__label'}, slice.label + ': ' + Math.round(slice.value * percent) + ' kr.');
-                })
-            )
+        return _.svg({class: 'pie-chart ' + (this.className || ''), viewBox: '-1 -1 2 2'},
+            this.renderSlices()
         );
     }
 }
