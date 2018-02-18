@@ -63,6 +63,7 @@ button {
 .coin-stack__coin {
     position: absolute;
     height: 10px;
+    animation-fill-mode: forwards;
 }
 
 .coin-stack__coin.in {
