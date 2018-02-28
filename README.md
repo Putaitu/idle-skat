@@ -10,8 +10,11 @@
    
 3. Enter the folder
    `cd idle-skat`
-   
-4. Start WebPack
+
+4. Install dependencies
+   `npm install`
+
+5 Start WebPack
    `webpack --watch --watch-poll --progress`
    
 ## Using the prototypes
