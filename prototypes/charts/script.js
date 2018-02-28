@@ -19,9 +19,9 @@ class Page extends Crisp.View {
             className: 'sales'
         });
 
-        // Set the slice names, sizes and colours (with animation)
-        this.sales.setSlice('total', 0.75, 1, 'Coral');
-        this.sales.setSlice('vat', 0.25, 1, 'CornflowerBlue');
+        // Set the slice names (total/vat), sizes (75%/25%), animation durations (1 second) and colours (Coral/CornflowerBlue)
+        this.sales.setSlice('total', 0.75, 1, '#ffa200');
+        this.sales.setSlice('vat', 0.25, 1, '#fefefe');
 
         // Create the "sales VAT" pie chart, and set the slices first (omitting the animation)
         this.salesVat = new PieChart({
@@ -37,9 +37,9 @@ class Page extends Crisp.View {
             className: 'cost'
         });
         
-        // Set the slices names, sizes and colours (with animation)
-        this.cost.setSlice('total', 0.75, 1, 'Coral');
-        this.cost.setSlice('vat', 0.25, 1, 'CornflowerBlue');
+        // Set the slice names (total/vat), sizes (75%/25%), animation durations (1 second) and colours (Coral/CornflowerBlue)
+        this.cost.setSlice('total', 0.75, 1, '#ffa200');
+        this.cost.setSlice('vat', 0.25, 1, '#fefefe');
 
         // Create the "cost VAT" pie chart, and set the slices first (omitting the animation)
         this.costVat = new PieChart({
