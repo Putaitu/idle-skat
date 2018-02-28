@@ -14,7 +14,7 @@
 4. Install dependencies
    `npm install`
 
-5 Start WebPack
+5. Start WebPack
    `webpack --watch --watch-poll --progress`
    
 ## Using the prototypes
