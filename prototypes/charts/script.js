@@ -14,13 +14,16 @@ class Page extends Crisp.View {
      * Pre render
      */
     prerender() {
+        // Create "sales" pie chart
         this.sales = new PieChart({
             className: 'sales'
         });
 
+        // Set the slice names, sizes and colours (with animation)
         this.sales.setSlice('total', 0.75, 1, 'Coral');
         this.sales.setSlice('vat', 0.25, 1, 'CornflowerBlue');
 
+        // Create the "sales VAT" pie chart, and set the slices first (omitting the animation)
         this.salesVat = new PieChart({
             className: 'sales-vat',
             model: {
@@ -29,13 +32,16 @@ class Page extends Crisp.View {
             }
         });
 
+        // Create the "cost" pie chart
         this.cost = new PieChart({
             className: 'cost'
         });
         
+        // Set the slices names, sizes and colours (with animation)
         this.cost.setSlice('total', 0.75, 1, 'Coral');
         this.cost.setSlice('vat', 0.25, 1, 'CornflowerBlue');
 
+        // Create the "cost VAT" pie chart, and set the slices first (omitting the animation)
         this.costVat = new PieChart({
             className: 'cost-vat',
             model: {
@@ -44,6 +50,7 @@ class Page extends Crisp.View {
             }
         });
         
+        // Start the merging animation
         setTimeout(() => {
             this.salesVat.element.classList.toggle('animating', true);
             this.costVat.element.classList.toggle('animating', true);
