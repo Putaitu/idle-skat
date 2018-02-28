@@ -2,15 +2,21 @@
 @import './Utilities/Breakpoints';
 @import './Utilities/Typography';
 
+@import './Views/Widgets/Widget';
+@import './Views/Widgets/Label';
 @import './Views/Widgets/PlayerInfo';
 @import './Views/Widgets/DebugMenu';
 @import './Views/Widgets/Button';
 @import './Views/Widgets/Input';
+@import './Views/Widgets/ProgressBar';
 
 @import './Views/Drawers/Drawer';
 
 @import './Views/Modals/Modal';
 
+@import './Views/Charts/PieChart';
+
 @import './Views/Pages/Page';
 @import './Views/Pages/Setup';
+@import './Views/Pages/BSkatEstimation';
 @import './Views/Pages/Level';

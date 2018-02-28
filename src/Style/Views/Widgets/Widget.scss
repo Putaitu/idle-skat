@@ -1,0 +1,31 @@
+.widget {
+    display: block;
+}
+
+.widget, .widget-group {
+    &.align {
+        &-center {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        &-left {
+            margin-right: auto;
+        }
+        
+        &-right {
+            margin-left: auto;
+        }
+    }
+}
+
+.widget-group {
+    display: flex;
+    max-width: 34rem;
+    margin-bottom: 1rem;
+    
+    .widget {
+        flex-basis: 0;
+        flex-grow: 1;
+    }
+}

@@ -1,0 +1,23 @@
+.page--b-skat-estimation {
+    &__pie-chart {
+        margin: 3rem auto 0 auto;
+    }
+
+    &__final {
+        text-align: center;
+        opacity: 0;
+        transform: translateX(-10rem);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+        margin-top: 2rem;
+
+        &:not(:empty) {
+            opacity: 1;
+            transform: none;
+        }
+
+        span {
+            font-weight: bold;
+            text-decoration: underline;
+        }
+    }
+}

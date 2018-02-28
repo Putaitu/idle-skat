@@ -151,26 +151,30 @@ Game.Views = {};
 Game.Views.Widgets = {};
 Game.Views.Widgets.PlayerInfo = __webpack_require__(12);
 Game.Views.Widgets.DebugMenu = __webpack_require__(13);
+Game.Views.Widgets.ProgressBar = __webpack_require__(14);
 
 Game.Views.Modals = {};
-Game.Views.Modals.Modal = __webpack_require__(14);
-Game.Views.Modals.VATReportingTool = __webpack_require__(15);
+Game.Views.Modals.Modal = __webpack_require__(15);
+Game.Views.Modals.VATReportingTool = __webpack_require__(16);
 
 Game.Views.Drawers = {};
-Game.Views.Drawers.Drawer = __webpack_require__(16);
-Game.Views.Drawers.FinancialRecordDrawer = __webpack_require__(17);
-Game.Views.Drawers.VATRecordDrawer = __webpack_require__(18);
+Game.Views.Drawers.Drawer = __webpack_require__(17);
+Game.Views.Drawers.FinancialRecordDrawer = __webpack_require__(18);
+Game.Views.Drawers.VATRecordDrawer = __webpack_require__(19);
+
+Game.Views.Charts = {};
+Game.Views.Charts.PieChart = __webpack_require__(20);
 
 Game.Views.Pages = {};
-Game.Views.Pages.Setup = __webpack_require__(19);
-Game.Views.Pages.Level = __webpack_require__(20);
+Game.Views.Pages.Setup = __webpack_require__(21);
+Game.Views.Pages.BSkatEstimation = __webpack_require__(22);
+Game.Views.Pages.Level = __webpack_require__(23);
 
 // -------------------
 // Controllers
 // -------------------
 Game.Controllers = {};
-
-Game.Controllers.ViewController = __webpack_require__(21);
+Game.Controllers.ViewController = __webpack_require__(24);
 
 /***/ }),
 /* 1 */
@@ -1254,6 +1258,63 @@ module.exports = DebugMenu;
 
 
 /**
+ * A progress bar
+ */
+
+class ProgressBar extends Crisp.View {
+    /**
+     * Constructor
+     */
+    constructor(params) {
+        super(params);
+
+        this.max = this.max || 100;
+        this.value = this.value || 0;
+
+        this.fetch();
+
+        for (let progressBar of Crisp.View.getAll(ProgressBar)) {
+            if (progressBar !== this) {
+                progressBar.remove();
+            }
+        }
+
+        _.append(document.body, this.element);
+    }
+
+    /**
+     * Sets the progress
+     *
+     * @param {Number} value
+     * @param {Number} max
+     * @param {String} message
+     */
+    setProgress(value, max, message) {
+        this.value = value;
+        this.max = max;
+        this.message = message;
+
+        this._render();
+    }
+
+    /**
+     * Template
+     */
+    template() {
+        return _.div({ class: 'widget widget--progress-bar' }, _.progress({ class: 'widget--progress-bar__progress', value: this.value, max: this.max }), _.if(this.message, _.div({ class: 'widget--progress-bar__message' }, this.message)));
+    }
+}
+
+module.exports = ProgressBar;
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
  * A modal
  */
 
@@ -1319,7 +1380,7 @@ class Modal extends Crisp.View {
 module.exports = Modal;
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1369,7 +1430,7 @@ class VATReportingTool extends Game.Views.Modals.Modal {
 module.exports = VATReportingTool;
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1443,7 +1504,7 @@ class Drawer extends Crisp.View {
 module.exports = Drawer;
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1480,7 +1541,7 @@ class FinancialRecordDrawer extends Game.Views.Drawers.Drawer {
 module.exports = FinancialRecordDrawer;
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1593,7 +1654,205 @@ class VATRecordDrawer extends Game.Views.Drawers.Drawer {
 module.exports = VATRecordDrawer;
 
 /***/ }),
-/* 19 */
+/* 20 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * A flexible pie chart
+ */
+
+class PieChart extends Crisp.View {
+    /**
+     * Constructor
+     */
+    constructor(params) {
+        super(params);
+
+        this.model = this.model || {};
+
+        this.fetch();
+    }
+
+    /**
+     * Gets a coordinate based on percent
+     *
+     * @param {Number} percent
+     *
+     * @param {Object} Coordinate
+     */
+    getCoordinate(percent) {
+        return {
+            x: Math.cos(2 * Math.PI * percent),
+            y: Math.sin(2 * Math.PI * percent)
+        };
+    }
+
+    /**
+     * Sets translation
+     *
+     * @param {Number} x
+     * @param {Number} y
+     */
+    setTranslation(x, y) {
+        x = x || 0;
+        y = y || 0;
+
+        this.element.setAttribute('transform', 'translate(' + x + ', ' + y + ')');
+    }
+
+    /**
+     * Gets the mean of a list of numbers
+     *
+     * @param {Array} numbers
+     *
+     * @returns {Number} Mean
+     */
+    getMean(...numbers) {
+        let mean = 0;
+
+        for (let number of numbers) {
+            mean += number;
+        }
+
+        mean /= numbers.length;
+
+        return mean;
+    }
+
+    /**
+     * Interpolates between 2 values
+     *
+     * @param {Number} value1
+     * @param {Number} value2
+     * @param {Number} amount
+     */
+    static lerp(value1, value2, amount) {
+        amount = amount < 0 ? 0 : amount;
+        amount = amount > 1 ? 1 : amount;
+
+        return value1 + (value2 - value1) * amount;
+    }
+
+    /**
+     * Sets the percentage and colour of a slice
+     *
+     * @param {String} name
+     * @param {Number} duration
+     * @param {Object} slice
+     */
+    setSlice(name, duration, slice) {
+        if (!this.model[name]) {
+            this.model[name] = {
+                percent: 0,
+                value: 0,
+                color: 'transparent'
+            };
+        }
+
+        let startPercent = this.model[name].percent;
+        let startColor = this.model[name].color || slice.color;
+        let startValue = this.model[name].value || slice.value;
+
+        this.model[name].percent = startPercent;
+        this.model[name].color = startColor;
+        this.model[name].value = startValue;
+
+        duration = duration || 0;
+
+        let amount = 0;
+        let time = Date.now();
+
+        if (duration <= 0) {
+            this.model[name].percent = slice.percent;
+            this.model[name].color = slice.color;
+            this.model[name].value = slice.value;
+
+            _.replace(this.svg, this.renderSlices());
+            return;
+        }
+
+        let tick = () => {
+            let delta = (Date.now() - time) / 1000;
+            amount += delta / duration;
+
+            time = Date.now();
+
+            this.model[name].percent = PieChart.lerp(startPercent, slice.percent, amount);
+            this.model[name].value = PieChart.lerp(startValue, slice.value, amount);
+
+            _.replace(this.svg, this.renderSlices());
+            _.replace(this.labels, this.renderLabels());
+
+            if (amount >= 1) {
+                return;
+            }
+
+            requestAnimationFrame(() => {
+                tick();
+            });
+        };
+
+        requestAnimationFrame(() => {
+            tick();
+        });
+    }
+
+    /**
+     * Renders the slices
+     *
+     * @returns {Array} Slices
+     */
+    renderSlices() {
+        let percent = 0;
+        let sliceIndex = 0;
+
+        return _.each(this.model, (name, slice) => {
+            let start = this.getCoordinate(percent);
+
+            percent += slice.percent;
+
+            let end = this.getCoordinate(percent);
+
+            let largeArc = slice.percent > 0.5 ? 1 : 0;
+
+            let pathData = 'M ' + start.x + ' ' + start.y + ' ' + 'A 1 1 0 ' + largeArc + ' 1 ' + end.x + ' ' + end.y + 'L 0 0';
+
+            sliceIndex++;
+
+            return _.path({ d: pathData, fill: slice.color, 'data-percent': slice.percent, 'data-name': name });
+        });
+    }
+
+    /**
+     * Renders the labels
+     *
+     * @returns {Array} Array of labels
+     */
+    renderLabels() {
+        return _.each(this.model, (name, slice) => {
+            if (!slice.label) {
+                return;
+            }
+
+            return _.label({ class: 'widget widget--label pie-chart__label', style: 'border-left: 2em solid ' + slice.color }, _.if(slice.showPercentage, _.span({ class: 'pie-chart__label__percent' }, Math.round(slice.percent * 100) + '%')), slice.label + ' (' + Math.round(slice.value) + 'kr.)');
+        });
+    }
+
+    /**
+     * Template
+     */
+    template() {
+        return _.div({ class: 'pie-chart ' + (this.className || '') }, this.svg = _.svg({ class: 'pie-chart__svg', viewBox: '-1 -1 2 2' }, this.renderSlices()), this.labels = _.div({ class: 'pie-chart__labels' }, this.renderLabels()));
+    }
+}
+
+module.exports = PieChart;
+
+/***/ }),
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1606,146 +1865,262 @@ class Setup extends Crisp.View {
     constructor(params) {
         super(params);
 
-        this.model = Game.Models.Player.current.company;
+        this.model = {
+            name: 'My Company Aps',
+            total: 30000,
+            capital: 3000
+        };
 
         this.fetch();
-
-        this.sanityCheck();
-
-        this.renderCalculations();
-        this.updatePersonalAccount();
     }
 
     /**
-     * Performs a sanity check
+     * Updates the pie chart
      */
-    sanityCheck() {
-        if (!this.model.name) {
-            this.model.name = 'My Company A/S';
-            return alert('Company name cannot be empty');
-        }
-
-        if (this.model.capital < 0) {
-            this.model.capital = 20000;
-            return alert('Capital cannot be a negative number');
-        }
-
-        if (this.model.unitPrice < 0) {
-            this.model.unitPrice = 0;
-            return alert('Unit price cannot be a negative number');
-        }
-
-        if (this.model.unitProduction < 0) {
-            this.model.unitProduction = 0;
-            return alert('Unit production cannot be a negative number');
-        }
-
-        if (this.model.unitProductionCost < 0) {
-            this.model.unitProductionCost = 0;
-            return alert('Unit production cost cannot be a negative number');
-        }
-
-        if (this.model.demand < 0) {
-            this.model.demand = 0;
-            return alert('Demand cannot be a negative number');
-        }
-
-        if (Game.Models.Player.current.personalAccount < 0) {
-            return alert('Your capital cannot exceed your personal account');
-        }
-
-        return true;
-    }
-
-    /**
-     * Updates the personal account
-     */
-    updatePersonalAccount() {
-        Game.Models.Player.current.personalAccount = 50000 - this.model.capital;
-
-        Game.Views.Widgets.PlayerInfo.update();
-    }
-
-    /**
-     * Renders an input field
-     *
-     * @param {String} key
-     * @param {String} label
-     * @param {String} description
-     * @param {Boolean} readOnly
-     *
-     * @returns {HTMLElement} Field element
-     */
-    renderInputField(key, label, description, readOnly) {
-        let type = 'text';
-
-        if (typeof this.model[key] === 'number') {
-            type = 'number';
-        }
-
-        return _.div({ class: 'page--setup__user-input__field' }, _.h4({ class: 'page--setup__user-input__field__label' }, label || ''), _.div({ class: 'page--setup__user-input__field__description' }, description || ''), _.input({ disabled: readOnly, type: type, class: 'widget widget--input', value: this.model[key] || '' }).on('input', e => {
-            if (readOnly) {
-                return;
-            }
-
-            this.model[key] = e.currentTarget.value;
-
-            this.renderCalculations();
-            this.updatePersonalAccount();
-        }));
-    }
-
-    /**
-     * Renders a calculation field
-     *
-     * @param {String} label
-     * @param {String} result
-     * @param {String} vat
-     */
-    renderCalculationField(label, result, vat) {
-        return _.div({ class: 'page--setup__calculations__field' }, _.h4({ class: 'page--setup__calculations__field__label' }, label), _.div({ class: 'page--setup__calculations__field__result' }, result), _.if(vat, _.div({ class: 'page--setup__calculations__field__vat' }, 'VAT: ' + vat)));
-    }
-
-    /**
-     * Renders the calculations
-     */
-    renderCalculations() {
-        let calculations = this.element.querySelector('.page--setup__calculations__inner');
-
-        if (!calculations) {
+    updatePieChart() {
+        if (!this.pieChart) {
             return;
         }
 
-        calculations.innerHTML = '';
+        this.pieChart.setSlice('account', 0.33, {
+            percent: 1 - this.model.capital / this.model.total,
+            value: this.model.total - this.model.capital
+        });
 
-        _.append(calculations, _.h2({ class: 'page--setup__calculations__heading' }, 'Calculations'), this.renderCalculationField('Sales', this.model.demand + ' × ' + this.model.unitPrice + ' = ' + this.model.estimatedYearlySales, this.model.estimatedYearlySales + ' × 25% = ' + this.model.estimatedYearlySalesVAT), this.renderCalculationField('Cost', -this.model.unitProduction + ' × ' + -this.model.unitProductionCost + ' = ' + -this.model.estimatedYearlyProductionCost, -this.model.estimatedYearlyProductionCost + ' / 125% × 25% = ' + -this.model.estimatedYearlyProductionCostVAT), this.renderCalculationField('Income', this.model.estimatedYearlyIncome), this.renderCalculationField('B-skat', this.model.estimatedYearlyBSkat + ' (' + this.model.estimatedMonthlyBSkat + ' per month)'), this.renderCalculationField('VAT payable', this.model.estimatedYearlySalesVAT + ' - ' + this.model.estimatedYearlyProductionCostVAT + ' = ' + this.model.estimatedYearlyVAT));
+        this.pieChart.setSlice('capital', 0.33, {
+            percent: this.model.capital / this.model.total,
+            value: this.model.capital
+        });
+    }
+
+    /**
+     * Event: Change name
+     *
+     * @param {InputEvent} e
+     */
+    onChangeName(e) {
+        this.model.name = e.currentTarget.value;
+    }
+
+    /**
+     * Event: Change capital
+     *
+     * @param {InputEvent} e
+     */
+    onChangeCapital(e) {
+        let value = parseInt(e.currentTarget.value);
+
+        if (value < 0) {
+            e.currentTarget.value = 0;
+        }
+
+        if (value > this.model.account) {
+            e.currentTarget.value = this.model.account;
+        }
+
+        this.model.capital = e.currentTarget.value;
+
+        this.updatePieChart();
+    }
+
+    /**
+     * Event: Click next
+     *
+     * @param {InputEvent} e
+     */
+    onClickNext(e) {
+        Game.Services.ConfigService.set('personalAccount', this.model.total - this.model.capital);
+        Game.Services.ConfigService.set('companyAccount', this.model.capital);
+        Game.Services.ConfigService.set('companyName', this.model.name);
+
+        Crisp.Router.go('/b-skat-estimation');
     }
 
     /**
      * Template
      */
     template() {
-        return _.div({ class: 'page page--setup' }, _.div({ class: 'page--setup__numbers' }, _.div({ class: 'page--setup__user-input' }, _.h2({ class: 'page--setup__user-input__heading' }, 'Registration'), this.renderInputField('name', 'Name', 'The name of your company'), _.h2({ class: 'page--setup__user-input__heading' }, 'Business plan'), this.renderInputField('capital', 'Capital', 'How much you, as the owner, will invest for the company\'s spending'), this.renderInputField('unitPrice', 'Unit price', 'How much you want to charge for your product'), this.renderInputField('unitProduction', 'Unit production', 'How many units you plan to produce in a year'), this.renderInputField('unitProductionCost', 'Production cost', 'How much a single unit costs to make', true), this.renderInputField('demand', 'Demand estimate', 'How many units you assume people will buy in a year')), _.div({ class: 'page--setup__calculations' }, _.div({ class: 'page--setup__calculations__inner' }))), _.div({ class: 'page--setup__actions' }, _.button({ class: 'widget widget--button' }, 'Start game').click(e => {
-            if (!this.sanityCheck()) {
-                return;
+        return _.div({ class: 'page page--setup' }, _.h1({ class: 'page__title' }, 'Setup'), _.div({ class: 'page--setup__input' }, _.div({ class: 'widget-group align-center' }, _.label({ class: 'widget widget--label' }, 'Company name'), _.input({ class: 'widget widget--input', type: 'text', name: 'name', placeholder: 'E.g. "My Company ApS"', value: this.model.name }).on('input', e => {
+            this.onChangeName(e);
+        })), _.div({ class: 'widget-group align-center' }, _.label({ class: 'widget widget--label' }, 'Capital'), _.input({ class: 'widget widget--input', type: 'number', min: 0, max: this.model.account, step: 1000, name: 'capital', placeholder: 'E.g. 3000', value: this.model.capital }).on('input', e => {
+            this.onChangeCapital(e);
+        }))), this.pieChart = new Game.Views.Charts.PieChart({
+            className: 'page--setup__pie-chart',
+            model: {
+                account: { percent: 1 - this.model.capital / this.model.total, label: 'Personal account', value: this.model.total - this.model.capital, color: 'green' },
+                capital: { percent: this.model.capital / this.model.total, label: 'Capital', value: this.model.capital, color: 'blue' },
+                total: { percent: 1, label: 'Total funds', color: 'transparent', value: this.model.total }
             }
-
-            this.model.bankBalance = this.model.capital;
-
-            this.model.save();
-
-            Game.Services.ConfigService.set('completedSetup', true);
-            Game.Services.TimeService.startClock();
-
-            Crisp.Router.init();
-        })));
+        }), _.button({ class: 'widget widget--button align-right' }, 'Next').click(e => {
+            this.onClickNext(e);
+        }));
     }
 }
 
 module.exports = Setup;
 
 /***/ }),
-/* 20 */
+/* 22 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * The B-skat estimation page
+ */
+
+class BSkatEstimation extends Crisp.View {
+    /**
+     * Constructor
+     */
+    constructor(params) {
+        super(params);
+
+        this.model = {
+            income: 96000,
+            bskat: 0
+        };
+
+        this.fetch();
+    }
+
+    /**
+     * Event: Change income
+     *
+     * @param {InputEvent} e
+     */
+    onChangeIncome(e) {
+        let value = parseInt(e.currentTarget.value);
+
+        if (value < 0) {
+            e.currentTarget.value = 0;
+        }
+
+        this.model.income = parseInt(e.currentTarget.value);
+        this.model.bskat = 0;
+        this.finalBSkat.innerHTML = '';
+
+        this.updatePieChart();
+    }
+
+    /**
+     * Updates the pie chart
+     */
+    updatePieChart() {
+        if (!this.pieChart) {
+            return;
+        }
+
+        this.pieChart.setSlice('bskat', 0.33, {
+            percent: this.model.bskat / this.model.income,
+            value: this.model.bskat
+        });
+
+        this.pieChart.setSlice('income', 0.33, {
+            percent: 1 - this.model.bskat / this.model.income,
+            value: this.model.income
+        });
+    }
+
+    /**
+     * Wraps setTimeout in a promise
+     *
+     * @param {Number} timeout
+     *
+     * @returns {Promise} Callback
+     */
+    wait(timeout) {
+        timeout = timeout || 0;
+        timeout *= 1000;
+
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve();
+            }, timeout);
+        });
+    }
+
+    /**
+     * Event: Click calculate
+     *
+     * @param {InputEvent} e
+     */
+    onClickCalculate(e) {
+        let progressBar = new Game.Views.Widgets.ProgressBar();
+
+        progressBar.setProgress(0, 100, 'Step 1...');
+
+        this.wait(1).then(() => {
+            progressBar.setProgress(20, 100, 'Step 2...');
+
+            return this.wait(1);
+        }).then(() => {
+            progressBar.setProgress(30, 100, 'Step 3...');
+
+            return this.wait(1);
+        }).then(() => {
+            progressBar.setProgress(40, 100, 'Step 4...');
+
+            return this.wait(1);
+        }).then(() => {
+            progressBar.setProgress(50, 100, 'Step 5...');
+
+            return this.wait(1);
+        }).then(() => {
+            progressBar.setProgress(60, 100, 'Step 6...');
+
+            return this.wait(1);
+        }).then(() => {
+            progressBar.setProgress(70, 100, 'Step 7...');
+
+            return this.wait(1);
+        }).then(() => {
+            progressBar.setProgress(80, 100, 'Step 8...');
+
+            return this.wait(1);
+        }).then(() => {
+            progressBar.setProgress(90, 100, 'Step 9...');
+
+            return this.wait(1);
+        }).then(() => {
+            progressBar.setProgress(100, 100, 'Done!');
+
+            return this.wait(1);
+        }).then(() => {
+            this.model.bskat = this.model.income * 0.38;
+
+            progressBar.remove();
+
+            this.updatePieChart();
+
+            this.finalBSkat.innerHTML = this.model.bskat + ' / 12 = <span>' + Math.round(this.model.bskat / 12) + 'kr. per month</span>';
+        });
+    }
+
+    /**
+     * Template
+     */
+    template() {
+        return _.div({ class: 'page page--b-skat-estimation' }, _.h1({ class: 'page__title' }, 'B-skat estimation'), _.div({ class: 'page--b-skat-estimation__input' }, _.div({ class: 'widget-group align-center' }, _.label({ class: 'widget widget--label' }, 'Target income (yearly)'), _.input({ class: 'widget widget--input', type: 'number', min: 0, value: this.model.income }).on('input', e => {
+            this.onChangeIncome(e);
+        })), _.button({ class: 'widget widget--button align-center' }, 'Calculate').click(e => {
+            this.onClickCalculate(e);
+        })), this.pieChart = new Game.Views.Charts.PieChart({
+            className: 'page--b-skat-estimation__pie-chart',
+            showPercentage: true,
+            model: {
+                bskat: { showPercentage: true, percent: this.model.bskat / this.model.income, label: 'B-skat', value: this.model.bskat, color: 'blue' },
+                income: { percent: 1 - this.model.bskat / this.model.income, label: 'Target income', color: 'green', value: this.model.income }
+            }
+        }), this.finalBSkat = _.div({ class: 'page--b-skat-estimation__final' }));
+    }
+}
+
+module.exports = BSkatEstimation;
+
+/***/ }),
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1887,7 +2262,7 @@ class Level extends Crisp.View {
 module.exports = Level;
 
 /***/ }),
-/* 21 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1903,22 +2278,27 @@ class ViewController {
      */
     static init() {
         Crisp.Router.route('/', this.index);
+        Crisp.Router.route('/b-skat-estimation', this.bskat);
 
         Crisp.Router.init();
     }
 
     /**
-     * Index route
+     * Index
      */
     static index() {
         Crisp.View.clear(Crisp.View);
 
-        if (!Game.Services.ConfigService.get('completedSetup')) {
-            _.append(document.body, new Game.Views.Widgets.PlayerInfo(), new Game.Views.Pages.Setup());
-        } else {
-            _.append(document.body, new Game.Views.Widgets.DebugMenu(), new Game.Views.Widgets.PlayerInfo(), new Game.Views.Pages.Level());
-            _.append(_.find('.drawers.bottom'), new Game.Views.Drawers.FinancialRecordDrawer(), new Game.Views.Drawers.VATRecordDrawer());
-        }
+        _.append(document.body, new Game.Views.Pages.Setup());
+    }
+
+    /**
+     * B-skat
+     */
+    static bskat() {
+        Crisp.View.clear(Crisp.View);
+
+        _.append(document.body, new Game.Views.Pages.BSkatEstimation());
     }
 }
 

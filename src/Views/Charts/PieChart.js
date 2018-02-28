@@ -79,18 +79,25 @@ class PieChart extends Crisp.View {
      * Sets the percentage and colour of a slice
      *
      * @param {String} name
-     * @param {Number} percent
      * @param {Number} duration
-     * @param {String} color
+     * @param {Object} slice
      */
-    setSlice(name, percent, duration, color) {
-        let startPercent = this.model[name] ? this.model[name].percent : 0;
-        let startColor = color || (this.model[name] ? this.model[name].color : 'transparent');
+    setSlice(name, duration, slice) {
+        if(!this.model[name]) {
+            this.model[name] = {
+                percent: 0,
+                value: 0,
+                color: 'transparent'
+            };
+        }
 
-        this.model[name] = {
-            percent: startPercent,
-            color: startColor
-        };
+        let startPercent = this.model[name].percent;
+        let startColor = this.model[name].color || slice.color;
+        let startValue = this.model[name].value || slice.value;
+
+        this.model[name].percent = startPercent;
+        this.model[name].color = startColor;
+        this.model[name].value = startValue;
 
         duration = duration || 0;
 
@@ -98,9 +105,11 @@ class PieChart extends Crisp.View {
         let time = Date.now();    
 
         if(duration <= 0) {
-            this.model[name].percent = percent;
-            this.model[name].color = color || startColor;
-            _.replace(this.element, this.renderSlices());
+            this.model[name].percent = slice.percent;
+            this.model[name].color = slice.color;
+            this.model[name].value = slice.value;
+            
+            _.replace(this.svg, this.renderSlices());
             return;
         }
 
@@ -110,9 +119,11 @@ class PieChart extends Crisp.View {
 
             time = Date.now();
 
-            this.model[name].percent = PieChart.lerp(startPercent, percent, amount);
+            this.model[name].percent = PieChart.lerp(startPercent, slice.percent, amount);
+            this.model[name].value = PieChart.lerp(startValue, slice.value, amount);
 
-            _.replace(this.element, this.renderSlices());
+            _.replace(this.svg, this.renderSlices());
+            _.replace(this.labels, this.renderLabels());
 
             if(amount >= 1) { return; }
 
@@ -152,11 +163,34 @@ class PieChart extends Crisp.View {
     }
 
     /**
+     * Renders the labels
+     *
+     * @returns {Array} Array of labels
+     */
+    renderLabels() {
+        return _.each(this.model, (name, slice) => {
+            if(!slice.label) { return; }
+
+            return _.label({class: 'widget widget--label pie-chart__label', style: 'border-left: 2em solid ' + slice.color},
+                _.if(slice.showPercentage,
+                    _.span({class: 'pie-chart__label__percent'}, Math.round(slice.percent * 100) + '%')
+                ),
+                slice.label + ' (' + Math.round(slice.value) + 'kr.)'
+            );
+        });
+    }
+
+    /**
      * Template
      */
     template() {
-        return _.svg({class: 'pie-chart ' + (this.className || ''), viewBox: '-1 -1 2 2'},
-            this.renderSlices()
+        return _.div({class: 'pie-chart ' + (this.className || '')},
+            this.svg = _.svg({class: 'pie-chart__svg', viewBox: '-1 -1 2 2'},
+                this.renderSlices()
+            ),
+            this.labels = _.div({class: 'pie-chart__labels'},
+                this.renderLabels()
+            )
         );
     }
 }

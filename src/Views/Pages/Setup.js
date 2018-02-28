@@ -7,150 +7,73 @@ class Setup extends Crisp.View {
     constructor(params) {
         super(params);
 
-        this.model = Game.Models.Player.current.company;
+        this.model = {
+            name: 'My Company Aps',
+            total: 30000,
+            capital: 3000
+        };
             
         this.fetch();
+    }
+   
+    /**
+     * Updates the pie chart
+     */
+    updatePieChart() {
+        if(!this.pieChart) { return; }
+        
+        this.pieChart.setSlice('account', 0.33, {
+            percent: 1 - (this.model.capital / this.model.total),
+            value: this.model.total - this.model.capital
+        });
 
-        this.sanityCheck();
-
-        this.renderCalculations();
-        this.updatePersonalAccount();
+        this.pieChart.setSlice('capital', 0.33, {
+            percent: this.model.capital / this.model.total,
+            value: this.model.capital
+        });
     }
 
     /**
-     * Performs a sanity check
+     * Event: Change name
+     *
+     * @param {InputEvent} e
      */
-    sanityCheck() {
-        if(!this.model.name) {
-            this.model.name = 'My Company A/S';
-            return alert('Company name cannot be empty');
-        }
-
-        if(this.model.capital < 0) {
-            this.model.capital = 20000;
-            return alert('Capital cannot be a negative number');
-        }
-
-        if(this.model.unitPrice < 0) {
-            this.model.unitPrice = 0;
-            return alert('Unit price cannot be a negative number');
-        }
-
-        if(this.model.unitProduction < 0) {
-            this.model.unitProduction = 0;
-            return alert('Unit production cannot be a negative number');
-        }
-
-        if(this.model.unitProductionCost < 0) {
-            this.model.unitProductionCost = 0;
-            return alert('Unit production cost cannot be a negative number');
-        }
-
-        if(this.model.demand < 0) {
-            this.model.demand = 0;
-            return alert('Demand cannot be a negative number');
-        }
-
-        if(Game.Models.Player.current.personalAccount < 0) {
-            return alert('Your capital cannot exceed your personal account');
-        }
-
-        return true;
+    onChangeName(e) {
+        this.model.name = e.currentTarget.value;
     }
     
     /**
-     * Updates the personal account
-     */
-    updatePersonalAccount() {
-        Game.Models.Player.current.personalAccount = 50000 - this.model.capital;
-
-        Game.Views.Widgets.PlayerInfo.update();
-    }
-
-    /**
-     * Renders an input field
+     * Event: Change capital
      *
-     * @param {String} key
-     * @param {String} label
-     * @param {String} description
-     * @param {Boolean} readOnly
-     *
-     * @returns {HTMLElement} Field element
+     * @param {InputEvent} e
      */
-    renderInputField(key, label, description, readOnly) {
-        let type = 'text';
+    onChangeCapital(e) {
+        let value = parseInt(e.currentTarget.value);
 
-        if(typeof this.model[key] === 'number') {
-            type = 'number';
+        if(value < 0) {
+            e.currentTarget.value = 0;
         }
-        
-        return _.div({class: 'page--setup__user-input__field'},
-            _.h4({class: 'page--setup__user-input__field__label'}, label || ''),
-            _.div({class: 'page--setup__user-input__field__description'}, description || ''),
-            _.input({disabled: readOnly, type: type, class: 'widget widget--input', value: this.model[key] || ''})
-                .on('input', (e) => {
-                    if(readOnly) { return; }
 
-                    this.model[key] = e.currentTarget.value;
+        if(value > this.model.account) {
+            e.currentTarget.value = this.model.account;
+        }
 
-                    this.renderCalculations();
-                    this.updatePersonalAccount();
-                })
-        );
+        this.model.capital = e.currentTarget.value;
+
+        this.updatePieChart();
     }
 
     /**
-     * Renders a calculation field
+     * Event: Click next
      *
-     * @param {String} label
-     * @param {String} result
-     * @param {String} vat
+     * @param {InputEvent} e
      */
-    renderCalculationField(label, result, vat) {
-        return _.div({class: 'page--setup__calculations__field'},
-            _.h4({class: 'page--setup__calculations__field__label'}, label),
-            _.div({class: 'page--setup__calculations__field__result'}, result),
-            _.if(vat, 
-                _.div({class: 'page--setup__calculations__field__vat'}, 'VAT: ' + vat)
-            )
-        );
-    }
+    onClickNext(e) {
+        Game.Services.ConfigService.set('personalAccount', this.model.total - this.model.capital);
+        Game.Services.ConfigService.set('companyAccount', this.model.capital);
+        Game.Services.ConfigService.set('companyName', this.model.name);
 
-    /**
-     * Renders the calculations
-     */
-    renderCalculations() {
-        let calculations = this.element.querySelector('.page--setup__calculations__inner');
-
-        if(!calculations) { return; }
-
-        calculations.innerHTML = '';
-
-        _.append(calculations,
-            _.h2({class: 'page--setup__calculations__heading'}, 'Calculations'),
-            this.renderCalculationField(
-                'Sales',
-                this.model.demand + ' × ' + this.model.unitPrice + ' = ' + this.model.estimatedYearlySales,
-                this.model.estimatedYearlySales + ' × 25% = ' + this.model.estimatedYearlySalesVAT
-            ),
-            this.renderCalculationField(
-                'Cost',
-                -this.model.unitProduction + ' × ' + -this.model.unitProductionCost + ' = ' + -this.model.estimatedYearlyProductionCost,
-                -this.model.estimatedYearlyProductionCost + ' / 125% × 25% = ' + -this.model.estimatedYearlyProductionCostVAT
-            ),
-            this.renderCalculationField(
-                'Income',
-                this.model.estimatedYearlyIncome
-            ),
-            this.renderCalculationField(
-                'B-skat',
-                this.model.estimatedYearlyBSkat + ' (' + this.model.estimatedMonthlyBSkat + ' per month)'
-            ),
-            this.renderCalculationField(
-                'VAT payable',
-                this.model.estimatedYearlySalesVAT + ' - ' + this.model.estimatedYearlyProductionCostVAT + ' = ' + this.model.estimatedYearlyVAT
-            )
-        );
+        Crisp.Router.go('/b-skat-estimation');
     }
 
     /**
@@ -158,36 +81,29 @@ class Setup extends Crisp.View {
      */
     template() {
         return _.div({class: 'page page--setup'},
-            _.div({class: 'page--setup__numbers'},
-                _.div({class: 'page--setup__user-input'},
-                    _.h2({class: 'page--setup__user-input__heading'}, 'Registration'),
-                    this.renderInputField('name', 'Name', 'The name of your company'),
-                    _.h2({class: 'page--setup__user-input__heading'}, 'Business plan'),
-                    this.renderInputField('capital', 'Capital', 'How much you, as the owner, will invest for the company\'s spending'),
-                    this.renderInputField('unitPrice', 'Unit price', 'How much you want to charge for your product'),
-                    this.renderInputField('unitProduction', 'Unit production', 'How many units you plan to produce in a year'),
-                    this.renderInputField('unitProductionCost', 'Production cost', 'How much a single unit costs to make', true),
-                    this.renderInputField('demand', 'Demand estimate', 'How many units you assume people will buy in a year')
+            _.h1({class: 'page__title'}, 'Setup'),
+            _.div({class: 'page--setup__input'},
+                _.div({class: 'widget-group align-center'},
+                    _.label({class: 'widget widget--label'}, 'Company name'),
+                    _.input({class: 'widget widget--input', type: 'text', name: 'name', placeholder: 'E.g. "My Company ApS"', value: this.model.name})
+                        .on('input', (e) => { this.onChangeName(e); })
                 ),
-                _.div({class: 'page--setup__calculations'},
-                    _.div({class: 'page--setup__calculations__inner'})
+                _.div({class: 'widget-group align-center'},
+                    _.label({class: 'widget widget--label'}, 'Capital'),
+                    _.input({class: 'widget widget--input', type: 'number', min: 0, max: this.model.account, step: 1000, name: 'capital', placeholder: 'E.g. 3000', value: this.model.capital})
+                        .on('input', (e) => { this.onChangeCapital(e); })
                 )
             ),
-            _.div({class: 'page--setup__actions'},
-                _.button({class: 'widget widget--button'}, 'Start game')
-                    .click((e) => {
-                        if(!this.sanityCheck()) { return; }
-
-                        this.model.bankBalance = this.model.capital;
-                        
-                        this.model.save();
-
-                        Game.Services.ConfigService.set('completedSetup', true);
-                        Game.Services.TimeService.startClock();
-
-                        Crisp.Router.init();
-                    })
-            )
+            this.pieChart = new Game.Views.Charts.PieChart({
+                className: 'page--setup__pie-chart',
+                model: {
+                    account: { percent: 1 - (this.model.capital / this.model.total), label: 'Personal account', value: this.model.total - this.model.capital, color: 'green' },
+                    capital: { percent: this.model.capital / this.model.total, label: 'Capital', value: this.model.capital, color: 'blue' },
+                    total: { percent: 1, label: 'Total funds', color: 'transparent', value: this.model.total }
+                }
+            }),
+            _.button({class: 'widget widget--button align-right'}, 'Next')
+                .click((e) => { this.onClickNext(e); })
         );
     }
 }

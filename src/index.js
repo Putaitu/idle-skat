@@ -75,23 +75,27 @@ Game.Views = {};
 Game.Views.Widgets = {};
 Game.Views.Widgets.PlayerInfo = require('./Views/Widgets/PlayerInfo');
 Game.Views.Widgets.DebugMenu = require('./Views/Widgets/DebugMenu');
+Game.Views.Widgets.ProgressBar = require('./Views/Widgets/ProgressBar');
 
 Game.Views.Modals = {};
 Game.Views.Modals.Modal = require('./Views/Modals/Modal');
 Game.Views.Modals.VATReportingTool = require('./Views/Modals/VATReportingTool');
 
 Game.Views.Drawers = {};
-Game.Views.Drawers.Drawer = require('./Views/Drawers/Drawer.js');
-Game.Views.Drawers.FinancialRecordDrawer = require('./Views/Drawers/FinancialRecordDrawer.js');
-Game.Views.Drawers.VATRecordDrawer = require('./Views/Drawers/VATRecordDrawer.js');
+Game.Views.Drawers.Drawer = require('./Views/Drawers/Drawer');
+Game.Views.Drawers.FinancialRecordDrawer = require('./Views/Drawers/FinancialRecordDrawer');
+Game.Views.Drawers.VATRecordDrawer = require('./Views/Drawers/VATRecordDrawer');
+
+Game.Views.Charts = {};
+Game.Views.Charts.PieChart = require('./Views/Charts/PieChart');
 
 Game.Views.Pages = {};
 Game.Views.Pages.Setup = require('./Views/Pages/Setup');
+Game.Views.Pages.BSkatEstimation = require('./Views/Pages/BSkatEstimation');
 Game.Views.Pages.Level = require('./Views/Pages/Level');
 
 // -------------------
 // Controllers
 // -------------------
 Game.Controllers = {};
-
 Game.Controllers.ViewController = require('./Controllers/ViewController');

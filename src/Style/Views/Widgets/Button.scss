@@ -1,5 +1,6 @@
 .widget--button {
-    line-height: 2rem;
+    line-height: 2;
+    text-decoration: none;
     padding: 0 1rem;
     background-color: lightgrey;
     text-transform: uppercase;
@@ -8,6 +9,8 @@
     font-weight: bold;
     border-radius: 1rem;
     border: 0;
+    max-width: 10rem;
+    text-align: center;
 
     &:hover {
         background-color: dimgrey;

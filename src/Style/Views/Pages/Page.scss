@@ -2,4 +2,9 @@
     width: calc(100% - 2rem);
     max-width: 70rem;
     margin: 3rem auto 0 auto;
+
+    &__title {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
 }

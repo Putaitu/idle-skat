@@ -9,32 +9,31 @@ class ViewController {
      */
     static init() {
         Crisp.Router.route('/', this.index);
+        Crisp.Router.route('/b-skat-estimation', this.bskat);
     
         Crisp.Router.init();
     }
 
     /**
-     * Index route
+     * Index
      */
     static index() {
         Crisp.View.clear(Crisp.View);
 
-        if(!Game.Services.ConfigService.get('completedSetup')) {
-            _.append(document.body,
-                new Game.Views.Widgets.PlayerInfo(),
-                new Game.Views.Pages.Setup() 
-            );
-        } else {
-            _.append(document.body,
-                new Game.Views.Widgets.DebugMenu(),
-                new Game.Views.Widgets.PlayerInfo(),
-                new Game.Views.Pages.Level() 
-            );
-            _.append(_.find('.drawers.bottom'), 
-                new Game.Views.Drawers.FinancialRecordDrawer(),
-                new Game.Views.Drawers.VATRecordDrawer()
-            );
-        }
+        _.append(document.body,
+            new Game.Views.Pages.Setup() 
+        );
+    }
+
+    /**
+     * B-skat
+     */
+    static bskat() {
+        Crisp.View.clear(Crisp.View);
+
+        _.append(document.body,
+            new Game.Views.Pages.BSkatEstimation() 
+        );
     }
 }
 
