@@ -4,9 +4,9 @@ const MACHINE_DELAY = 4;
 
 let machineCounter = 0;
 
-class Level extends Crisp.View {
+class Session extends Crisp.View {
     /**
-     * Constrcutor
+     * Constructor
      */
     constructor(params) {
         super(params);
@@ -26,9 +26,15 @@ class Level extends Crisp.View {
      * Heartbeat
      */
     heartbeat() {
+        if(!document.hasFocus()) { return; }
+
         // Tick time 
         Game.Services.TimeService.tick();
-        
+       
+        this.timeline.heartbeat();
+        this.notifications.heartbeat();
+
+        /*
         // Sell one unit every second
         this.model.company.sellUnit();
 
@@ -51,6 +57,7 @@ class Level extends Crisp.View {
 
         // Render the level
         this._render();
+        */
 
         // Save the current state
         this.model.save();
@@ -140,16 +147,18 @@ class Level extends Crisp.View {
                     this.renderInputField('unitPrice', 'Unit price'),
                     this.renderButton('machines', 'Machines', 'Price: 10000 kr.', 'Purchase', () => { this.model.company.purchaseMachine(); }),
                     this.renderButton('inventory', 'Inventory', 'Cost: ' + this.model.company.unitProductionCost + ' kr.', 'Produce', () => { this.model.company.produceUnit(); }),
-                ),
+                )/*,
                 _.div({class: 'page--level__calculations'},
                     _.div({class: 'page--level__calculations__inner'},
                         this.renderCalculationField('Sales', this.model.financialRecord.currentReport.sales + ' kr.'),
                         this.renderCalculationField('Production cost', this.model.financialRecord.currentReport.productionCost + ' kr.') 
                     )
-                )
-            )
+                )*/
+            ),
+            this.notifications = new Game.Views.Drawers.Notifications(),
+            this.timeline = new Game.Views.Drawers.Timeline()
         );
     }
 }
 
-module.exports = Level;
+module.exports = Session;

@@ -576,85 +576,118 @@ h1, h2, h3, h4, h5, h6 {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(255, 255, 255, 0.5);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center; }
-
-.drawers {
-  position: fixed;
-  left: 0;
-  padding: 0.5rem; }
-  .drawers.top {
-    top: 0; }
-  .drawers.bottom {
-    bottom: 0; }
-  .drawers:after {
-    content: '';
-    display: block;
-    clear: both; }
+  background-color: rgba(255, 255, 255, 0.5); }
+  .widget--progress-bar__progress, .widget--progress-bar__message {
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%);
+    width: calc(100% - 2rem);
+    max-width: 30rem; }
+  .widget--progress-bar__progress {
+    height: 2rem;
+    top: calc(50% - 1rem); }
+  .widget--progress-bar__message {
+    top: calc(50% + 1rem); }
 
 .drawer {
-  position: relative;
-  float: left;
-  margin-right: 1rem;
-  border-radius: 1rem;
-  background-color: dimgrey;
-  color: white; }
-  .drawer__preview__label {
-    line-height: 2rem;
-    padding: 0 0.5rem;
-    text-transform: uppercase;
-    font-weight: bold;
-    margin: 0 0.5rem; }
-  .drawer__preview__notification {
-    background-color: red;
-    color: white;
-    font-weight: bold;
-    line-height: 1rem;
-    width: 1rem;
-    text-align: center;
-    border-radius: 50%;
-    margin: 0.25rem;
-    font-size: 0.8rem;
-    position: absolute;
-    top: -0.5rem;
-    right: -0.5rem; }
-  .drawer__content {
-    display: none; }
+  position: fixed;
+  bottom: 0;
+  left: 0; }
   .drawer__toggle {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
-    display: block;
-    width: 100%;
-    position: absolute;
-    top: 0;
-    width: 100%;
-    height: 2rem;
-    right: 0;
-    cursor: pointer; }
-    .drawer__toggle:focus {
-      outline: none; }
-    .drawer__toggle:checked {
-      width: 2rem; }
-  .drawer__toggle:checked ~ .drawer__content {
-    display: block;
-    padding: 1rem; }
-  .drawer__toggle:checked ~ .drawer__preview * {
+    width: 3rem;
+    height: 1rem;
+    cursor: pointer;
+    background-color: grey; }
+  .drawer__toggle:checked ~ .drawer__preview {
     display: none; }
-  .drawer__toggle:checked ~ .drawer__preview:after {
-    content: '\2716';
-    display: block;
-    line-height: 2rem;
-    height: 2rem;
-    width: 2rem;
+  .drawer__toggle:not(:checked) ~ .drawer__content {
+    display: none; }
+
+.drawer--timeline__scroller {
+  overflow-x: hidden;
+  overflow-y: visible;
+  padding-top: 4rem; }
+  .drawer--timeline__scroller__year {
+    font-size: 2rem;
+    padding-left: 1rem;
+    margin-bottom: 0.5rem; }
+  .drawer--timeline__scroller__month, .drawer--timeline__scroller__day__month {
+    font-size: 1.5rem;
+    color: grey;
+    bottom: 5rem;
     position: absolute;
-    right: 0;
-    top: 0;
-    text-align: center;
-    pointer-events: none; }
+    left: 0;
+    padding-left: 1rem;
+    background-color: white; }
+  .drawer--timeline__scroller__days {
+    display: flex;
+    padding-top: 4rem; }
+  .drawer--timeline__scroller__day {
+    flex-basis: 3rem;
+    width: 3rem;
+    min-width: 3rem;
+    position: relative;
+    border-left: 1px solid lightgrey; }
+    .drawer--timeline__scroller__day__month:after {
+      content: '';
+      display: block;
+      height: 6.5rem;
+      border-left: 1px solid grey;
+      position: absolute;
+      left: -1px;
+      top: 0; }
+    .drawer--timeline__scroller__day__number {
+      text-align: center;
+      line-height: 3rem; }
+    .drawer--timeline__scroller__day__notification {
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform-origin: 0% 100%;
+      display: inline-block;
+      border-radius: 1.5rem 1.5rem 1.5rem 0;
+      border: 0;
+      padding: 0 0.5rem;
+      transform: rotate(-45deg);
+      white-space: nowrap;
+      font-weight: bold;
+      line-height: 2rem;
+      height: 2rem; }
+      .drawer--timeline__scroller__day__notification.alert {
+        background: #f33;
+        color: white; }
+      .drawer--timeline__scroller__day__notification.warning {
+        background: yellow;
+        color: black; }
+
+.drawer--notifications {
+  position: fixed;
+  left: 0;
+  bottom: 10rem; }
+  .drawer--notifications__entry {
+    border-radius: 0.2rem;
+    padding: 0.5rem;
+    position: relative;
+    background-color: lightgrey; }
+    .drawer--notifications__entry:not(:last-of-type) {
+      margin-bottom: 1rem; }
+    .drawer--notifications__entry__progress {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background-color: grey; }
+    .drawer--notifications__entry__title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      position: relative; }
+    .drawer--notifications__entry__title + .drawer--notifications__entry__message {
+      margin-top: 0.5rem; }
+    .drawer--notifications__entry__message {
+      position: relative; }
 
 @keyframes modal__fade-in {
   0% {

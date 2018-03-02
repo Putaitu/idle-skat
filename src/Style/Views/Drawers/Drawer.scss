@@ -1,101 +1,25 @@
-.drawers {
-    position: fixed;
-    left: 0;
-    padding: 0.5rem;
-
-    &.top {
-        top: 0;
-    }
-    
-    &.bottom {
-        bottom: 0;
-    }
-
-    &:after {
-        content: '';
-        display: block;
-        clear: both;
-    }
-}
-
 .drawer {
-    position: relative;
-    float: left;
-    margin-right: 1rem;
-    border-radius: 1rem;
-    background-color: dimgrey;
-    color: white;
-
-    &__preview {
-        &__label {
-            line-height: 2rem;
-            padding: 0 0.5rem;
-            text-transform: uppercase;
-            font-weight: bold;
-            margin: 0 0.5rem;
-        }
-
-        &__notification {
-            background-color: red;
-            color: white;
-            font-weight: bold;
-            line-height: 1rem;
-            width: 1rem;
-            text-align: center;
-            border-radius: 50%;
-            margin: 0.25rem;
-            font-size: 0.8rem;
-            position: absolute;
-            top: -0.5rem;
-            right: -0.5rem;
-        }
-    }
-
-    &__content {
-        display: none;
-    }
+    position: fixed;
+    bottom: 0;
+    left: 0;
 
     &__toggle {
         -webkit-appearance: none;
         -moz-appearance: none;
         appearance: none;
-        display: block;
-        width: 100%;
-        position: absolute;
-        top: 0;
-        width: 100%;
-        height: 2rem;
-        right: 0;
+        width: 3rem;
+        height: 1rem;
         cursor: pointer;
-  
-        &:focus {
-            outline: none;
-        }
+        background-color: grey;
+    }
 
-        &:checked {
-            width: 2rem;
-        }
-    }
-   
-    &__toggle:checked ~ &__content {
-        display: block;
-        padding: 1rem;
-    }
-    
-    &__toggle:checked ~ &__preview * {
+    // Expanded
+    &__toggle:checked ~ &__preview {
         display: none;
     }
-    
-    &__toggle:checked ~ &__preview:after {
-        content: '✖';
-        display: block;
-        line-height: 2rem;
-        height: 2rem;
-        width: 2rem;
-        position: absolute;
-        right: 0;
-        top: 0;
-        text-align: center;
-        pointer-events: none;
+
+    // Collapsed
+    &__toggle:not(:checked) ~ &__content {
+        display: none;
     }
 }

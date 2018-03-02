@@ -12,6 +12,7 @@ class ProgressBar extends Crisp.View {
 
         this.max = this.max || 100;
         this.value = this.value || 0;
+        this.message = '';
 
         this.fetch();
 
@@ -34,7 +35,10 @@ class ProgressBar extends Crisp.View {
     setProgress(value, max, message) {
         this.value = value;
         this.max = max;
-        this.message = message;
+
+        if(message) {
+            this.message += '<br>' + message;
+        }
 
         this._render();
     }

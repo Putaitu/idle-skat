@@ -10,6 +10,8 @@ class Drawer extends Crisp.View {
     constructor(params) {
         super(params);
 
+        this.model = this.model || {};
+
         this.fetch();
     }
     
@@ -55,16 +57,18 @@ class Drawer extends Crisp.View {
     }
 
     /**
-     * Updates this drawer
+     * Renders the toggle
      */
-    update() {}
+    renderToggle() {
+        return _.input({type: 'checkbox', class: 'drawer__toggle', checked: this.isExpanded});
+    }
 
     /**
      * Template
      */
     template() {
         return _.div({class: 'drawer drawer-' + this.name.replace('Drawer', '').replace(/([A-Z])/g, '-$1').trim().toLowerCase()},
-            _.input({type: 'checkbox', class: 'drawer__toggle', checked: this.isExpanded}),
+            this.renderToggle(),
             this.renderPreview(),
             this.renderContent()
         );

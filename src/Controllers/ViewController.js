@@ -10,6 +10,7 @@ class ViewController {
     static init() {
         Crisp.Router.route('/', this.index);
         Crisp.Router.route('/b-skat-estimation', this.bskat);
+        Crisp.Router.route('/session', this.session);
     
         Crisp.Router.init();
     }
@@ -18,9 +19,7 @@ class ViewController {
      * Index
      */
     static index() {
-        Crisp.View.clear(Crisp.View);
-
-        _.append(document.body,
+        _.replace(document.body,
             new Game.Views.Pages.Setup() 
         );
     }
@@ -29,10 +28,17 @@ class ViewController {
      * B-skat
      */
     static bskat() {
-        Crisp.View.clear(Crisp.View);
-
-        _.append(document.body,
+        _.replace(document.body,
             new Game.Views.Pages.BSkatEstimation() 
+        );
+    }
+
+    /**
+     * Session
+     */
+    static session() {
+        _.replace(document.body,
+            new Game.Views.Pages.Session() 
         );
     }
 }

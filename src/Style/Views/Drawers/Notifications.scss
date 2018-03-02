@@ -1,0 +1,38 @@
+.drawer--notifications {
+    position: fixed;
+    left: 0;
+    bottom: 10rem;
+
+    &__entry {
+        border-radius: 0.2rem;
+        padding: 0.5rem;
+        position: relative;
+        background-color: lightgrey;
+
+        &:not(:last-of-type) {
+            margin-bottom: 1rem;
+        }
+
+        &__progress {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background-color: grey;
+        }
+
+        &__title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            position: relative;
+        }
+
+        &__title + &__message {
+            margin-top: 0.5rem;
+        }
+
+        &__message {
+            position: relative;
+        }
+    }
+}

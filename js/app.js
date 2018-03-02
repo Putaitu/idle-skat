@@ -72,53 +72,6 @@
 
 __webpack_require__(1);
 
-/**
- * Adds hours to a date
- */
-Date.prototype.addHours = function (h) {
-    this.setTime(this.getTime() + h * 60 * 60 * 1000);
-    return this;
-};
-
-/**
- * Gets quarter from a date
- */
-Date.prototype.getQuarter = function () {
-    let month = this.getMonth() + 1;
-
-    if (month <= 3) {
-        return 1;
-    }
-    if (month <= 6) {
-        return 2;
-    }
-    if (month <= 9) {
-        return 3;
-    }
-    return 4;
-};
-
-/**
- * Pretty prints a date
- */
-Date.prototype.prettyPrint = function () {
-    let string = this.getFullYear() + '-';
-
-    if (this.getMonth() + 1 < 10) {
-        string += '0';
-    }
-
-    string += this.getMonth() + 1 + '-';
-
-    if (this.getDate() < 10) {
-        string += '0';
-    }
-
-    string += this.getDate();
-
-    return string;
-};
-
 window._ = Crisp.Elements;
 
 window.Game = {};
@@ -161,6 +114,8 @@ Game.Views.Drawers = {};
 Game.Views.Drawers.Drawer = __webpack_require__(17);
 Game.Views.Drawers.FinancialRecordDrawer = __webpack_require__(18);
 Game.Views.Drawers.VATRecordDrawer = __webpack_require__(19);
+Game.Views.Drawers.Timeline = __webpack_require__(31);
+Game.Views.Drawers.Notifications = __webpack_require__(32);
 
 Game.Views.Charts = {};
 Game.Views.Charts.PieChart = __webpack_require__(20);
@@ -168,7 +123,7 @@ Game.Views.Charts.PieChart = __webpack_require__(20);
 Game.Views.Pages = {};
 Game.Views.Pages.Setup = __webpack_require__(21);
 Game.Views.Pages.BSkatEstimation = __webpack_require__(22);
-Game.Views.Pages.Level = __webpack_require__(23);
+Game.Views.Pages.Session = __webpack_require__(29);
 
 // -------------------
 // Controllers
@@ -233,7 +188,90 @@ module.exports = ConfigService;
 "use strict";
 
 
-const HOURS_PER_SECOND = 12;
+const HOURS_PER_SECOND = 24;
+
+/**
+ * Resets hours, minutes and seconds of a date
+ */
+Date.prototype.reset = function () {
+    this.setHours(0);
+    this.setMinutes(0);
+    this.setSeconds(0);
+
+    return this;
+};
+
+/**
+ * Adds hours to a date
+ */
+Date.prototype.addHours = function (h) {
+    this.setTime(this.getTime() + h * 60 * 60 * 1000);
+    return this;
+};
+
+/**
+ * Adds days to a date
+ */
+Date.prototype.addDays = function (d) {
+    this.setDate(this.getDate() + d);
+    return this;
+};
+
+/**
+ * Adds months to a date
+ */
+Date.prototype.addMonths = function (m) {
+    this.setMonth(this.getMonth() + m);
+    return this;
+};
+
+/**
+ * Gets the actual month
+ */
+Date.prototype.getMonthName = function () {
+    const names = ['January', 'Fabruary', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+    return names[this.getMonth()];
+};
+
+/**
+ * Gets quarter from a date
+ */
+Date.prototype.getQuarter = function () {
+    let month = this.getMonth() + 1;
+
+    if (month <= 3) {
+        return 1;
+    }
+    if (month <= 6) {
+        return 2;
+    }
+    if (month <= 9) {
+        return 3;
+    }
+    return 4;
+};
+
+/**
+ * Pretty prints a date
+ */
+Date.prototype.prettyPrint = function () {
+    let string = this.getFullYear() + '-';
+
+    if (this.getMonth() + 1 < 10) {
+        string += '0';
+    }
+
+    string += this.getMonth() + 1 + '-';
+
+    if (this.getDate() < 10) {
+        string += '0';
+    }
+
+    string += this.getDate();
+
+    return string;
+};
 
 /**
  * The service for managing time
@@ -264,10 +302,6 @@ class TimeService {
      * @param {Number} amount
      */
     static addDays(amount) {
-        if (amount < 1) {
-            return;
-        }
-
         let time = this.currentTime;
 
         time.addHours(amount * 24);
@@ -313,6 +347,13 @@ class TimeService {
      */
     static get currentMonth() {
         return this.currentTime.getMonth() + 1;
+    }
+
+    /**
+     * Gets the current date
+     */
+    static get currentDate() {
+        return this.currentTime.getDate();
     }
 
     /**
@@ -1270,6 +1311,7 @@ class ProgressBar extends Crisp.View {
 
         this.max = this.max || 100;
         this.value = this.value || 0;
+        this.message = '';
 
         this.fetch();
 
@@ -1292,7 +1334,10 @@ class ProgressBar extends Crisp.View {
     setProgress(value, max, message) {
         this.value = value;
         this.max = max;
-        this.message = message;
+
+        if (message) {
+            this.message += '<br>' + message;
+        }
 
         this._render();
     }
@@ -1447,6 +1492,8 @@ class Drawer extends Crisp.View {
     constructor(params) {
         super(params);
 
+        this.model = this.model || {};
+
         this.fetch();
     }
 
@@ -1489,15 +1536,17 @@ class Drawer extends Crisp.View {
     }
 
     /**
-     * Updates this drawer
+     * Renders the toggle
      */
-    update() {}
+    renderToggle() {
+        return _.input({ type: 'checkbox', class: 'drawer__toggle', checked: this.isExpanded });
+    }
 
     /**
      * Template
      */
     template() {
-        return _.div({ class: 'drawer drawer-' + this.name.replace('Drawer', '').replace(/([A-Z])/g, '-$1').trim().toLowerCase() }, _.input({ type: 'checkbox', class: 'drawer__toggle', checked: this.isExpanded }), this.renderPreview(), this.renderContent());
+        return _.div({ class: 'drawer drawer-' + this.name.replace('Drawer', '').replace(/([A-Z])/g, '-$1').trim().toLowerCase() }, this.renderToggle(), this.renderPreview(), this.renderContent());
     }
 }
 
@@ -2049,10 +2098,10 @@ class BSkatEstimation extends Crisp.View {
     onClickCalculate(e) {
         let progressBar = new Game.Views.Widgets.ProgressBar();
 
-        progressBar.setProgress(0, 100, 'Step 1...');
+        progressBar.setProgress(0, 100, 'Municipality tax...');
 
         this.wait(1).then(() => {
-            progressBar.setProgress(20, 100, 'Step 2...');
+            progressBar.setProgress(20, 100, 'Labour contribution...');
 
             return this.wait(1);
         }).then(() => {
@@ -2099,10 +2148,23 @@ class BSkatEstimation extends Crisp.View {
     }
 
     /**
+     * Event: Click done
+     *
+     * @param {InputEvent} e
+     */
+    onClickDone(e) {
+        if (this.model.bskat <= 0) {
+            return alert('Please calculate your B-skat first');
+        }
+
+        location.hash = '/session';
+    }
+
+    /**
      * Template
      */
     template() {
-        return _.div({ class: 'page page--b-skat-estimation' }, _.h1({ class: 'page__title' }, 'B-skat estimation'), _.div({ class: 'page--b-skat-estimation__input' }, _.div({ class: 'widget-group align-center' }, _.label({ class: 'widget widget--label' }, 'Target income (yearly)'), _.input({ class: 'widget widget--input', type: 'number', min: 0, value: this.model.income }).on('input', e => {
+        return _.div({ class: 'page page--b-skat-estimation' }, _.h1({ class: 'page__title' }, 'B-skat estimation'), _.div({ class: 'page--b-skat-estimation__input' }, _.div({ class: 'widget-group align-center' }, _.label({ class: 'widget widget--label' }, 'Target income for ' + Game.Services.TimeService.currentYear), _.input({ class: 'widget widget--input', type: 'number', step: 1000, min: 0, value: this.model.income }).on('input', e => {
             this.onChangeIncome(e);
         })), _.button({ class: 'widget widget--button align-center' }, 'Calculate').click(e => {
             this.onClickCalculate(e);
@@ -2113,14 +2175,70 @@ class BSkatEstimation extends Crisp.View {
                 bskat: { showPercentage: true, percent: this.model.bskat / this.model.income, label: 'B-skat', value: this.model.bskat, color: 'blue' },
                 income: { percent: 1 - this.model.bskat / this.model.income, label: 'Target income', color: 'green', value: this.model.income }
             }
-        }), this.finalBSkat = _.div({ class: 'page--b-skat-estimation__final' }));
+        }), this.finalBSkat = _.div({ class: 'page--b-skat-estimation__final' }), _.button({ class: 'widget widget--button align-right' }, 'Done').click(e => {
+            this.onClickDone(e);
+        }));
     }
 }
 
 module.exports = BSkatEstimation;
 
 /***/ }),
-/* 23 */
+/* 23 */,
+/* 24 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * The view controller
+ */
+
+class ViewController {
+    /**
+     * Initialise routes
+     */
+    static init() {
+        Crisp.Router.route('/', this.index);
+        Crisp.Router.route('/b-skat-estimation', this.bskat);
+        Crisp.Router.route('/session', this.session);
+
+        Crisp.Router.init();
+    }
+
+    /**
+     * Index
+     */
+    static index() {
+        _.replace(document.body, new Game.Views.Pages.Setup());
+    }
+
+    /**
+     * B-skat
+     */
+    static bskat() {
+        _.replace(document.body, new Game.Views.Pages.BSkatEstimation());
+    }
+
+    /**
+     * Session
+     */
+    static session() {
+        _.replace(document.body, new Game.Views.Pages.Session());
+    }
+}
+
+ViewController.init();
+
+module.exports = ViewController;
+
+/***/ }),
+/* 25 */,
+/* 26 */,
+/* 27 */,
+/* 28 */,
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2130,9 +2248,9 @@ const MACHINE_DELAY = 4;
 
 let machineCounter = 0;
 
-class Level extends Crisp.View {
+class Session extends Crisp.View {
     /**
-     * Constrcutor
+     * Constructor
      */
     constructor(params) {
         super(params);
@@ -2154,31 +2272,35 @@ class Level extends Crisp.View {
      * Heartbeat
      */
     heartbeat() {
+        if (!document.hasFocus()) {
+            return;
+        }
+
         // Tick time 
         Game.Services.TimeService.tick();
 
+        this.timeline.heartbeat();
+        this.notifications.heartbeat();
+
+        /*
         // Sell one unit every second
         this.model.company.sellUnit();
-
-        // Automatically produce units
+         // Automatically produce units
         machineCounter++;
-
-        if (machineCounter >= MACHINE_DELAY) {
-            for (let i = 0; i < this.model.company.machines; i++) {
+        
+        if(machineCounter >= MACHINE_DELAY) {
+            for(let i = 0; i < this.model.company.machines; i++) {
                 this.model.company.produceUnit();
             }
-
-            machineCounter = 0;
+             machineCounter = 0;
         }
-
-        // Update the VAT record drawer
+         // Update the VAT record drawer
         Game.Views.Drawers.VATRecordDrawer.update();
-
-        // Update the financial record drawer
+         // Update the financial record drawer
         Game.Views.Drawers.FinancialRecordDrawer.update();
-
-        // Render the level
+         // Render the level
         this._render();
+        */
 
         // Save the current state
         this.model.save();
@@ -2255,56 +2377,230 @@ class Level extends Crisp.View {
             this.model.company.purchaseMachine();
         }), this.renderButton('inventory', 'Inventory', 'Cost: ' + this.model.company.unitProductionCost + ' kr.', 'Produce', () => {
             this.model.company.produceUnit();
-        })), _.div({ class: 'page--level__calculations' }, _.div({ class: 'page--level__calculations__inner' }, this.renderCalculationField('Sales', this.model.financialRecord.currentReport.sales + ' kr.'), this.renderCalculationField('Production cost', this.model.financialRecord.currentReport.productionCost + ' kr.')))));
+        })) /*,
+            _.div({class: 'page--level__calculations'},
+               _.div({class: 'page--level__calculations__inner'},
+                   this.renderCalculationField('Sales', this.model.financialRecord.currentReport.sales + ' kr.'),
+                   this.renderCalculationField('Production cost', this.model.financialRecord.currentReport.productionCost + ' kr.') 
+               )
+            )*/
+        ), this.notifications = new Game.Views.Drawers.Notifications(), this.timeline = new Game.Views.Drawers.Timeline());
     }
 }
 
-module.exports = Level;
+module.exports = Session;
 
 /***/ }),
-/* 24 */
+/* 30 */,
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 /**
- * The view controller
+ * The pervasive timeline
  */
 
-class ViewController {
+class Timeline extends Game.Views.Drawers.Drawer {
     /**
-     * Initialise routes
+     * Gets the notification for a date
+     *
+     * @param {Date} date
+     *
+     * @returns {Object} Notification
      */
-    static init() {
-        Crisp.Router.route('/', this.index);
-        Crisp.Router.route('/b-skat-estimation', this.bskat);
+    getNotification(date) {
+        // Pay VAT due date
+        if (date.getDate() === 1 && ( // The first day of...
+        date.getMonth() === 2 || // ...march or...
+        date.getMonth() === 5 || // ...june or...
+        date.getMonth() === 8 || // ...september or...
+        date.getMonth() === 11 // ...december
+        )) {
+            return {
+                type: 'alert',
+                title: 'VAT payment due',
+                message: 'VAT payment was due on ' + date.prettyPrint() + ', but was not paid'
+            };
+        }
 
-        Crisp.Router.init();
+        // Able to pay VAT
+        if (date.getDate() === 22 && ( // The 22nd day of...
+        date.getMonth() === 1 || // ...february or...
+        date.getMonth() === 4 || // ...may or...
+        date.getMonth() === 7 || // ...august or...
+        date.getMonth() === 10 // ...november
+        )) {
+            let expiresOn = new Date(date).addMonths(1);
+            expiresOn.setDate(1);
+
+            return {
+                type: 'warning',
+                title: 'VAT payment available',
+                message: 'VAT payment can be made, and is due on ' + expiresOn.prettyPrint(),
+                expiresOn: expiresOn
+            };
+        }
+
+        // Report VAT
+        if (date.getDate() === 1 && ( // The first day of...
+        date.getMonth() === 0 || // ...january or...
+        date.getMonth() === 3 || // ...april or...
+        date.getMonth() === 6 || // ...july or...
+        date.getMonth() === 9 // ...october
+        )) {
+            let expiresOn = new Date(date).addMonths(1);
+            expiresOn.setDate(22);
+
+            return {
+                type: 'warning',
+                title: 'VAT report',
+                message: 'VAT can be reported, and payment can be made starting ' + expiresOn.prettyPrint(),
+                expiresOn: expiresOn
+            };
+        }
     }
 
     /**
-     * Index
+     * Event: Click notification
+     *
+     * @param {Object} notification
      */
-    static index() {
-        Crisp.View.clear(Crisp.View);
-
-        _.append(document.body, new Game.Views.Pages.Setup());
+    onClickNotification(notification) {
+        alert(notification.message);
     }
 
     /**
-     * B-skat
+     * Heartbeat
      */
-    static bskat() {
-        Crisp.View.clear(Crisp.View);
+    heartbeat() {
+        let currentDate = Game.Services.TimeService.currentDate;
 
-        _.append(document.body, new Game.Views.Pages.BSkatEstimation());
+        if (this.lastDate !== currentDate) {
+            this._render();
+        }
+
+        this.lastDate = currentDate;
+    }
+
+    /**
+     * Renders the toggle
+     */
+    renderToggle() {
+        return null;
+    }
+
+    /**
+     * Renders the preview
+     */
+    renderPreview() {
+        let date = Game.Services.TimeService.currentTime;
+
+        return _.div({ class: 'drawer__preview drawer--timeline__scroller' }, _.div({ class: 'drawer--timeline__scroller__year' }, date.getFullYear()), _.div({ class: 'drawer--timeline__scroller__month' }, date.getMonthName()), _.div({ class: 'drawer--timeline__scroller__days' }, _.loop(30, day => {
+            let currentDate = new Date(date);
+
+            currentDate.addDays(day);
+            currentDate.reset();
+
+            let notification = this.getNotification(currentDate);
+
+            if (notification && day === 0) {
+                Game.Views.Drawers.Notifications.set(notification);
+            }
+
+            return _.div({ class: 'drawer--timeline__scroller__day ' + (currentDate.getDate() % 2 === 0 ? 'even' : 'odd') }, _.if(currentDate.getDate() === 1 && day > 0, _.div({ class: 'drawer--timeline__scroller__day__month' }, currentDate.getMonthName())), _.div({ class: 'drawer--timeline__scroller__day__number', 'data-number': currentDate.getDate() }, currentDate.getDate()), _.do(() => {
+                if (!notification) {
+                    return;
+                }
+
+                return _.div({ class: 'drawer--timeline__scroller__day__notification ' + (notification.type || '') }, notification.title);
+            }));
+        })));
+    }
+
+    /**
+     * Renders the main content
+     */
+    renderContent() {
+        return _.div({ class: 'drawer__content drawer--timeline__days' });
     }
 }
 
-ViewController.init();
+module.exports = Timeline;
 
-module.exports = ViewController;
+/***/ }),
+/* 32 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * Notification drawer
+ */
+
+class Notifications extends Game.Views.Drawers.Drawer {
+    /**
+     * Sets a notification
+     *
+     * @param {Object} notification
+     */
+    static set(notification) {
+        let instance = Crisp.View.get(Notifications);
+
+        if (!instance) {
+            return;
+        }
+
+        let key = btoa(JSON.stringify(notification));
+
+        notification.createdOn = Game.Services.TimeService.currentTime;
+
+        instance.model[key] = notification;
+
+        instance.fetch();
+    }
+
+    /**
+     * Heartbeat
+     */
+    heartbeat() {
+        this.fetch();
+    }
+
+    /**
+     * Renders the preview
+     */
+    renderPreview() {
+        let currentDate = Game.Services.TimeService.currentTime;
+
+        return _.div({ class: 'drawer__preview drawer--notifications__entries' }, _.each(this.model, (key, notification) => {
+            return _.div({ class: 'drawer--notifications__entry' }, _.do(() => {
+                if (!notification.expiresOn) {
+                    return;
+                }
+
+                let percent = (currentDate.getTime() - notification.createdOn.getTime()) / (notification.expiresOn.getTime() - notification.createdOn.getTime()) * 100;
+
+                if (percent > 100) {
+                    percent = 100;
+                }
+
+                return _.div({ class: 'drawer--notifications__entry__progress', style: 'width: ' + percent + '%' });
+            }), _.if(notification.title, _.div({ class: 'drawer--notifications__entry__title' }, notification.title)), _.if(notification.message, _.div({ class: 'drawer--notifications__entry__message' }, notification.message)));
+        }));
+    }
+
+    /**
+     * Renders the toggle
+     */
+    renderToggle() {
+        return null;
+    }
+}
+
+module.exports = Notifications;
 
 /***/ })
 /******/ ]);

@@ -78,11 +78,11 @@ class BSkatEstimation extends Crisp.View {
     onClickCalculate(e) {
         let progressBar = new Game.Views.Widgets.ProgressBar();
 
-        progressBar.setProgress(0, 100, 'Step 1...');
+        progressBar.setProgress(0, 100, 'Municipality tax...');
 
         this.wait(1)
         .then(() => {
-            progressBar.setProgress(20, 100, 'Step 2...');
+            progressBar.setProgress(20, 100, 'Labour contribution...');
 
             return this.wait(1);
         })
@@ -138,6 +138,17 @@ class BSkatEstimation extends Crisp.View {
     }
 
     /**
+     * Event: Click done
+     *
+     * @param {InputEvent} e
+     */
+    onClickDone(e) {
+        if(this.model.bskat <= 0) { return alert('Please calculate your B-skat first'); } 
+
+        location.hash = '/session';
+    }
+
+    /**
      * Template
      */
     template() {
@@ -145,8 +156,8 @@ class BSkatEstimation extends Crisp.View {
             _.h1({class: 'page__title'}, 'B-skat estimation'),
             _.div({class: 'page--b-skat-estimation__input'},
                 _.div({class: 'widget-group align-center'},
-                    _.label({class: 'widget widget--label'}, 'Target income (yearly)'),
-                    _.input({class: 'widget widget--input', type: 'number', min: 0, value: this.model.income})
+                    _.label({class: 'widget widget--label'}, 'Target income for ' + Game.Services.TimeService.currentYear),
+                    _.input({class: 'widget widget--input', type: 'number', step: 1000, min: 0, value: this.model.income})
                         .on('input', (e) => { this.onChangeIncome(e); })
                 ),
                 _.button({class: 'widget widget--button align-center'}, 'Calculate')
@@ -160,7 +171,9 @@ class BSkatEstimation extends Crisp.View {
                     income: { percent: 1 - (this.model.bskat / this.model.income), label: 'Target income', color: 'green', value: this.model.income }
                 }
             }),
-            this.finalBSkat = _.div({class: 'page--b-skat-estimation__final'})
+            this.finalBSkat = _.div({class: 'page--b-skat-estimation__final'}),
+            _.button({class: 'widget widget--button align-right'}, 'Done')
+                .click((e) => { this.onClickDone(e); })
         );
     }
 }
