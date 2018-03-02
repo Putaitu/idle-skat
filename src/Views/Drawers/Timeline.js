@@ -25,13 +25,17 @@ class Timeline extends Game.Views.Drawers.Drawer {
             return {
                 type: 'alert',
                 title: 'VAT payment due',
-                message: 'VAT payment was due on ' + date.prettyPrint() + ', but was not paid'
+                message: 'VAT payment was due on ' + date.prettyPrint() + ', but was not paid',
+                action: {
+                    label: 'Pay VAT',
+                    onClick: () => {}
+                }
             };
         }
         
         // Able to pay VAT
         if(
-            date.getDate() === 22 && // The 22nd day of...
+            date.getDate() === 24 && // The 24th day of...
             (
                 date.getMonth() === 1 || // ...february or...
                 date.getMonth() === 4 || // ...may or...
@@ -46,13 +50,17 @@ class Timeline extends Game.Views.Drawers.Drawer {
                 type: 'warning',
                 title: 'VAT payment available',
                 message: 'VAT payment can be made, and is due on ' + expiresOn.prettyPrint(),
-                expiresOn: expiresOn
+                expiresOn: expiresOn,
+                action: {
+                    label: 'Pay VAT',
+                    onClick: () => {}
+                }
             };
         }
 
         // Report VAT
         if(
-            date.getDate() === 1 && // The first day of...
+            date.getDate() === 4 && // The first day of...
             (
                 date.getMonth() === 0 || // ...january or...
                 date.getMonth() === 3 || // ...april or...
@@ -61,13 +69,47 @@ class Timeline extends Game.Views.Drawers.Drawer {
             )
         ) {
             let expiresOn = new Date(date).addMonths(1); 
-            expiresOn.setDate(22);
+            expiresOn.setDate(24);
 
             return {
                 type: 'warning',
                 title: 'VAT report',
                 message: 'VAT can be reported, and payment can be made starting ' + expiresOn.prettyPrint(),
-                expiresOn: expiresOn
+                expiresOn: expiresOn,
+                action: {
+                    label: 'Report VAT',
+                    onClick: () => {}
+                }
+            };
+        }
+
+        // Able to pay B-skat
+        if(date.getDate() === 1) {
+            let expiresOn = new Date(date);
+            expiresOn.setDate(22);
+            
+            return {
+                type: 'warning',
+                title: 'B-skat payment available',
+                message: 'B-skat payment can be made, and is due on ' + expiresOn.prettyPrint(),
+                expiresOn: expiresOn,
+                action: {
+                    label: 'Pay B-skat',
+                    onClick: () => {}
+                }
+            };
+        }
+        
+        // B-skat payment due
+        if(date.getDate() === 22) {
+            return {
+                type: 'alert',
+                title: 'B-skat payment due',
+                message: 'B-skat payment was due on ' + date.prettyPrint() + ', but was not paid',
+                action: {
+                    label: 'Pay B-skat',
+                    onClick: () => {}
+                }
             };
         }
     }

@@ -65,12 +65,12 @@
                 height: 2rem;
 
                 &.alert {
-                    background: #f33;
+                    background-color: red;
                     color: white;
                 }
                 
                 &.warning {
-                    background: yellow;
+                    background-color: yellow;
                     color: black;
                 }
             }

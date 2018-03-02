@@ -5,6 +5,27 @@
  */
 class Notifications extends Game.Views.Drawers.Drawer {
     /**
+     * Constructor
+     */
+    constructor(params) {
+        super(params);
+
+        this.model = Game.Services.ConfigService.get('notifications') || {};
+
+        for(let key in this.model) {
+            let entry = this.model[key];
+
+            if(entry.createdOn) {
+                entry.createdOn = new Date(entry.createdOn);
+            }
+            
+            if(entry.expiresOn) {
+                entry.expiresOn = new Date(entry.expiresOn);
+            }
+        }
+    }
+
+    /**
      * Sets a notification
      *
      * @param {Object} notification
@@ -14,19 +35,37 @@ class Notifications extends Game.Views.Drawers.Drawer {
 
         if(!instance) { return; }
 
-        let key = btoa(JSON.stringify(notification));
-
         notification.createdOn = Game.Services.TimeService.currentTime;
+
+        let key = notification.createdOn.getTime().toString();
 
         instance.model[key] = notification;
 
+        Game.Services.ConfigService.set('notifications', instance.model);
+
         instance.fetch();
+    }
+
+    /**
+     * Cleans up expired notifications
+     */
+    cleanExpired() {
+        let date = Game.Services.TimeService.currentTime;
+
+        for(let key in this.model) {
+            let entry = this.model[key];
+
+            if(entry.expiresOn && entry.expiresOn.getTime() <= date.getTime()) {
+                delete this.model[key];
+            }
+        }
     }
 
     /**
      * Heartbeat
      */
     heartbeat() {
+        this.cleanExpired();
         this.fetch();
     }
 
@@ -38,15 +77,13 @@ class Notifications extends Game.Views.Drawers.Drawer {
 
         return _.div({class: 'drawer__preview drawer--notifications__entries'},
             _.each(this.model, (key, notification) => {
-                return _.div({class: 'drawer--notifications__entry'},
+                return _.div({class: 'drawer--notifications__entry ' + (notification.type || '')},
                     _.do(() => {
                         if(!notification.expiresOn) { return; }
 
                         let percent = ((currentDate.getTime() - notification.createdOn.getTime()) / (notification.expiresOn.getTime() - notification.createdOn.getTime())) * 100;
 
-                        if(percent > 100) {
-                            percent = 100;
-                        }
+                        if(percent >= 100) { percent = 100; }
 
                         return _.div({class: 'drawer--notifications__entry__progress', style: 'width: ' + percent + '%'});
                     }),
@@ -55,7 +92,13 @@ class Notifications extends Game.Views.Drawers.Drawer {
                     ),
                     _.if(notification.message,
                         _.div({class: 'drawer--notifications__entry__message'}, notification.message)
-                    )
+                    ),
+                    _.do(() => {
+                        if(!notification.action) { return; }
+
+                        return _.button({class: 'widget widget--button ' + (notification.type || '')}, notification.action.label)
+                            .click(() => { notification.action.onClick(); })
+                    })
                 );
             })
         );

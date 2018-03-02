@@ -114,22 +114,22 @@ Game.Views.Drawers = {};
 Game.Views.Drawers.Drawer = __webpack_require__(17);
 Game.Views.Drawers.FinancialRecordDrawer = __webpack_require__(18);
 Game.Views.Drawers.VATRecordDrawer = __webpack_require__(19);
-Game.Views.Drawers.Timeline = __webpack_require__(31);
-Game.Views.Drawers.Notifications = __webpack_require__(32);
+Game.Views.Drawers.Timeline = __webpack_require__(20);
+Game.Views.Drawers.Notifications = __webpack_require__(21);
 
 Game.Views.Charts = {};
-Game.Views.Charts.PieChart = __webpack_require__(20);
+Game.Views.Charts.PieChart = __webpack_require__(22);
 
 Game.Views.Pages = {};
-Game.Views.Pages.Setup = __webpack_require__(21);
-Game.Views.Pages.BSkatEstimation = __webpack_require__(22);
-Game.Views.Pages.Session = __webpack_require__(29);
+Game.Views.Pages.Setup = __webpack_require__(23);
+Game.Views.Pages.BSkatEstimation = __webpack_require__(24);
+Game.Views.Pages.Session = __webpack_require__(25);
 
 // -------------------
 // Controllers
 // -------------------
 Game.Controllers = {};
-Game.Controllers.ViewController = __webpack_require__(24);
+Game.Controllers.ViewController = __webpack_require__(26);
 
 /***/ }),
 /* 1 */
@@ -1710,6 +1710,306 @@ module.exports = VATRecordDrawer;
 
 
 /**
+ * The pervasive timeline
+ */
+
+class Timeline extends Game.Views.Drawers.Drawer {
+    /**
+     * Gets the notification for a date
+     *
+     * @param {Date} date
+     *
+     * @returns {Object} Notification
+     */
+    getNotification(date) {
+        // Pay VAT due date
+        if (date.getDate() === 1 && ( // The first day of...
+        date.getMonth() === 2 || // ...march or...
+        date.getMonth() === 5 || // ...june or...
+        date.getMonth() === 8 || // ...september or...
+        date.getMonth() === 11 // ...december
+        )) {
+            return {
+                type: 'alert',
+                title: 'VAT payment due',
+                message: 'VAT payment was due on ' + date.prettyPrint() + ', but was not paid',
+                action: {
+                    label: 'Pay VAT',
+                    onClick: () => {}
+                }
+            };
+        }
+
+        // Able to pay VAT
+        if (date.getDate() === 24 && ( // The 24th day of...
+        date.getMonth() === 1 || // ...february or...
+        date.getMonth() === 4 || // ...may or...
+        date.getMonth() === 7 || // ...august or...
+        date.getMonth() === 10 // ...november
+        )) {
+            let expiresOn = new Date(date).addMonths(1);
+            expiresOn.setDate(1);
+
+            return {
+                type: 'warning',
+                title: 'VAT payment available',
+                message: 'VAT payment can be made, and is due on ' + expiresOn.prettyPrint(),
+                expiresOn: expiresOn,
+                action: {
+                    label: 'Pay VAT',
+                    onClick: () => {}
+                }
+            };
+        }
+
+        // Report VAT
+        if (date.getDate() === 4 && ( // The first day of...
+        date.getMonth() === 0 || // ...january or...
+        date.getMonth() === 3 || // ...april or...
+        date.getMonth() === 6 || // ...july or...
+        date.getMonth() === 9 // ...october
+        )) {
+            let expiresOn = new Date(date).addMonths(1);
+            expiresOn.setDate(24);
+
+            return {
+                type: 'warning',
+                title: 'VAT report',
+                message: 'VAT can be reported, and payment can be made starting ' + expiresOn.prettyPrint(),
+                expiresOn: expiresOn,
+                action: {
+                    label: 'Report VAT',
+                    onClick: () => {}
+                }
+            };
+        }
+
+        // Able to pay B-skat
+        if (date.getDate() === 1) {
+            let expiresOn = new Date(date);
+            expiresOn.setDate(22);
+
+            return {
+                type: 'warning',
+                title: 'B-skat payment available',
+                message: 'B-skat payment can be made, and is due on ' + expiresOn.prettyPrint(),
+                expiresOn: expiresOn,
+                action: {
+                    label: 'Pay B-skat',
+                    onClick: () => {}
+                }
+            };
+        }
+
+        // B-skat payment due
+        if (date.getDate() === 22) {
+            return {
+                type: 'alert',
+                title: 'B-skat payment due',
+                message: 'B-skat payment was due on ' + date.prettyPrint() + ', but was not paid',
+                action: {
+                    label: 'Pay B-skat',
+                    onClick: () => {}
+                }
+            };
+        }
+    }
+
+    /**
+     * Event: Click notification
+     *
+     * @param {Object} notification
+     */
+    onClickNotification(notification) {
+        alert(notification.message);
+    }
+
+    /**
+     * Heartbeat
+     */
+    heartbeat() {
+        let currentDate = Game.Services.TimeService.currentDate;
+
+        if (this.lastDate !== currentDate) {
+            this._render();
+        }
+
+        this.lastDate = currentDate;
+    }
+
+    /**
+     * Renders the toggle
+     */
+    renderToggle() {
+        return null;
+    }
+
+    /**
+     * Renders the preview
+     */
+    renderPreview() {
+        let date = Game.Services.TimeService.currentTime;
+
+        return _.div({ class: 'drawer__preview drawer--timeline__scroller' }, _.div({ class: 'drawer--timeline__scroller__year' }, date.getFullYear()), _.div({ class: 'drawer--timeline__scroller__month' }, date.getMonthName()), _.div({ class: 'drawer--timeline__scroller__days' }, _.loop(30, day => {
+            let currentDate = new Date(date);
+
+            currentDate.addDays(day);
+            currentDate.reset();
+
+            let notification = this.getNotification(currentDate);
+
+            if (notification && day === 0) {
+                Game.Views.Drawers.Notifications.set(notification);
+            }
+
+            return _.div({ class: 'drawer--timeline__scroller__day ' + (currentDate.getDate() % 2 === 0 ? 'even' : 'odd') }, _.if(currentDate.getDate() === 1 && day > 0, _.div({ class: 'drawer--timeline__scroller__day__month' }, currentDate.getMonthName())), _.div({ class: 'drawer--timeline__scroller__day__number', 'data-number': currentDate.getDate() }, currentDate.getDate()), _.do(() => {
+                if (!notification) {
+                    return;
+                }
+
+                return _.div({ class: 'drawer--timeline__scroller__day__notification ' + (notification.type || '') }, notification.title);
+            }));
+        })));
+    }
+
+    /**
+     * Renders the main content
+     */
+    renderContent() {
+        return _.div({ class: 'drawer__content drawer--timeline__days' });
+    }
+}
+
+module.exports = Timeline;
+
+/***/ }),
+/* 21 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * Notification drawer
+ */
+
+class Notifications extends Game.Views.Drawers.Drawer {
+    /**
+     * Constructor
+     */
+    constructor(params) {
+        super(params);
+
+        this.model = Game.Services.ConfigService.get('notifications') || {};
+
+        for (let key in this.model) {
+            let entry = this.model[key];
+
+            if (entry.createdOn) {
+                entry.createdOn = new Date(entry.createdOn);
+            }
+
+            if (entry.expiresOn) {
+                entry.expiresOn = new Date(entry.expiresOn);
+            }
+        }
+    }
+
+    /**
+     * Sets a notification
+     *
+     * @param {Object} notification
+     */
+    static set(notification) {
+        let instance = Crisp.View.get(Notifications);
+
+        if (!instance) {
+            return;
+        }
+
+        notification.createdOn = Game.Services.TimeService.currentTime;
+
+        let key = notification.createdOn.getTime().toString();
+
+        instance.model[key] = notification;
+
+        Game.Services.ConfigService.set('notifications', instance.model);
+
+        instance.fetch();
+    }
+
+    /**
+     * Cleans up expired notifications
+     */
+    cleanExpired() {
+        let date = Game.Services.TimeService.currentTime;
+
+        for (let key in this.model) {
+            let entry = this.model[key];
+
+            if (entry.expiresOn && entry.expiresOn.getTime() <= date.getTime()) {
+                delete this.model[key];
+            }
+        }
+    }
+
+    /**
+     * Heartbeat
+     */
+    heartbeat() {
+        this.cleanExpired();
+        this.fetch();
+    }
+
+    /**
+     * Renders the preview
+     */
+    renderPreview() {
+        let currentDate = Game.Services.TimeService.currentTime;
+
+        return _.div({ class: 'drawer__preview drawer--notifications__entries' }, _.each(this.model, (key, notification) => {
+            return _.div({ class: 'drawer--notifications__entry ' + (notification.type || '') }, _.do(() => {
+                if (!notification.expiresOn) {
+                    return;
+                }
+
+                let percent = (currentDate.getTime() - notification.createdOn.getTime()) / (notification.expiresOn.getTime() - notification.createdOn.getTime()) * 100;
+
+                if (percent >= 100) {
+                    percent = 100;
+                }
+
+                return _.div({ class: 'drawer--notifications__entry__progress', style: 'width: ' + percent + '%' });
+            }), _.if(notification.title, _.div({ class: 'drawer--notifications__entry__title' }, notification.title)), _.if(notification.message, _.div({ class: 'drawer--notifications__entry__message' }, notification.message)), _.do(() => {
+                if (!notification.action) {
+                    return;
+                }
+
+                return _.button({ class: 'widget widget--button ' + (notification.type || '') }, notification.action.label).click(() => {
+                    notification.action.onClick();
+                });
+            }));
+        }));
+    }
+
+    /**
+     * Renders the toggle
+     */
+    renderToggle() {
+        return null;
+    }
+}
+
+module.exports = Notifications;
+
+/***/ }),
+/* 22 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
  * A flexible pie chart
  */
 
@@ -1901,7 +2201,7 @@ class PieChart extends Crisp.View {
 module.exports = PieChart;
 
 /***/ }),
-/* 21 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2009,7 +2309,7 @@ class Setup extends Crisp.View {
 module.exports = Setup;
 
 /***/ }),
-/* 22 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2184,61 +2484,7 @@ class BSkatEstimation extends Crisp.View {
 module.exports = BSkatEstimation;
 
 /***/ }),
-/* 23 */,
-/* 24 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-/**
- * The view controller
- */
-
-class ViewController {
-    /**
-     * Initialise routes
-     */
-    static init() {
-        Crisp.Router.route('/', this.index);
-        Crisp.Router.route('/b-skat-estimation', this.bskat);
-        Crisp.Router.route('/session', this.session);
-
-        Crisp.Router.init();
-    }
-
-    /**
-     * Index
-     */
-    static index() {
-        _.replace(document.body, new Game.Views.Pages.Setup());
-    }
-
-    /**
-     * B-skat
-     */
-    static bskat() {
-        _.replace(document.body, new Game.Views.Pages.BSkatEstimation());
-    }
-
-    /**
-     * Session
-     */
-    static session() {
-        _.replace(document.body, new Game.Views.Pages.Session());
-    }
-}
-
-ViewController.init();
-
-module.exports = ViewController;
-
-/***/ }),
-/* 25 */,
-/* 26 */,
-/* 27 */,
-/* 28 */,
-/* 29 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2391,216 +2637,53 @@ class Session extends Crisp.View {
 module.exports = Session;
 
 /***/ }),
-/* 30 */,
-/* 31 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 /**
- * The pervasive timeline
+ * The view controller
  */
 
-class Timeline extends Game.Views.Drawers.Drawer {
+class ViewController {
     /**
-     * Gets the notification for a date
-     *
-     * @param {Date} date
-     *
-     * @returns {Object} Notification
+     * Initialise routes
      */
-    getNotification(date) {
-        // Pay VAT due date
-        if (date.getDate() === 1 && ( // The first day of...
-        date.getMonth() === 2 || // ...march or...
-        date.getMonth() === 5 || // ...june or...
-        date.getMonth() === 8 || // ...september or...
-        date.getMonth() === 11 // ...december
-        )) {
-            return {
-                type: 'alert',
-                title: 'VAT payment due',
-                message: 'VAT payment was due on ' + date.prettyPrint() + ', but was not paid'
-            };
-        }
+    static init() {
+        Crisp.Router.route('/', this.index);
+        Crisp.Router.route('/b-skat-estimation', this.bskat);
+        Crisp.Router.route('/session', this.session);
 
-        // Able to pay VAT
-        if (date.getDate() === 22 && ( // The 22nd day of...
-        date.getMonth() === 1 || // ...february or...
-        date.getMonth() === 4 || // ...may or...
-        date.getMonth() === 7 || // ...august or...
-        date.getMonth() === 10 // ...november
-        )) {
-            let expiresOn = new Date(date).addMonths(1);
-            expiresOn.setDate(1);
-
-            return {
-                type: 'warning',
-                title: 'VAT payment available',
-                message: 'VAT payment can be made, and is due on ' + expiresOn.prettyPrint(),
-                expiresOn: expiresOn
-            };
-        }
-
-        // Report VAT
-        if (date.getDate() === 1 && ( // The first day of...
-        date.getMonth() === 0 || // ...january or...
-        date.getMonth() === 3 || // ...april or...
-        date.getMonth() === 6 || // ...july or...
-        date.getMonth() === 9 // ...october
-        )) {
-            let expiresOn = new Date(date).addMonths(1);
-            expiresOn.setDate(22);
-
-            return {
-                type: 'warning',
-                title: 'VAT report',
-                message: 'VAT can be reported, and payment can be made starting ' + expiresOn.prettyPrint(),
-                expiresOn: expiresOn
-            };
-        }
+        Crisp.Router.init();
     }
 
     /**
-     * Event: Click notification
-     *
-     * @param {Object} notification
+     * Index
      */
-    onClickNotification(notification) {
-        alert(notification.message);
+    static index() {
+        _.replace(document.body, new Game.Views.Pages.Setup());
     }
 
     /**
-     * Heartbeat
+     * B-skat
      */
-    heartbeat() {
-        let currentDate = Game.Services.TimeService.currentDate;
-
-        if (this.lastDate !== currentDate) {
-            this._render();
-        }
-
-        this.lastDate = currentDate;
+    static bskat() {
+        _.replace(document.body, new Game.Views.Pages.BSkatEstimation());
     }
 
     /**
-     * Renders the toggle
+     * Session
      */
-    renderToggle() {
-        return null;
-    }
-
-    /**
-     * Renders the preview
-     */
-    renderPreview() {
-        let date = Game.Services.TimeService.currentTime;
-
-        return _.div({ class: 'drawer__preview drawer--timeline__scroller' }, _.div({ class: 'drawer--timeline__scroller__year' }, date.getFullYear()), _.div({ class: 'drawer--timeline__scroller__month' }, date.getMonthName()), _.div({ class: 'drawer--timeline__scroller__days' }, _.loop(30, day => {
-            let currentDate = new Date(date);
-
-            currentDate.addDays(day);
-            currentDate.reset();
-
-            let notification = this.getNotification(currentDate);
-
-            if (notification && day === 0) {
-                Game.Views.Drawers.Notifications.set(notification);
-            }
-
-            return _.div({ class: 'drawer--timeline__scroller__day ' + (currentDate.getDate() % 2 === 0 ? 'even' : 'odd') }, _.if(currentDate.getDate() === 1 && day > 0, _.div({ class: 'drawer--timeline__scroller__day__month' }, currentDate.getMonthName())), _.div({ class: 'drawer--timeline__scroller__day__number', 'data-number': currentDate.getDate() }, currentDate.getDate()), _.do(() => {
-                if (!notification) {
-                    return;
-                }
-
-                return _.div({ class: 'drawer--timeline__scroller__day__notification ' + (notification.type || '') }, notification.title);
-            }));
-        })));
-    }
-
-    /**
-     * Renders the main content
-     */
-    renderContent() {
-        return _.div({ class: 'drawer__content drawer--timeline__days' });
+    static session() {
+        _.replace(document.body, new Game.Views.Pages.Session());
     }
 }
 
-module.exports = Timeline;
+ViewController.init();
 
-/***/ }),
-/* 32 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-/**
- * Notification drawer
- */
-
-class Notifications extends Game.Views.Drawers.Drawer {
-    /**
-     * Sets a notification
-     *
-     * @param {Object} notification
-     */
-    static set(notification) {
-        let instance = Crisp.View.get(Notifications);
-
-        if (!instance) {
-            return;
-        }
-
-        let key = btoa(JSON.stringify(notification));
-
-        notification.createdOn = Game.Services.TimeService.currentTime;
-
-        instance.model[key] = notification;
-
-        instance.fetch();
-    }
-
-    /**
-     * Heartbeat
-     */
-    heartbeat() {
-        this.fetch();
-    }
-
-    /**
-     * Renders the preview
-     */
-    renderPreview() {
-        let currentDate = Game.Services.TimeService.currentTime;
-
-        return _.div({ class: 'drawer__preview drawer--notifications__entries' }, _.each(this.model, (key, notification) => {
-            return _.div({ class: 'drawer--notifications__entry' }, _.do(() => {
-                if (!notification.expiresOn) {
-                    return;
-                }
-
-                let percent = (currentDate.getTime() - notification.createdOn.getTime()) / (notification.expiresOn.getTime() - notification.createdOn.getTime()) * 100;
-
-                if (percent > 100) {
-                    percent = 100;
-                }
-
-                return _.div({ class: 'drawer--notifications__entry__progress', style: 'width: ' + percent + '%' });
-            }), _.if(notification.title, _.div({ class: 'drawer--notifications__entry__title' }, notification.title)), _.if(notification.message, _.div({ class: 'drawer--notifications__entry__message' }, notification.message)));
-        }));
-    }
-
-    /**
-     * Renders the toggle
-     */
-    renderToggle() {
-        return null;
-    }
-}
-
-module.exports = Notifications;
+module.exports = ViewController;
 
 /***/ })
 /******/ ]);

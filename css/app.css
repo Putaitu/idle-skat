@@ -657,10 +657,10 @@ h1, h2, h3, h4, h5, h6 {
       line-height: 2rem;
       height: 2rem; }
       .drawer--timeline__scroller__day__notification.alert {
-        background: #f33;
+        background-color: red;
         color: white; }
       .drawer--timeline__scroller__day__notification.warning {
-        background: yellow;
+        background-color: yellow;
         color: black; }
 
 .drawer--notifications {
@@ -679,7 +679,7 @@ h1, h2, h3, h4, h5, h6 {
       top: 0;
       left: 0;
       height: 100%;
-      background-color: grey; }
+      background-color: rgba(0, 0, 0, 0.25); }
     .drawer--notifications__entry__title {
       font-size: 1.5rem;
       font-weight: bold;
@@ -688,6 +688,12 @@ h1, h2, h3, h4, h5, h6 {
       margin-top: 0.5rem; }
     .drawer--notifications__entry__message {
       position: relative; }
+    .drawer--notifications__entry.warning {
+      background-color: yellow;
+      color: black; }
+    .drawer--notifications__entry.alert {
+      background-color: red;
+      color: white; }
 
 @keyframes modal__fade-in {
   0% {
