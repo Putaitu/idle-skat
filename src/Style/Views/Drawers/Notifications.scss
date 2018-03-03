@@ -1,16 +1,22 @@
 .drawer--notifications {
     position: fixed;
     left: 0;
-    bottom: 10rem;
+    bottom: 12rem;
 
     &__entry {
         border-radius: 0.2rem;
-        padding: 0.5rem;
+        padding: 1rem;
         position: relative;
-        background-color: lightgrey;
+        background-color: dimgrey;
+        color: lightgrey;
+        transition: transform 0.5s ease;
 
         &:not(:last-of-type) {
             margin-bottom: 1rem;
+        }
+
+        &.out {
+            transform: translateX(-100%);
         }
 
         &__progress {
@@ -19,20 +25,25 @@
             left: 0;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.25);
+            pointer-events: none;
         }
 
         &__title {
-            font-size: 1.5rem;
             font-weight: bold;
             position: relative;
-        }
-
-        &__title + &__message {
-            margin-top: 0.5rem;
+            z-index: 1;
+            margin-bottom: 0.25rem;
         }
 
         &__message {
             position: relative;
+            z-index: 1;
+            margin-bottom: 0.25rem;
+        }
+
+        &__action {
+            position: relative;
+            z-index: 1;
         }
 
         &.warning {

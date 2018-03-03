@@ -24,11 +24,11 @@ class Timeline extends Game.Views.Drawers.Drawer {
         ) {
             return {
                 type: 'alert',
-                title: 'VAT payment due',
+                title: 'VAT due',
                 message: 'VAT payment was due on ' + date.prettyPrint() + ', but was not paid',
                 action: {
                     label: 'Pay VAT',
-                    onClick: () => {}
+                    onClick: 'onClickPayVAT'
                 }
             };
         }
@@ -48,12 +48,12 @@ class Timeline extends Game.Views.Drawers.Drawer {
 
             return {
                 type: 'warning',
-                title: 'VAT payment available',
+                title: 'Pay VAT',
                 message: 'VAT payment can be made, and is due on ' + expiresOn.prettyPrint(),
                 expiresOn: expiresOn,
                 action: {
                     label: 'Pay VAT',
-                    onClick: () => {}
+                    onClick: 'onClickPayVAT'
                 }
             };
         }
@@ -73,42 +73,42 @@ class Timeline extends Game.Views.Drawers.Drawer {
 
             return {
                 type: 'warning',
-                title: 'VAT report',
+                title: 'Report VAT',
                 message: 'VAT can be reported, and payment can be made starting ' + expiresOn.prettyPrint(),
                 expiresOn: expiresOn,
                 action: {
                     label: 'Report VAT',
-                    onClick: () => {}
+                    onClick: 'onClickReportVAT'
                 }
             };
         }
 
-        // Able to pay B-skat
+        // Able to pay B tax
         if(date.getDate() === 1) {
             let expiresOn = new Date(date);
             expiresOn.setDate(22);
             
             return {
                 type: 'warning',
-                title: 'B-skat payment available',
-                message: 'B-skat payment can be made, and is due on ' + expiresOn.prettyPrint(),
+                title: 'Pay B tax',
+                message: 'B tax payment can be made, and is due on ' + expiresOn.prettyPrint(),
                 expiresOn: expiresOn,
                 action: {
-                    label: 'Pay B-skat',
-                    onClick: () => {}
+                    label: 'Pay B tax',
+                    onClick: 'onClickPayBTax'
                 }
             };
         }
         
-        // B-skat payment due
+        // B tax payment due
         if(date.getDate() === 22) {
             return {
                 type: 'alert',
-                title: 'B-skat payment due',
-                message: 'B-skat payment was due on ' + date.prettyPrint() + ', but was not paid',
+                title: 'B tax due',
+                message: 'B tax payment was due on ' + date.prettyPrint() + ', but was not paid',
                 action: {
                     label: 'Pay B-skat',
-                    onClick: () => {}
+                    onClick: 'onClickPayBTax'
                 }
             };
         }

@@ -560,9 +560,12 @@ h1, h2, h3, h4, h5, h6 {
   border: 0;
   max-width: 10rem;
   text-align: center; }
-  .widget--button:hover {
-    background-color: dimgrey;
-    color: lightgrey; }
+  .widget--button.warning {
+    background-color: yellow;
+    color: black; }
+  .widget--button.alert {
+    background-color: red;
+    color: white; }
 
 .widget--input {
   border: 1px solid grey;
@@ -666,28 +669,37 @@ h1, h2, h3, h4, h5, h6 {
 .drawer--notifications {
   position: fixed;
   left: 0;
-  bottom: 10rem; }
+  bottom: 12rem; }
   .drawer--notifications__entry {
     border-radius: 0.2rem;
-    padding: 0.5rem;
+    padding: 1rem;
     position: relative;
-    background-color: lightgrey; }
+    background-color: dimgrey;
+    color: lightgrey;
+    transition: transform 0.5s ease; }
     .drawer--notifications__entry:not(:last-of-type) {
       margin-bottom: 1rem; }
+    .drawer--notifications__entry.out {
+      transform: translateX(-100%); }
     .drawer--notifications__entry__progress {
       position: absolute;
       top: 0;
       left: 0;
       height: 100%;
-      background-color: rgba(0, 0, 0, 0.25); }
+      background-color: rgba(0, 0, 0, 0.25);
+      pointer-events: none; }
     .drawer--notifications__entry__title {
-      font-size: 1.5rem;
       font-weight: bold;
-      position: relative; }
-    .drawer--notifications__entry__title + .drawer--notifications__entry__message {
-      margin-top: 0.5rem; }
+      position: relative;
+      z-index: 1;
+      margin-bottom: 0.25rem; }
     .drawer--notifications__entry__message {
-      position: relative; }
+      position: relative;
+      z-index: 1;
+      margin-bottom: 0.25rem; }
+    .drawer--notifications__entry__action {
+      position: relative;
+      z-index: 1; }
     .drawer--notifications__entry.warning {
       background-color: yellow;
       color: black; }

@@ -1731,11 +1731,11 @@ class Timeline extends Game.Views.Drawers.Drawer {
         )) {
             return {
                 type: 'alert',
-                title: 'VAT payment due',
+                title: 'VAT due',
                 message: 'VAT payment was due on ' + date.prettyPrint() + ', but was not paid',
                 action: {
                     label: 'Pay VAT',
-                    onClick: () => {}
+                    onClick: 'onClickPayVAT'
                 }
             };
         }
@@ -1752,12 +1752,12 @@ class Timeline extends Game.Views.Drawers.Drawer {
 
             return {
                 type: 'warning',
-                title: 'VAT payment available',
+                title: 'Pay VAT',
                 message: 'VAT payment can be made, and is due on ' + expiresOn.prettyPrint(),
                 expiresOn: expiresOn,
                 action: {
                     label: 'Pay VAT',
-                    onClick: () => {}
+                    onClick: 'onClickPayVAT'
                 }
             };
         }
@@ -1774,42 +1774,42 @@ class Timeline extends Game.Views.Drawers.Drawer {
 
             return {
                 type: 'warning',
-                title: 'VAT report',
+                title: 'Report VAT',
                 message: 'VAT can be reported, and payment can be made starting ' + expiresOn.prettyPrint(),
                 expiresOn: expiresOn,
                 action: {
                     label: 'Report VAT',
-                    onClick: () => {}
+                    onClick: 'onClickReportVAT'
                 }
             };
         }
 
-        // Able to pay B-skat
+        // Able to pay B tax
         if (date.getDate() === 1) {
             let expiresOn = new Date(date);
             expiresOn.setDate(22);
 
             return {
                 type: 'warning',
-                title: 'B-skat payment available',
-                message: 'B-skat payment can be made, and is due on ' + expiresOn.prettyPrint(),
+                title: 'Pay B tax',
+                message: 'B tax payment can be made, and is due on ' + expiresOn.prettyPrint(),
                 expiresOn: expiresOn,
                 action: {
-                    label: 'Pay B-skat',
-                    onClick: () => {}
+                    label: 'Pay B tax',
+                    onClick: 'onClickPayBTax'
                 }
             };
         }
 
-        // B-skat payment due
+        // B tax payment due
         if (date.getDate() === 22) {
             return {
                 type: 'alert',
-                title: 'B-skat payment due',
-                message: 'B-skat payment was due on ' + date.prettyPrint() + ', but was not paid',
+                title: 'B tax due',
+                message: 'B tax payment was due on ' + date.prettyPrint() + ', but was not paid',
                 action: {
                     label: 'Pay B-skat',
-                    onClick: () => {}
+                    onClick: 'onClickPayBTax'
                 }
             };
         }
@@ -1913,6 +1913,8 @@ class Notifications extends Game.Views.Drawers.Drawer {
                 entry.expiresOn = new Date(entry.expiresOn);
             }
         }
+
+        this.fetch();
     }
 
     /**
@@ -1933,7 +1935,7 @@ class Notifications extends Game.Views.Drawers.Drawer {
 
         instance.model[key] = notification;
 
-        Game.Services.ConfigService.set('notifications', instance.model);
+        instance.save();
 
         instance.fetch();
     }
@@ -1943,14 +1945,27 @@ class Notifications extends Game.Views.Drawers.Drawer {
      */
     cleanExpired() {
         let date = Game.Services.TimeService.currentTime;
+        let hasChanged = false;
 
         for (let key in this.model) {
             let entry = this.model[key];
 
             if (entry.expiresOn && entry.expiresOn.getTime() <= date.getTime()) {
                 delete this.model[key];
+                hasChanged = true;
             }
         }
+
+        if (hasChanged) {
+            this.save();
+        }
+    }
+
+    /**
+     * Save changes
+     */
+    save() {
+        Game.Services.ConfigService.set('notifications', this.model);
     }
 
     /**
@@ -1958,7 +1973,7 @@ class Notifications extends Game.Views.Drawers.Drawer {
      */
     heartbeat() {
         this.cleanExpired();
-        this.fetch();
+        this.update();
     }
 
     /**
@@ -1968,7 +1983,7 @@ class Notifications extends Game.Views.Drawers.Drawer {
         let currentDate = Game.Services.TimeService.currentTime;
 
         return _.div({ class: 'drawer__preview drawer--notifications__entries' }, _.each(this.model, (key, notification) => {
-            return _.div({ class: 'drawer--notifications__entry ' + (notification.type || '') }, _.do(() => {
+            return _.div({ class: 'drawer--notifications__entry' }, _.do(() => {
                 if (!notification.expiresOn) {
                     return;
                 }
@@ -1979,14 +1994,25 @@ class Notifications extends Game.Views.Drawers.Drawer {
                     percent = 100;
                 }
 
-                return _.div({ class: 'drawer--notifications__entry__progress', style: 'width: ' + percent + '%' });
+                return _.div({ 'data-cr-dynamic': true, class: 'drawer--notifications__entry__progress', style: 'width: ' + percent + '%' });
             }), _.if(notification.title, _.div({ class: 'drawer--notifications__entry__title' }, notification.title)), _.if(notification.message, _.div({ class: 'drawer--notifications__entry__message' }, notification.message)), _.do(() => {
                 if (!notification.action) {
                     return;
                 }
 
-                return _.button({ class: 'widget widget--button ' + (notification.type || '') }, notification.action.label).click(() => {
-                    notification.action.onClick();
+                return _.button({ class: 'drawer--notifications__entry__action widget widget--button ' + (notification.type || '') }, notification.action.label).click(e => {
+                    e.currentTarget.parentElement.classList.toggle('out', true);
+
+                    setTimeout(() => {
+                        delete this.model[key];
+                        this.save();
+                    }, 500);
+
+                    if (typeof this[notification.action.onClick] !== 'function') {
+                        return;
+                    }
+
+                    this[notification.action.onClick](key);
                 });
             }));
         }));
@@ -1997,6 +2023,33 @@ class Notifications extends Game.Views.Drawers.Drawer {
      */
     renderToggle() {
         return null;
+    }
+
+    /**
+     * Event: Click pay B tax
+     *
+     * @param {String} key
+     */
+    onClickPayBTax() {
+        alert('Pay B tax');
+    }
+
+    /**
+     * Event: Click pay VAT
+     *
+     * @param {String} key
+     */
+    onClickPayVAT() {
+        alert('Pay VAT');
+    }
+
+    /**
+     * Event: Click report VAT
+     *
+     * @param {String} key
+     */
+    onClickReportVAT() {
+        alert('Report VAT');
     }
 }
 

@@ -23,6 +23,8 @@ class Notifications extends Game.Views.Drawers.Drawer {
                 entry.expiresOn = new Date(entry.expiresOn);
             }
         }
+
+        this.fetch();
     }
 
     /**
@@ -41,7 +43,7 @@ class Notifications extends Game.Views.Drawers.Drawer {
 
         instance.model[key] = notification;
 
-        Game.Services.ConfigService.set('notifications', instance.model);
+        instance.save();
 
         instance.fetch();
     }
@@ -51,14 +53,27 @@ class Notifications extends Game.Views.Drawers.Drawer {
      */
     cleanExpired() {
         let date = Game.Services.TimeService.currentTime;
+        let hasChanged = false;
 
         for(let key in this.model) {
             let entry = this.model[key];
 
             if(entry.expiresOn && entry.expiresOn.getTime() <= date.getTime()) {
                 delete this.model[key];
+                hasChanged = true;
             }
         }
+
+        if(hasChanged) {
+            this.save();
+        }
+    }
+
+    /**
+     * Save changes
+     */
+    save() {
+        Game.Services.ConfigService.set('notifications', this.model);
     }
 
     /**
@@ -66,7 +81,7 @@ class Notifications extends Game.Views.Drawers.Drawer {
      */
     heartbeat() {
         this.cleanExpired();
-        this.fetch();
+        this.update();
     }
 
     /**
@@ -77,7 +92,7 @@ class Notifications extends Game.Views.Drawers.Drawer {
 
         return _.div({class: 'drawer__preview drawer--notifications__entries'},
             _.each(this.model, (key, notification) => {
-                return _.div({class: 'drawer--notifications__entry ' + (notification.type || '')},
+                return _.div({class: 'drawer--notifications__entry'},
                     _.do(() => {
                         if(!notification.expiresOn) { return; }
 
@@ -85,7 +100,7 @@ class Notifications extends Game.Views.Drawers.Drawer {
 
                         if(percent >= 100) { percent = 100; }
 
-                        return _.div({class: 'drawer--notifications__entry__progress', style: 'width: ' + percent + '%'});
+                        return _.div({'data-cr-dynamic': true, class: 'drawer--notifications__entry__progress', style: 'width: ' + percent + '%'});
                     }),
                     _.if(notification.title,
                         _.div({class: 'drawer--notifications__entry__title'}, notification.title)
@@ -96,8 +111,19 @@ class Notifications extends Game.Views.Drawers.Drawer {
                     _.do(() => {
                         if(!notification.action) { return; }
 
-                        return _.button({class: 'widget widget--button ' + (notification.type || '')}, notification.action.label)
-                            .click(() => { notification.action.onClick(); })
+                        return _.button({class: 'drawer--notifications__entry__action widget widget--button ' + (notification.type || '')}, notification.action.label)
+                            .click((e) => { 
+                                e.currentTarget.parentElement.classList.toggle('out', true);
+                               
+                                setTimeout(() => {
+                                    delete this.model[key];
+                                    this.save();
+                                }, 500);
+
+                                if(typeof this[notification.action.onClick] !== 'function') { return; }
+
+                                this[notification.action.onClick](key);
+                            })
                     })
                 );
             })
@@ -109,6 +135,33 @@ class Notifications extends Game.Views.Drawers.Drawer {
      */
     renderToggle() {
         return null;
+    }
+
+    /**
+     * Event: Click pay B tax
+     *
+     * @param {String} key
+     */
+    onClickPayBTax() {
+        alert('Pay B tax'); 
+    }
+    
+    /**
+     * Event: Click pay VAT
+     *
+     * @param {String} key
+     */
+    onClickPayVAT() {
+        alert('Pay VAT'); 
+    }
+   
+    /**
+     * Event: Click report VAT
+     *
+     * @param {String} key
+     */
+    onClickReportVAT() {
+        alert('Report VAT'); 
     }
 }
 

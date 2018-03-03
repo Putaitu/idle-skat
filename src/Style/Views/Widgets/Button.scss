@@ -12,8 +12,13 @@
     max-width: 10rem;
     text-align: center;
 
-    &:hover {
-        background-color: dimgrey;
-        color: lightgrey;
+    &.warning {
+        background-color: yellow;
+        color: black;
+    }
+
+    &.alert {
+        background-color: red;
+        color: white;
     }
 }
