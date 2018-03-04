@@ -4,7 +4,15 @@ require('./Style/index.scss');
 
 window._ = Crisp.Elements;
 
-window.Game = {};
+// -------------------
+// Constants
+// -------------------
+window.Game = {
+    MACHINE_PRICE: 10000,
+    MACHINE_CAPACITY: 1,
+    PRODUCTION_COST: 10,
+    DEFAULT_UNIT_PRICE: 10
+};
 
 // -------------------
 // Services
@@ -13,6 +21,7 @@ Game.Services = {};
 Game.Services.ConfigService = require('./Services/ConfigService');
 Game.Services.TimeService = require('./Services/TimeService');
 Game.Services.DebugService = require('./Services/DebugService');
+Game.Services.SessionService = require('./Services/SessionService');
 
 // -------------------
 // Models
@@ -38,13 +47,14 @@ Game.Views.Widgets.ProgressBar = require('./Views/Widgets/ProgressBar');
 
 Game.Views.Modals = {};
 Game.Views.Modals.Modal = require('./Views/Modals/Modal');
+Game.Views.Modals.Message = require('./Views/Modals/Message');
+Game.Views.Modals.Transfer = require('./Views/Modals/Transfer');
 Game.Views.Modals.VATReportingTool = require('./Views/Modals/VATReportingTool');
 
 Game.Views.Drawers = {};
 Game.Views.Drawers.Drawer = require('./Views/Drawers/Drawer');
-Game.Views.Drawers.FinancialRecordDrawer = require('./Views/Drawers/FinancialRecordDrawer');
-Game.Views.Drawers.VATRecordDrawer = require('./Views/Drawers/VATRecordDrawer');
 Game.Views.Drawers.Timeline = require('./Views/Drawers/Timeline');
+Game.Views.Drawers.Stats = require('./Views/Drawers/Stats');
 Game.Views.Drawers.Notifications = require('./Views/Drawers/Notifications');
 
 Game.Views.Charts = {};
@@ -52,7 +62,7 @@ Game.Views.Charts.PieChart = require('./Views/Charts/PieChart');
 
 Game.Views.Pages = {};
 Game.Views.Pages.Setup = require('./Views/Pages/Setup');
-Game.Views.Pages.BSkatEstimation = require('./Views/Pages/BSkatEstimation');
+Game.Views.Pages.BTaxEstimation = require('./Views/Pages/BTaxEstimation');
 Game.Views.Pages.Session = require('./Views/Pages/Session');
 
 // -------------------

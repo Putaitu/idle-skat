@@ -35,12 +35,9 @@ class ProgressBar extends Crisp.View {
     setProgress(value, max, message) {
         this.value = value;
         this.max = max;
+        this.message = message;
 
-        if(message) {
-            this.message += '<br>' + message;
-        }
-
-        this._render();
+        this.update();
     }
 
     /**
@@ -48,12 +45,8 @@ class ProgressBar extends Crisp.View {
      */
     template() {
         return _.div({class: 'widget widget--progress-bar'},
-            _.progress({class: 'widget--progress-bar__progress', value: this.value, max: this.max}),
-            _.if(this.message,
-                _.div({class: 'widget--progress-bar__message'},
-                    this.message
-                )
-            )
+            _.progress({dynamicAttributes: true, class: 'widget--progress-bar__progress', value: this.value, max: this.max}),
+            _.div({dynamicContent: true, class: 'widget--progress-bar__message'}, this.message)
         );
     }
 }

@@ -93,6 +93,22 @@ Date.prototype.prettyPrint = function() {
 }
 
 /**
+ * A global helper function for wrapping setTimeout in a promise
+ *
+ * @param {Number} timeout
+ *
+ * @returns {Promise} Callback
+ */
+window.wait = (timeout) => {
+    timeout = timeout || 0;
+    timeout *= 1000;
+
+    return new Promise((resolve) => {
+        setTimeout(() => { resolve(); }, timeout);
+    });
+};
+
+/**
  * The service for managing time
  */
 class TimeService {
@@ -100,8 +116,13 @@ class TimeService {
      * Starts the clock
      */
     static startClock() {
-        Game.Services.ConfigService.set('time', Date.now());
-        Game.Services.ConfigService.set('startTime', Date.now());
+        let startDate = new Date();
+        startDate.reset();
+        startDate.setMonth(0);
+        startDate.setDate(1);
+
+        Game.Services.ConfigService.set('time', startDate.getTime());
+        Game.Services.ConfigService.set('startTime', startDate.getTime());
     }
 
     /**

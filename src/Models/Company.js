@@ -72,9 +72,9 @@ class Company extends Game.Models.Entity {
     }
 
     /**
-     * Gets the estimated yearly B skat
+     * Gets the estimated yearly B tax
      */
-    get estimatedYearlyBSkat() {
+    get estimatedYearlyBTax() {
         return this.round(this.estimatedYearlyIncome * this.estimatedVATPercentage / 100);
     }
     
@@ -86,10 +86,10 @@ class Company extends Game.Models.Entity {
     }
 
     /**
-     * Gets the estimated monthly B skat
+     * Gets the estimated monthly B tax
      */
-    get estimatedMonthlyBSkat() {
-        return this.round(this.estimatedYearlyBSkat / 12);
+    get estimatedMonthlyBTax() {
+        return this.round(this.estimatedYearlyBTax / 12);
     }
 
     /**

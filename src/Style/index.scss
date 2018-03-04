@@ -13,6 +13,7 @@
 @import './Views/Drawers/Drawer';
 @import './Views/Drawers/Timeline';
 @import './Views/Drawers/Notifications';
+@import './Views/Drawers/Stats';
 
 @import './Views/Modals/Modal';
 
@@ -20,5 +21,5 @@
 
 @import './Views/Pages/Page';
 @import './Views/Pages/Setup';
-@import './Views/Pages/BSkatEstimation';
-@import './Views/Pages/Level';
+@import './Views/Pages/BTaxEstimation';
+@import './Views/Pages/Session';

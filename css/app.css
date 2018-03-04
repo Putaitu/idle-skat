@@ -414,6 +414,12 @@ h1, h2, h3, h4, h5, h6 {
 
 .widget {
   display: block; }
+  .widget.text-center {
+    text-align: center; }
+  .widget.text-left {
+    text-align: left; }
+  .widget.text-right {
+    text-align: right; }
 
 .widget.align-center, .widget-group.align-center {
   margin-left: auto;
@@ -427,7 +433,6 @@ h1, h2, h3, h4, h5, h6 {
 
 .widget-group {
   display: flex;
-  max-width: 34rem;
   margin-bottom: 1rem; }
   .widget-group .widget {
     flex-basis: 0;
@@ -437,6 +442,16 @@ h1, h2, h3, h4, h5, h6 {
   white-space: nowrap;
   line-height: 2;
   padding: 0 0.5rem; }
+  .widget--label.vat:after {
+    content: '+VAT';
+    vertical-align: super;
+    font-size: 0.5rem;
+    font-weight: bold;
+    padding: 0.1rem 0.2rem;
+    border-radius: 0.25rem;
+    background-color: teal;
+    color: white;
+    margin-left: 0.25rem; }
 
 .widget--player-info {
   position: fixed;
@@ -558,8 +573,9 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: bold;
   border-radius: 1rem;
   border: 0;
-  max-width: 10rem;
-  text-align: center; }
+  min-width: 8rem;
+  text-align: center;
+  white-space: nowrap; }
   .widget--button.warning {
     background-color: yellow;
     color: black; }
@@ -653,12 +669,12 @@ h1, h2, h3, h4, h5, h6 {
       display: inline-block;
       border-radius: 1.5rem 1.5rem 1.5rem 0;
       border: 0;
-      padding: 0 0.5rem;
-      transform: rotate(-45deg);
+      padding: 0.25rem 0.5rem;
+      line-height: 1;
+      transform: rotate(-25deg);
       white-space: nowrap;
       font-weight: bold;
-      line-height: 2rem;
-      height: 2rem; }
+      font-size: 0.7rem; }
       .drawer--timeline__scroller__day__notification.alert {
         background-color: red;
         color: white; }
@@ -707,6 +723,22 @@ h1, h2, h3, h4, h5, h6 {
       background-color: red;
       color: white; }
 
+.drawer--stats {
+  top: 0;
+  bottom: auto;
+  background-color: dimgrey;
+  color: lightgrey;
+  padding: 1rem;
+  width: 100%; }
+  .drawer--stats__preview {
+    display: flex;
+    justify-content: center; }
+    .drawer--stats__preview__company, .drawer--stats__preview__personal {
+      max-width: 20rem; }
+    .drawer--stats__preview__company, .drawer--stats__preview__personal, .drawer--stats__preview__transations {
+      flex-shrink: 0;
+      flex-grow: 1; }
+
 @keyframes modal__fade-in {
   0% {
     opacity: 0; }
@@ -715,9 +747,9 @@ h1, h2, h3, h4, h5, h6 {
 
 @keyframes modal__fly-in {
   0% {
-    transform: translateY(-3rem); }
+    transform: translate(-50%, -60%); }
   100% {
-    transform: none; } }
+    transform: translate(-50%, -50%); } }
 
 .modal {
   position: fixed;
@@ -734,6 +766,7 @@ h1, h2, h3, h4, h5, h6 {
     right: 1rem;
     color: dimgrey;
     width: 2rem;
+    min-width: 0;
     height: 2rem;
     display: block; }
     .modal__close:after {
@@ -742,13 +775,26 @@ h1, h2, h3, h4, h5, h6 {
   .modal__dialog {
     animation: modal__fly-in 0.5s ease;
     position: absolute;
-    top: 1rem;
-    left: 1rem;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     height: calc(100% - 2rem);
     width: calc(100% - 2rem);
     border-radius: 2rem;
     border: 1px solid dimgrey;
-    background-color: lightgrey; }
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem; }
+  .modal__header {
+    margin-bottom: 1rem; }
+  .modal__footer {
+    margin-top: 1rem; }
+  .modal__body {
+    flex-grow: 1; }
+  .modal.small .modal__dialog {
+    max-width: 20rem;
+    max-height: 10rem; }
 
 .pie-chart {
   max-width: 20rem; }
@@ -779,55 +825,39 @@ h1, h2, h3, h4, h5, h6 {
 .page--setup__pie-chart {
   margin: 3rem auto 0 auto; }
 
-.page--b-skat-estimation__pie-chart {
+.page--b-tax-estimation__pie-chart {
   margin: 3rem auto 0 auto; }
 
-.page--b-skat-estimation__final {
+.page--b-tax-estimation__final {
   text-align: center;
   opacity: 0;
   transform: translateX(-10rem);
   transition: opacity 0.5s ease, transform 0.5s ease;
   margin-top: 2rem; }
-  .page--b-skat-estimation__final:not(:empty) {
+  .page--b-tax-estimation__final:not(:empty) {
     opacity: 1;
     transform: none; }
-  .page--b-skat-estimation__final span {
+  .page--b-tax-estimation__final span {
     font-weight: bold;
     text-decoration: underline; }
 
-.page--level__numbers {
-  display: flex;
-  flex-wrap: wrap; }
-
-.page--level__user-input {
-  flex-grow: 1;
-  flex-shrink: 0;
-  padding: 1rem; }
-  .page--level__user-input__heading {
-    margin-bottom: 1rem; }
-  .page--level__user-input__field {
-    margin-bottom: 1rem; }
-
-.page--level__calculations {
-  text-align: right; }
-  .page--level__calculations__inner {
-    padding: 1rem;
-    margin: 0 auto;
-    background-color: lightgrey; }
-  .page--level__calculations__heading {
-    margin-bottom: 1rem; }
-  .page--level__calculations__field {
-    margin-bottom: 1rem; }
-    .page--level__calculations__field__result {
-      white-space: nowrap; }
-    .page--level__calculations__field__vat {
-      white-space: nowrap; }
-
-.page--level__actions {
-  flex-grow: 1;
-  padding: 1rem;
-  display: flex;
-  justify-content: center;
-  align-items: center; }
+.page--session {
+  margin-top: 6rem; }
+  .page--session.paused:after {
+    content: 'PAUSED';
+    display: block;
+    font-size: 2rem;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.25);
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    pointer-events: none; }
 
 /*# sourceMappingURL=app.css.map*/

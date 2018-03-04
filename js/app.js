@@ -74,7 +74,15 @@ __webpack_require__(1);
 
 window._ = Crisp.Elements;
 
-window.Game = {};
+// -------------------
+// Constants
+// -------------------
+window.Game = {
+    MACHINE_PRICE: 10000,
+    MACHINE_CAPACITY: 1,
+    PRODUCTION_COST: 10,
+    DEFAULT_UNIT_PRICE: 10
+};
 
 // -------------------
 // Services
@@ -83,6 +91,7 @@ Game.Services = {};
 Game.Services.ConfigService = __webpack_require__(2);
 Game.Services.TimeService = __webpack_require__(3);
 Game.Services.DebugService = __webpack_require__(4);
+Game.Services.SessionService = __webpack_require__(30);
 
 // -------------------
 // Models
@@ -108,28 +117,29 @@ Game.Views.Widgets.ProgressBar = __webpack_require__(14);
 
 Game.Views.Modals = {};
 Game.Views.Modals.Modal = __webpack_require__(15);
+Game.Views.Modals.Message = __webpack_require__(31);
+Game.Views.Modals.Transfer = __webpack_require__(32);
 Game.Views.Modals.VATReportingTool = __webpack_require__(16);
 
 Game.Views.Drawers = {};
 Game.Views.Drawers.Drawer = __webpack_require__(17);
-Game.Views.Drawers.FinancialRecordDrawer = __webpack_require__(18);
-Game.Views.Drawers.VATRecordDrawer = __webpack_require__(19);
-Game.Views.Drawers.Timeline = __webpack_require__(20);
-Game.Views.Drawers.Notifications = __webpack_require__(21);
+Game.Views.Drawers.Timeline = __webpack_require__(18);
+Game.Views.Drawers.Stats = __webpack_require__(19);
+Game.Views.Drawers.Notifications = __webpack_require__(20);
 
 Game.Views.Charts = {};
-Game.Views.Charts.PieChart = __webpack_require__(22);
+Game.Views.Charts.PieChart = __webpack_require__(21);
 
 Game.Views.Pages = {};
-Game.Views.Pages.Setup = __webpack_require__(23);
-Game.Views.Pages.BSkatEstimation = __webpack_require__(24);
-Game.Views.Pages.Session = __webpack_require__(25);
+Game.Views.Pages.Setup = __webpack_require__(22);
+Game.Views.Pages.BTaxEstimation = __webpack_require__(23);
+Game.Views.Pages.Session = __webpack_require__(24);
 
 // -------------------
 // Controllers
 // -------------------
 Game.Controllers = {};
-Game.Controllers.ViewController = __webpack_require__(26);
+Game.Controllers.ViewController = __webpack_require__(25);
 
 /***/ }),
 /* 1 */
@@ -156,26 +166,57 @@ class ConfigService {
      * @param {Object} value
      */
     static set(key, value) {
+        if (!this.cache) {
+            this.cache = {};
+        }
+
+        if (!!parseFloat(value)) {
+            value = parseFloat(value);
+        }
+
         try {
             localStorage.setItem(key, JSON.stringify(value));
         } catch (e) {
             localStorage.setItem(key, value);
         }
+
+        this.cache[key] = value;
     }
 
     /**
      * Gets a value
      *
      * @param {String} key
+     * @param {Object} defaultValue
      *
      * @returns {Object} Value
      */
-    static get(key) {
-        try {
-            return JSON.parse(localStorage.getItem(key));
-        } catch (e) {
-            return localStorage.getItem(key);
+    static get(key, defaultValue) {
+        if (!this.cache) {
+            this.cache = {};
         }
+
+        if (this.cache[key]) {
+            return this.cache[key];
+        }
+
+        let value;
+
+        // Parse object
+        try {
+            value = JSON.parse(localStorage.getItem(key)) || defaultValue;
+        } catch (e) {
+            value = localStorage.getItem(key) || defaultValue;
+        }
+
+        // Parse number
+        if (!!parseFloat(value)) {
+            value = parseFloat(value);
+        }
+
+        this.cache[key] = value;
+
+        return value;
     }
 }
 
@@ -274,6 +315,24 @@ Date.prototype.prettyPrint = function () {
 };
 
 /**
+ * A global helper function for wrapping setTimeout in a promise
+ *
+ * @param {Number} timeout
+ *
+ * @returns {Promise} Callback
+ */
+window.wait = timeout => {
+    timeout = timeout || 0;
+    timeout *= 1000;
+
+    return new Promise(resolve => {
+        setTimeout(() => {
+            resolve();
+        }, timeout);
+    });
+};
+
+/**
  * The service for managing time
  */
 class TimeService {
@@ -281,8 +340,13 @@ class TimeService {
      * Starts the clock
      */
     static startClock() {
-        Game.Services.ConfigService.set('time', Date.now());
-        Game.Services.ConfigService.set('startTime', Date.now());
+        let startDate = new Date();
+        startDate.reset();
+        startDate.setMonth(0);
+        startDate.setDate(1);
+
+        Game.Services.ConfigService.set('time', startDate.getTime());
+        Game.Services.ConfigService.set('startTime', startDate.getTime());
     }
 
     /**
@@ -725,9 +789,9 @@ class Company extends Game.Models.Entity {
     }
 
     /**
-     * Gets the estimated yearly B skat
+     * Gets the estimated yearly B tax
      */
-    get estimatedYearlyBSkat() {
+    get estimatedYearlyBTax() {
         return this.round(this.estimatedYearlyIncome * this.estimatedVATPercentage / 100);
     }
 
@@ -739,10 +803,10 @@ class Company extends Game.Models.Entity {
     }
 
     /**
-     * Gets the estimated monthly B skat
+     * Gets the estimated monthly B tax
      */
-    get estimatedMonthlyBSkat() {
-        return this.round(this.estimatedYearlyBSkat / 12);
+    get estimatedMonthlyBTax() {
+        return this.round(this.estimatedYearlyBTax / 12);
     }
 
     /**
@@ -1334,19 +1398,16 @@ class ProgressBar extends Crisp.View {
     setProgress(value, max, message) {
         this.value = value;
         this.max = max;
+        this.message = message;
 
-        if (message) {
-            this.message += '<br>' + message;
-        }
-
-        this._render();
+        this.update();
     }
 
     /**
      * Template
      */
     template() {
-        return _.div({ class: 'widget widget--progress-bar' }, _.progress({ class: 'widget--progress-bar__progress', value: this.value, max: this.max }), _.if(this.message, _.div({ class: 'widget--progress-bar__message' }, this.message)));
+        return _.div({ class: 'widget widget--progress-bar' }, _.progress({ dynamicAttributes: true, class: 'widget--progress-bar__progress', value: this.value, max: this.max }), _.div({ dynamicContent: true, class: 'widget--progress-bar__message' }, this.message));
     }
 }
 
@@ -1381,6 +1442,8 @@ class Modal extends Crisp.View {
         }
 
         _.append(document.body, this);
+
+        Game.Services.TimeService.isPaused = true;
     }
 
     /**
@@ -1403,6 +1466,8 @@ class Modal extends Crisp.View {
      */
     close() {
         this.remove();
+
+        Game.Services.TimeService.isPaused = false;
     }
 
     /**
@@ -1416,8 +1481,10 @@ class Modal extends Crisp.View {
      * Template
      */
     template() {
-        return _.div({ class: 'modal modal--' + this.className }, _.div({ class: 'modal__dialog' }, _.button({ class: 'modal__close widget widget--button' }).click(() => {
+        return _.div({ class: 'modal modal--' + this.className + ' ' + (this.size || 'large') }, _.div({ class: 'modal__dialog' }, _.button({ class: 'modal__close widget widget--button' }).click(() => {
             this.close();
+
+            this.trigger('cancel');
         }), _.div({ class: 'modal__header' }, this.renderHeader()), _.div({ class: 'modal__body' }, this.renderBody()), _.div({ class: 'modal__footer' }, this.renderFooter())));
     }
 }
@@ -1560,156 +1627,6 @@ module.exports = Drawer;
 
 
 /**
- * A drawer for the financial record and paying B tax
- */
-
-class FinancialRecordDrawer extends Game.Views.Drawers.Drawer {
-    /**
-     * Gets the drawer position
-     */
-    get position() {
-        return 'bottom';
-    }
-
-    /**
-     * Renders this drawer
-     */
-    renderContent() {
-        return _.div({ class: 'drawer__content' }, _.each(Game.Models.Player.current.financialRecord.reports, (year, months) => {
-            return [_.h4(year), _.each(months, (month, report) => {
-                if (report.bTaxIsPaid) {
-                    return;
-                }
-
-                return _.button({ class: 'widget widget--button' }, month);
-            })];
-        }));
-    }
-}
-
-module.exports = FinancialRecordDrawer;
-
-/***/ }),
-/* 19 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-/**
- * The drawer for VAT reminders and calculations
- */
-
-class VATRecordDrawer extends Game.Views.Drawers.Drawer {
-    /**
-     * Constructor
-     */
-    constructor(params) {
-        params = params || {};
-
-        params.dueReports = [];
-        params.duePayments = [];
-
-        params.model = Game.Models.Player.current.vatRecord;
-
-        super(params);
-    }
-
-    /**
-     * Gets the drawer position
-     */
-    get position() {
-        return 'bottom';
-    }
-
-    /**
-     * Renders the preview of this drawer
-     */
-    renderPreview() {
-        return _.div({ class: 'drawer__preview' }, _.label({ class: 'drawer__preview__label' }, 'VAT Record'), _.if(this.dueReports.length > 0 || this.duePayments.length > 0, _.div({ class: 'drawer__preview__notification' }, this.dueReports.length + this.duePayments.length)));
-    }
-
-    /**
-     * Updates this drawer
-     */
-    update() {
-        this.model.generatePayments();
-
-        this.checkPayments();
-
-        this.fetch();
-    }
-
-    /**
-     * Checks a payment for any due dates
-     *
-     * @param {Number} year
-     * @param {Number} quarter
-     * @param {VATPayment} payment
-     */
-    checkPayment(year, quarter, payment) {}
-
-    /**
-     * Checks all payments
-     */
-    checkPayments() {
-        this.duePayments = [];
-
-        let previousQuarter = Game.Services.TimeService.previousQuarter;
-        let currentYear = Game.Services.TimeService.currentYear;
-
-        for (let year in this.model.payments) {
-            let paymentYear = this.model.payments[year];
-
-            for (let quarter in paymentYear) {
-                if (quarter <= previousQuarter && year == currentYear || year < currentYear) {
-                    let payment = paymentYear[quarter];
-
-                    payment.updateFine();
-
-                    if (!payment.isReported || !payment.isPaid) {
-                        this.duePayments.push(payment);
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Renders this drawer
-     */
-    renderContent() {
-        return _.div({ class: 'drawer__content' }, _.each(this.model.payments, (year, quarters) => {
-            return [_.h4(year), _.each(quarters, (quarter, payment) => {
-                if (payment.isPaid || !payment.dueAt) {
-                    return;
-                }
-
-                return _.button({ class: 'widget widget--button' }, quarter).click(() => {
-                    if (!payment.isReported) {
-                        new Game.Views.Modals.VATReportingTool({
-                            year: year,
-                            quarter: quarter
-                        });
-                    } else {
-                        Game.Models.Player.current.payQuarterlyVAT(year, quarter);
-                    }
-                });
-            })];
-        }));
-    }
-}
-
-module.exports = VATRecordDrawer;
-
-/***/ }),
-/* 20 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-/**
  * The pervasive timeline
  */
 
@@ -1732,11 +1649,7 @@ class Timeline extends Game.Views.Drawers.Drawer {
             return {
                 type: 'alert',
                 title: 'VAT due',
-                message: 'VAT payment was due on ' + date.prettyPrint() + ', but was not paid',
-                action: {
-                    label: 'Pay VAT',
-                    onClick: 'onClickPayVAT'
-                }
+                isSilent: true
             };
         }
 
@@ -1756,7 +1669,7 @@ class Timeline extends Game.Views.Drawers.Drawer {
                 message: 'VAT payment can be made, and is due on ' + expiresOn.prettyPrint(),
                 expiresOn: expiresOn,
                 action: {
-                    label: 'Pay VAT',
+                    label: 'Pay VAT (' + Game.Services.SessionService.getVat(date.getFullYear(), date.getQuarter()).amount + ' DKK)',
                     onClick: 'onClickPayVAT'
                 }
             };
@@ -1795,7 +1708,7 @@ class Timeline extends Game.Views.Drawers.Drawer {
                 message: 'B tax payment can be made, and is due on ' + expiresOn.prettyPrint(),
                 expiresOn: expiresOn,
                 action: {
-                    label: 'Pay B tax',
+                    label: 'Pay B tax (' + Math.round(Game.Services.ConfigService.get('btax', 0) / 12) + ' DKK)',
                     onClick: 'onClickPayBTax'
                 }
             };
@@ -1806,11 +1719,7 @@ class Timeline extends Game.Views.Drawers.Drawer {
             return {
                 type: 'alert',
                 title: 'B tax due',
-                message: 'B tax payment was due on ' + date.prettyPrint() + ', but was not paid',
-                action: {
-                    label: 'Pay B-skat',
-                    onClick: 'onClickPayBTax'
-                }
+                isSilent: true
             };
         }
     }
@@ -1828,13 +1737,7 @@ class Timeline extends Game.Views.Drawers.Drawer {
      * Heartbeat
      */
     heartbeat() {
-        let currentDate = Game.Services.TimeService.currentDate;
-
-        if (this.lastDate !== currentDate) {
-            this._render();
-        }
-
-        this.lastDate = currentDate;
+        this.update();
     }
 
     /**
@@ -1850,7 +1753,7 @@ class Timeline extends Game.Views.Drawers.Drawer {
     renderPreview() {
         let date = Game.Services.TimeService.currentTime;
 
-        return _.div({ class: 'drawer__preview drawer--timeline__scroller' }, _.div({ class: 'drawer--timeline__scroller__year' }, date.getFullYear()), _.div({ class: 'drawer--timeline__scroller__month' }, date.getMonthName()), _.div({ class: 'drawer--timeline__scroller__days' }, _.loop(30, day => {
+        return _.div({ dynamicContent: true, class: 'drawer__preview drawer--timeline__scroller' }, _.div({ class: 'drawer--timeline__scroller__year' }, date.getFullYear()), _.div({ class: 'drawer--timeline__scroller__month' }, date.getMonthName()), _.div({ class: 'drawer--timeline__scroller__days' }, _.loop(30, day => {
             let currentDate = new Date(date);
 
             currentDate.addDays(day);
@@ -1858,7 +1761,7 @@ class Timeline extends Game.Views.Drawers.Drawer {
 
             let notification = this.getNotification(currentDate);
 
-            if (notification && day === 0) {
+            if (notification && day === 0 && !notification.isSilent) {
                 Game.Views.Drawers.Notifications.set(notification);
             }
 
@@ -1883,7 +1786,45 @@ class Timeline extends Game.Views.Drawers.Drawer {
 module.exports = Timeline;
 
 /***/ }),
-/* 21 */
+/* 19 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * Player statistics
+ */
+
+class Stats extends Game.Views.Drawers.Drawer {
+    /**
+     * Renders the toggle
+     */
+    renderToggle() {
+        return null;
+    }
+
+    /**
+     * Heartbeat
+     */
+    heartbeat() {
+        this.update();
+    }
+
+    /**
+     * Renders the preview
+     */
+    renderPreview() {
+        return _.div({ class: 'drawer__preview drawer--stats__preview' }, _.div({ class: 'drawer--stats__preview__company' }, _.div({ dynamicContent: true, class: 'widget widget--label text-center' }, 'Company account: ' + Game.Services.ConfigService.get('companyAccount', 0) + ' DKK')), _.div({ class: 'drawer--stats__preview__transactions' }, _.button({ class: 'widget widget--button align-center' }, 'Transfer ➜').click(() => {
+            new Game.Views.Modals.Transfer();
+        })), _.div({ class: 'drawer--stats__preview__personal' }, _.div({ dynamicContent: true, class: 'widget widget--label text-center' }, 'Personal account: ' + Game.Services.ConfigService.get('personalAccount', 0) + ' DKK')));
+    }
+}
+
+module.exports = Stats;
+
+/***/ }),
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1941,27 +1882,6 @@ class Notifications extends Game.Views.Drawers.Drawer {
     }
 
     /**
-     * Cleans up expired notifications
-     */
-    cleanExpired() {
-        let date = Game.Services.TimeService.currentTime;
-        let hasChanged = false;
-
-        for (let key in this.model) {
-            let entry = this.model[key];
-
-            if (entry.expiresOn && entry.expiresOn.getTime() <= date.getTime()) {
-                delete this.model[key];
-                hasChanged = true;
-            }
-        }
-
-        if (hasChanged) {
-            this.save();
-        }
-    }
-
-    /**
      * Save changes
      */
     save() {
@@ -1972,7 +1892,6 @@ class Notifications extends Game.Views.Drawers.Drawer {
      * Heartbeat
      */
     heartbeat() {
-        this.cleanExpired();
         this.update();
     }
 
@@ -1982,7 +1901,7 @@ class Notifications extends Game.Views.Drawers.Drawer {
     renderPreview() {
         let currentDate = Game.Services.TimeService.currentTime;
 
-        return _.div({ class: 'drawer__preview drawer--notifications__entries' }, _.each(this.model, (key, notification) => {
+        return _.div({ dynamicChildren: true, class: 'drawer__preview drawer--notifications__entries' }, _.each(this.model, (key, notification) => {
             return _.div({ class: 'drawer--notifications__entry' }, _.do(() => {
                 if (!notification.expiresOn) {
                     return;
@@ -1991,28 +1910,41 @@ class Notifications extends Game.Views.Drawers.Drawer {
                 let percent = (currentDate.getTime() - notification.createdOn.getTime()) / (notification.expiresOn.getTime() - notification.createdOn.getTime()) * 100;
 
                 if (percent >= 100) {
+                    notification.isExpired = true;
                     percent = 100;
                 }
 
-                return _.div({ 'data-cr-dynamic': true, class: 'drawer--notifications__entry__progress', style: 'width: ' + percent + '%' });
+                return _.div({ dynamicAttributes: true, class: 'drawer--notifications__entry__progress', style: 'width: ' + percent + '%' });
             }), _.if(notification.title, _.div({ class: 'drawer--notifications__entry__title' }, notification.title)), _.if(notification.message, _.div({ class: 'drawer--notifications__entry__message' }, notification.message)), _.do(() => {
                 if (!notification.action) {
                     return;
                 }
 
-                return _.button({ class: 'drawer--notifications__entry__action widget widget--button ' + (notification.type || '') }, notification.action.label).click(e => {
-                    e.currentTarget.parentElement.classList.toggle('out', true);
-
-                    setTimeout(() => {
-                        delete this.model[key];
-                        this.save();
-                    }, 500);
-
+                return _.button({ dynamicAttributes: true, class: 'drawer--notifications__entry__action widget widget--button ' + (notification.isExpired ? 'alert' : notification.type || '') }, notification.action.label).click(e => {
                     if (typeof this[notification.action.onClick] !== 'function') {
                         return;
                     }
 
-                    this[notification.action.onClick](key);
+                    this[notification.action.onClick](notification).then(message => {
+                        e.currentTarget.parentElement.classList.toggle('out', true);
+
+                        setTimeout(() => {
+                            delete this.model[key];
+                            this.save();
+                        }, 500);
+
+                        if (message) {
+                            new Game.Views.Modals.Message({
+                                title: 'Success',
+                                message: message
+                            });
+                        }
+                    }).catch(e => {
+                        new Game.Views.Modals.Message({
+                            title: 'Error',
+                            message: e.message
+                        });
+                    });
                 });
             }));
         }));
@@ -2028,35 +1960,35 @@ class Notifications extends Game.Views.Drawers.Drawer {
     /**
      * Event: Click pay B tax
      *
-     * @param {String} key
+     * @param {Object} notification
      */
-    onClickPayBTax() {
-        alert('Pay B tax');
+    onClickPayBTax(notification) {
+        return Game.Services.SessionService.payBTax(notification.createdOn);
     }
 
     /**
      * Event: Click pay VAT
      *
-     * @param {String} key
+     * @param {Object} notification
      */
-    onClickPayVAT() {
-        alert('Pay VAT');
+    onClickPayVAT(notification) {
+        return Game.Services.SessionService.payVat(notification.createdOn);
     }
 
     /**
      * Event: Click report VAT
      *
-     * @param {String} key
+     * @param {Object} notification
      */
-    onClickReportVAT() {
-        alert('Report VAT');
+    onClickReportVAT(notification) {
+        return Game.Services.SessionService.reportVat(notification.createdOn);
     }
 }
 
 module.exports = Notifications;
 
 /***/ }),
-/* 22 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2254,7 +2186,7 @@ class PieChart extends Crisp.View {
 module.exports = PieChart;
 
 /***/ }),
-/* 23 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2269,8 +2201,8 @@ class Setup extends Crisp.View {
 
         this.model = {
             name: 'My Company Aps',
-            total: 30000,
-            capital: 3000
+            total: 7500,
+            capital: 5000
         };
 
         this.fetch();
@@ -2331,11 +2263,14 @@ class Setup extends Crisp.View {
      * @param {InputEvent} e
      */
     onClickNext(e) {
+        // We clear localStorage this point to make sure we start with a clean slate
+        localStorage.clear();
+
         Game.Services.ConfigService.set('personalAccount', this.model.total - this.model.capital);
         Game.Services.ConfigService.set('companyAccount', this.model.capital);
         Game.Services.ConfigService.set('companyName', this.model.name);
 
-        Crisp.Router.go('/b-skat-estimation');
+        Crisp.Router.go('/b-tax-estimation');
     }
 
     /**
@@ -2362,17 +2297,17 @@ class Setup extends Crisp.View {
 module.exports = Setup;
 
 /***/ }),
-/* 24 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 /**
- * The B-skat estimation page
+ * The B tax estimation page
  */
 
-class BSkatEstimation extends Crisp.View {
+class BTaxEstimation extends Crisp.View {
     /**
      * Constructor
      */
@@ -2381,7 +2316,7 @@ class BSkatEstimation extends Crisp.View {
 
         this.model = {
             income: 96000,
-            bskat: 0
+            btax: 0
         };
 
         this.fetch();
@@ -2400,8 +2335,8 @@ class BSkatEstimation extends Crisp.View {
         }
 
         this.model.income = parseInt(e.currentTarget.value);
-        this.model.bskat = 0;
-        this.finalBSkat.innerHTML = '';
+        this.model.btax = 0;
+        this.finalBTax.innerHTML = '';
 
         this.updatePieChart();
     }
@@ -2414,32 +2349,14 @@ class BSkatEstimation extends Crisp.View {
             return;
         }
 
-        this.pieChart.setSlice('bskat', 0.33, {
-            percent: this.model.bskat / this.model.income,
-            value: this.model.bskat
+        this.pieChart.setSlice('btax', 0.33, {
+            percent: this.model.btax / this.model.income,
+            value: this.model.btax
         });
 
         this.pieChart.setSlice('income', 0.33, {
-            percent: 1 - this.model.bskat / this.model.income,
+            percent: 1 - this.model.btax / this.model.income,
             value: this.model.income
-        });
-    }
-
-    /**
-     * Wraps setTimeout in a promise
-     *
-     * @param {Number} timeout
-     *
-     * @returns {Promise} Callback
-     */
-    wait(timeout) {
-        timeout = timeout || 0;
-        timeout *= 1000;
-
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve();
-            }, timeout);
         });
     }
 
@@ -2450,53 +2367,45 @@ class BSkatEstimation extends Crisp.View {
      */
     onClickCalculate(e) {
         let progressBar = new Game.Views.Widgets.ProgressBar();
+        let progress = 0;
+        let max = 38;
 
-        progressBar.setProgress(0, 100, 'Municipality tax...');
+        progress += 0.8;
+        progressBar.setProgress(progress, max, 'Church tax...');
 
-        this.wait(1).then(() => {
-            progressBar.setProgress(20, 100, 'Labour contribution...');
+        wait(1).then(() => {
+            progress += 2.8;
+            progressBar.setProgress(progress, max, 'State tax...');
 
-            return this.wait(1);
+            return wait(0.9);
         }).then(() => {
-            progressBar.setProgress(30, 100, 'Step 3...');
+            progress += 5;
+            progressBar.setProgress(progress, max, 'Health contributions...');
 
-            return this.wait(1);
+            return wait(0.85);
         }).then(() => {
-            progressBar.setProgress(40, 100, 'Step 4...');
+            progress += 23.8;
+            progressBar.setProgress(progress, max, 'Municipal tax...');
 
-            return this.wait(1);
+            return wait(1);
         }).then(() => {
-            progressBar.setProgress(50, 100, 'Step 5...');
+            progress += 2.8;
+            progressBar.setProgress(progress, max, 'Labour market contribution...');
 
-            return this.wait(1);
+            return wait(0.4);
         }).then(() => {
-            progressBar.setProgress(60, 100, 'Step 6...');
+            progress += 2.8;
+            progressBar.setProgress(progress, max, 'ATP contribution...');
 
-            return this.wait(1);
+            return wait(2);
         }).then(() => {
-            progressBar.setProgress(70, 100, 'Step 7...');
-
-            return this.wait(1);
-        }).then(() => {
-            progressBar.setProgress(80, 100, 'Step 8...');
-
-            return this.wait(1);
-        }).then(() => {
-            progressBar.setProgress(90, 100, 'Step 9...');
-
-            return this.wait(1);
-        }).then(() => {
-            progressBar.setProgress(100, 100, 'Done!');
-
-            return this.wait(1);
-        }).then(() => {
-            this.model.bskat = this.model.income * 0.38;
+            this.model.btax = this.model.income * 0.38;
 
             progressBar.remove();
 
             this.updatePieChart();
 
-            this.finalBSkat.innerHTML = this.model.bskat + ' / 12 = <span>' + Math.round(this.model.bskat / 12) + 'kr. per month</span>';
+            this.finalBTax.innerHTML = this.model.btax + ' / 12 = <span>' + Math.round(this.model.btax / 12) + 'kr. per month</span>';
         });
     }
 
@@ -2506,8 +2415,20 @@ class BSkatEstimation extends Crisp.View {
      * @param {InputEvent} e
      */
     onClickDone(e) {
-        if (this.model.bskat <= 0) {
-            return alert('Please calculate your B-skat first');
+        if (this.model.btax <= 0) {
+            return alert('Please calculate your B tax first');
+        }
+
+        // Save the estimated income
+        Game.Services.ConfigService.set('estimatedIncome', this.model.income);
+
+        // Save the B tax estimate
+        Game.Services.ConfigService.set('btax', this.model.btax);
+
+        // Check if setup is complete
+        if (!Game.Services.ConfigService.set('completedSetup')) {
+            Game.Services.ConfigService.set('completedSetup', true);
+            Game.Services.TimeService.startClock();
         }
 
         location.hash = '/session';
@@ -2517,35 +2438,31 @@ class BSkatEstimation extends Crisp.View {
      * Template
      */
     template() {
-        return _.div({ class: 'page page--b-skat-estimation' }, _.h1({ class: 'page__title' }, 'B-skat estimation'), _.div({ class: 'page--b-skat-estimation__input' }, _.div({ class: 'widget-group align-center' }, _.label({ class: 'widget widget--label' }, 'Target income for ' + Game.Services.TimeService.currentYear), _.input({ class: 'widget widget--input', type: 'number', step: 1000, min: 0, value: this.model.income }).on('input', e => {
+        return _.div({ class: 'page page--b-tax-estimation' }, _.h1({ class: 'page__title' }, 'B tax estimation for ' + Game.Services.TimeService.currentYear), _.div({ class: 'page--b-tax-estimation__input' }, _.div({ class: 'widget-group align-center' }, _.label({ class: 'widget widget--label' }, 'Target income for ' + Game.Services.TimeService.currentYear), _.input({ class: 'widget widget--input', type: 'number', step: 1000, min: 0, value: this.model.income }).on('input', e => {
             this.onChangeIncome(e);
-        })), _.button({ class: 'widget widget--button align-center' }, 'Calculate').click(e => {
+        })), _.button({ class: 'widget widget--button align-center' }, 'Calculate B tax').click(e => {
             this.onClickCalculate(e);
         })), this.pieChart = new Game.Views.Charts.PieChart({
-            className: 'page--b-skat-estimation__pie-chart',
+            className: 'page--b-tax-estimation__pie-chart',
             showPercentage: true,
             model: {
-                bskat: { showPercentage: true, percent: this.model.bskat / this.model.income, label: 'B-skat', value: this.model.bskat, color: 'blue' },
-                income: { percent: 1 - this.model.bskat / this.model.income, label: 'Target income', color: 'green', value: this.model.income }
+                btax: { showPercentage: true, percent: this.model.btax / this.model.income, label: 'B tax', value: this.model.btax, color: 'blue' },
+                income: { percent: 1 - this.model.btax / this.model.income, label: 'Target income', color: 'green', value: this.model.income }
             }
-        }), this.finalBSkat = _.div({ class: 'page--b-skat-estimation__final' }), _.button({ class: 'widget widget--button align-right' }, 'Done').click(e => {
+        }), this.finalBTax = _.div({ class: 'page--b-tax-estimation__final' }), _.button({ class: 'widget widget--button align-right' }, 'Done').click(e => {
             this.onClickDone(e);
         }));
     }
 }
 
-module.exports = BSkatEstimation;
+module.exports = BTaxEstimation;
 
 /***/ }),
-/* 25 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-
-const MACHINE_DELAY = 4;
-
-let machineCounter = 0;
 
 class Session extends Crisp.View {
     /**
@@ -2571,7 +2488,9 @@ class Session extends Crisp.View {
      * Heartbeat
      */
     heartbeat() {
-        if (!document.hasFocus()) {
+        this.element.classList.toggle('paused', !document.hasFocus());
+
+        if (!document.hasFocus() || Game.Services.TimeService.isPaused) {
             return;
         }
 
@@ -2580,117 +2499,68 @@ class Session extends Crisp.View {
 
         this.timeline.heartbeat();
         this.notifications.heartbeat();
+        this.stats.heartbeat();
 
-        /*
         // Sell one unit every second
-        this.model.company.sellUnit();
-         // Automatically produce units
-        machineCounter++;
-        
-        if(machineCounter >= MACHINE_DELAY) {
-            for(let i = 0; i < this.model.company.machines; i++) {
-                this.model.company.produceUnit();
-            }
-             machineCounter = 0;
-        }
-         // Update the VAT record drawer
-        Game.Views.Drawers.VATRecordDrawer.update();
-         // Update the financial record drawer
-        Game.Views.Drawers.FinancialRecordDrawer.update();
-         // Render the level
-        this._render();
-        */
+        Game.Services.SessionService.sellUnit();
 
-        // Save the current state
-        this.model.save();
+        // Automatically produce units
+        Game.Services.SessionService.autoProduceUnits();
+
+        // Update the view
+        this.update();
     }
 
     /**
-     * Renders an input field
+     * Event: Changed unit price
      *
-     * @param {String} key
-     * @param {String} label
-     * @param {String} description
-     * @param {Boolean} readOnly
-     *
-     * @returns {HTMLElement} Field element
+     * @param {Number} price
      */
-    renderInputField(key, label, description, readOnly) {
-        let type = 'text';
+    onChangeUnitPrice(price) {
+        Game.Services.SessionService.setUnitPrice(price);
 
-        if (typeof this.model.company[key] === 'number') {
-            type = 'number';
-        }
-
-        return _.div({ class: 'page--level__user-input__field' }, _.h4({ class: 'page--level__user-input__field__label' }, label || ''), _.div({ class: 'page--level__user-input__field__description' }, description || ''), _.input({ disabled: readOnly, type: type, class: 'widget widget--input', value: this.model.company[key] || '' }).on('change', e => {
-            if (readOnly) {
-                return;
-            }
-
-            this.model.company[key] = e.currentTarget.value;
-
-            this.model.save();
-            Game.Views.Widgets.PlayerInfo.update();
-
-            this.fetch();
-        }));
+        this.update();
     }
 
-    /**
-     * Renders a button
-     *
-     * @param {String} key
-     * @param {String} label
-     * @param {String} description
-     * @param {String} action
-     * @param {Function} onClick
-     *
-     * @returns {HTMLElement} Field element
+    /*
+     * Event: Click buy machine
      */
-    renderButton(key, label, description, action, onClick) {
-        return _.div({ class: 'page--level__user-input__field' }, _.h4({ class: 'page--level__user-input__field__label' }, (label || '') + ': ' + this.model.company[key]), _.div({ class: 'page--level__user-input__field__description' }, description || ''), _.button({ class: 'widget widget--button' }, action).on('click', e => {
-            onClick();
+    onClickBuyMachine() {
+        Game.Services.SessionService.buyMachine();
 
-            this.model.save();
-            Game.Views.Widgets.PlayerInfo.update();
-
-            this.fetch();
-        }));
+        this.update();
     }
 
-    /**
-     * Renders a calculation field
-     *
-     * @param {String} label
-     * @param {String} result
+    /*
+     * Event: Click produce
      */
-    renderCalculationField(label, result) {
-        return _.div({ class: 'page--level__calculations__field' }, _.h4({ class: 'page--level__calculations__field__label' }, label), _.div({ class: 'page--level__calculations__field__result' }, result));
+    onClickProduce() {
+        Game.Services.SessionService.produceUnit();
+
+        this.update();
     }
 
     /**
      * Template
      */
     template() {
-        return _.div({ class: 'page page--level' }, _.div({ class: 'page--level__numbers' }, _.div({ class: 'page--level__user-input' }, this.renderInputField('unitPrice', 'Unit price'), this.renderButton('machines', 'Machines', 'Price: 10000 kr.', 'Purchase', () => {
-            this.model.company.purchaseMachine();
-        }), this.renderButton('inventory', 'Inventory', 'Cost: ' + this.model.company.unitProductionCost + ' kr.', 'Produce', () => {
-            this.model.company.produceUnit();
-        })) /*,
-            _.div({class: 'page--level__calculations'},
-               _.div({class: 'page--level__calculations__inner'},
-                   this.renderCalculationField('Sales', this.model.financialRecord.currentReport.sales + ' kr.'),
-                   this.renderCalculationField('Production cost', this.model.financialRecord.currentReport.productionCost + ' kr.') 
-               )
-            )*/
-        ), this.notifications = new Game.Views.Drawers.Notifications(), this.timeline = new Game.Views.Drawers.Timeline());
+        let year = Game.Services.TimeService.currentYear;
+        let month = Game.Services.TimeService.currentMonth;
+
+        return _.div({ class: 'page page--session' }, _.div({ class: 'page--session__user-input' }, _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Unit price'), _.input({ class: 'widget widget--input text-center', type: 'number', value: Game.Services.ConfigService.get('unitPrice', Game.DEFAULT_UNIT_PRICE) }).on('input', e => {
+            this.onChangeUnitPrice(e.currentTarget.value);
+        }), _.div({ dynamicContent: true, class: 'widget widget--label text-right vat' }, Game.Services.ConfigService.get('unitPrice', Game.DEFAULT_UNIT_PRICE) * 1.25 + ' DKK')), _.div({ class: 'widget-group' }, _.div({ dynamicContent: true, class: 'widget widget--label' }, 'Machines: ' + Game.Services.ConfigService.get('machines', 0)), _.button({ class: 'widget widget--button' }, 'Buy machine (' + Game.MACHINE_PRICE + ' DKK)').click(e => {
+            this.onClickBuyMachine();
+        }), _.div({ class: 'widget widget--label text-right vat' }, Game.MACHINE_PRICE * 1.25 + ' DKK')), _.div({ class: 'widget-group' }, _.div({ dynamicContent: true, class: 'widget widget--label' }, 'Inventory: ' + Game.Services.ConfigService.get('inventory', 0)), _.button({ class: 'widget widget--button' }, 'Produce (' + Game.PRODUCTION_COST + ' DKK)').click(e => {
+            this.onClickProduce();
+        }), _.div({ class: 'widget widget--label text-right vat' }, Game.PRODUCTION_COST * 1.25 + ' DKK')), _.div({ class: 'widget-group' }, _.div({ class: 'class: widget widget--label' }, 'Sales this year (estimated ' + Game.Services.ConfigService.get('estimatedIncome', 0).toString() + '):'), _.div({ dynamicContent: true, class: 'class: widget widget--label' }, Game.Services.SessionService.getSales(year).toString())), _.div({ class: 'widget-group' }, _.div({ class: 'class: widget widget--label' }, 'Cost this year:'), _.div({ dynamicContent: true, class: 'class: widget widget--label' }, Game.Services.SessionService.getCost(year).toString()))), this.stats = new Game.Views.Drawers.Stats(), this.notifications = new Game.Views.Drawers.Notifications(), this.timeline = new Game.Views.Drawers.Timeline());
     }
 }
 
 module.exports = Session;
 
 /***/ }),
-/* 26 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2706,7 +2576,7 @@ class ViewController {
      */
     static init() {
         Crisp.Router.route('/', this.index);
-        Crisp.Router.route('/b-skat-estimation', this.bskat);
+        Crisp.Router.route('/b-tax-estimation', this.btax);
         Crisp.Router.route('/session', this.session);
 
         Crisp.Router.init();
@@ -2720,10 +2590,10 @@ class ViewController {
     }
 
     /**
-     * B-skat
+     * B tax
      */
-    static bskat() {
-        _.replace(document.body, new Game.Views.Pages.BSkatEstimation());
+    static btax() {
+        _.replace(document.body, new Game.Views.Pages.BTaxEstimation());
     }
 
     /**
@@ -2737,6 +2607,516 @@ class ViewController {
 ViewController.init();
 
 module.exports = ViewController;
+
+/***/ }),
+/* 26 */,
+/* 27 */,
+/* 28 */,
+/* 29 */,
+/* 30 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * A general helper service for common actions
+ */
+
+class SessionService {
+    /**
+     * Automatically produces units
+     */
+    static autoProduceUnits() {
+        let machines = Game.Services.ConfigService.get('machines', 0);
+
+        if (machines < 1) {
+            return;
+        }
+
+        for (let i = 0; i < machines; i++) {
+            this.produceUnit();
+        }
+    }
+
+    /**
+     * Produces a unit
+     */
+    static produceUnit() {
+        let companyAccount = Game.Services.ConfigService.get('companyAccount', 0);
+
+        if (companyAccount < Game.PRODUCTION_COST) {
+            return;
+        }
+
+        let inventory = Game.Services.ConfigService.get('inventory', 0);
+
+        Game.Services.ConfigService.set('inventory', inventory + 1);
+        Game.Services.ConfigService.set('companyAccount', companyAccount - Game.PRODUCTION_COST);
+    }
+
+    /**
+     * Buys a machine
+     */
+    static buyMachine() {
+        let companyAccount = Game.Services.ConfigService.get('companyAccount', 0);
+
+        if (companyAccount < Game.MACHINE_PRICE) {
+            return;
+        }
+
+        let machines = Game.Services.ConfigService.get('machines', 0);
+
+        Game.Services.ConfigService.set('machines', machines + 1);
+        Game.Services.ConfigService.set('companyAccount', companyAccount - Game.MACHINE_PRICE);
+    }
+
+    /**
+     * Report VAT
+     *
+     * @param {Date} date
+     *
+     * @return {Promise}
+     */
+    static reportVat(date) {
+        let tool = new Game.Views.Modals.VATReportingTool({ date: date });
+
+        return new Promise((resolve, reject) => {
+            tool.on('done', () => {
+                resolve();
+            });
+
+            tool.on('cancel', () => {
+                reject();
+            });
+        });
+    }
+
+    /**
+     * Pay B tax
+     *
+     * @param {Date} date
+     *
+     * @return {Promise}
+     */
+    static payBTax(date) {
+        let amount = Game.Services.ConfigService.get('btax', 0);
+
+        if (amount > 0) {
+            amount = Math.round(amount / 12);
+        }
+
+        let companyAccount = Game.Services.ConfigService.get('companyAccount', 0);
+
+        if (companyAccount < amount) {
+            return Promise.reject(new Error('You don\'t have enough money in your company account to pay B tax'));
+        }
+
+        Game.Services.ConfigService.set('companyAccount', companyAccount - amount);
+
+        return Promise.resolve('B tax for ' + date.getMonthName() + ' ' + date.getFullYear() + ' has been paid');
+    }
+
+    /**
+     * Gets VAT info
+     *
+     * @param {Number} year
+     * @param {Number} quarter
+     *
+     * @returns {Object} VAT info
+     */
+    static getVat(year, quarter) {
+        let vat = Game.Services.ConfigService.get('vat', {});
+
+        if (!year) {
+            return vat;
+        }
+
+        if (!vat[year]) {
+            vat[year] = {};
+        }
+
+        if (!quarter) {
+            return vat[year];
+        }
+
+        if (!vat[year][quarter]) {
+            vat[year][quarter] = { amount: 0, isPaid: false };
+        }
+
+        let firstMonth = (quarter - 1) * 3 + 1;
+        let lastMonth = firstMonth + 2;
+
+        for (let month = firstMonth; month <= lastMonth; month++) {
+            let sales = this.getSales(year, month);
+            let cost = this.getCost(year, month);
+
+            let vatSales = sales / 1.25 * 0.25;
+            let vatCost = cost / 1.25 * 0.25;
+
+            vat[year][quarter].amount += vatSales + vatCost;
+        }
+
+        return vat[year][quarter];
+    }
+
+    /**
+     * Pay VAT
+     *
+     * @param {Date} date
+     *
+     * @return {Promise}
+     */
+    static payVat(date) {
+        let year = date.getFullYear();
+        let quarter = date.getQuarter();
+
+        let vat = this.getVat(year, quarter);
+
+        if (vat.isPaid) {
+            return;
+        }
+
+        let companyAccount = Game.Services.ConfigService.get('companyAccount', 0);
+
+        if (companyAccount < amount) {
+            return Promise.reject('You don\'t have enough money in your company account to pay VAT');
+        }
+
+        Game.Services.ConfigService.set('companyAccount', companyAccount - amount);
+
+        return Promise.resolve('VAT for ' + year + ' Q' + quarter + ' has been paid');
+    }
+
+    /**
+     * Sets the unit price
+     *
+     * @param {Number} price 
+     */
+    static setUnitPrice(price) {
+        Game.Services.ConfigService.set('unitPrice', price);
+    }
+
+    /**
+     * Sells a unit
+     */
+    static sellUnit() {
+        let inventory = Game.Services.ConfigService.get('inventory', 0);
+
+        if (inventory < 1) {
+            return;
+        }
+
+        let year = Game.Services.TimeService.currentYear;
+        let month = Game.Services.TimeService.currentMonth;
+
+        let companyAccount = Game.Services.ConfigService.get('companyAccount', 0);
+        let sales = this.getSales(year, month);
+        let cost = this.getCost(year, month);
+        let unitPrice = Game.Services.ConfigService.get('unitPrice', Game.DEFAULT_UNIT_PRICE);
+
+        sales += unitPrice;
+        cost += Game.PRODUCTION_COST;
+
+        this.setSales(year, month, sales);
+        this.setCost(year, month, cost);
+
+        Game.Services.ConfigService.set('inventory', inventory - 1);
+        Game.Services.ConfigService.set('companyAccount', companyAccount + unitPrice);
+    }
+
+    /**
+     * Gets the sales numbers
+     *
+     * @param {Number} year
+     * @param {Number} month
+     *
+     * @param {Number} Sales
+     */
+    static getSales(year, month) {
+        let result = 0;
+        let sales = Game.Services.ConfigService.get('sales', {});
+
+        if (year && !sales[year]) {
+            sales[year] = {};
+        }
+        if (month && !sales[year][month]) {
+            sales[year][month] = 0;
+        }
+
+        // Specific month
+        if (year && month) {
+            result = sales[year][month];
+
+            // Specific year
+        } else if (month) {
+            for (let m in sales[year]) {
+                result += parseFloat(sales[y][m]) || 0;
+            }
+
+            // result sales
+        } else {
+            for (let y in sales) {
+                for (let m in sales[y]) {
+                    result += parseFloat(sales[y][m]) || 0;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Sets the sales numbers
+     *
+     * @param {Number} year
+     * @param {Number} month
+     * @param {Number} amount
+     */
+    static setSales(year, month, amount) {
+        if (!year) {
+            throw new Error('Year is required');
+        }
+        if (!month) {
+            throw new Error('Month is required');
+        }
+
+        let sales = Game.Services.ConfigService.get('sales', {});
+
+        if (!year) {
+            return sales;
+        }
+
+        if (!sales[year]) {
+            sales[year] = {};
+        }
+
+        if (!month) {
+            return sales[year];
+        }
+
+        if (!sales[year][month]) {
+            sales[year][month] = 0;
+        }
+
+        sales[year][month] = amount;
+
+        Game.Services.ConfigService.set('sales', sales);
+    }
+
+    /**
+     * Gets the cost numbers
+     *
+     * @param {Number} year
+     * @param {Number} month
+     *
+     * @param {Object|Number} cost
+     */
+    static getCost(year, month) {
+        let result = 0;
+        let cost = Game.Services.ConfigService.get('cost', {});
+
+        if (year && !cost[year]) {
+            cost[year] = {};
+        }
+        if (month && !cost[year][month]) {
+            cost[year][month] = 0;
+        }
+
+        // Specific month
+        if (year && month) {
+            result = cost[year][month];
+
+            // Specific year
+        } else if (month) {
+            for (let m in cost[year]) {
+                result += parseFloat(cost[y][m]) || 0;
+            }
+
+            // result cost
+        } else {
+            for (let y in cost) {
+                for (let m in cost[y]) {
+                    result += parseFloat(cost[y][m]) || 0;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Sets the cost numbers
+     *
+     * @param {Number} year
+     * @param {Number} month
+     * @param {Number} amount
+     */
+    static setCost(year, month, amount) {
+        if (!year) {
+            throw new Error('Year is required');
+        }
+        if (!month) {
+            throw new Error('Month is required');
+        }
+
+        let cost = Game.Services.ConfigService.get('cost', {});
+
+        if (!year) {
+            return cost;
+        }
+
+        if (!cost[year]) {
+            cost[year] = {};
+        }
+
+        if (!month) {
+            return cost[year];
+        }
+
+        if (!cost[year][month]) {
+            cost[year][month] = 0;
+        }
+
+        cost[year][month] = amount;
+
+        Game.Services.ConfigService.set('cost', cost);
+    }
+}
+
+module.exports = SessionService;
+
+/***/ }),
+/* 31 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * A message modal
+ */
+
+class Message extends Game.Views.Modals.Modal {
+  /**
+   * Constructor
+   */
+  constructor(params) {
+    super(params);
+  }
+
+  /**
+   * Pre render
+   */
+  prerender() {
+    this.size = this.size || 'small';
+  }
+
+  /**
+   * Renders the header
+   */
+  renderHeader() {
+    return _.div({ class: 'modal--message__title' }, this.title);
+  }
+
+  /**
+   * Renders the body
+   */
+  renderBody() {
+    return _.div({ class: 'modal--message__message' }, this.message);
+  }
+
+  /**
+   * Renders the footer
+   */
+  renderFooter() {
+    return _.button({ class: 'widget widget--button align-right' }, 'OK').click(() => {
+      this.close();
+    });
+  }
+}
+
+module.exports = Message;
+
+/***/ }),
+/* 32 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * A modal for transffering funds
+ */
+
+class Transfer extends Game.Views.Modals.Modal {
+    /**
+     * Pre render
+     */
+    prerender() {
+        this.size = this.size || 'small';
+        this.amount = 0;
+    }
+
+    /**
+     * Render header
+     */
+    renderHeader() {
+        return 'Transfer funds';
+    }
+
+    /**
+     * Render body
+     */
+    renderBody() {
+        let companyAccount = Game.Services.ConfigService.get('companyAccount', 0);
+
+        return _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label text-center' }, 0), _.input({ class: 'widget widget--range', type: 'range', min: 0, max: companyAccount }).on('input', e => {
+            this.onChangeAmount(e.currentTarget.value);
+        }), _.div({ class: 'widget widget--label text-center' }, companyAccount));
+    }
+
+    /**
+     * Event: Change amount
+     *
+     * @param {Number} amount
+     */
+    onChangeAmount(amount) {
+        this.amount = parseFloat(amount);
+
+        this.update();
+    }
+
+    /**
+     * Event: Click transfer
+     */
+    onClickTransfer() {
+        let companyAccount = Game.Services.ConfigService.get('companyAccount', 0);
+        let personalAccount = Game.Services.ConfigService.get('personalAccount', 0);
+
+        if (companyAccount < this.amount) {
+            return;
+        }
+
+        Game.Services.ConfigService.set('companyAccount', companyAccount - this.amount);
+        Game.Services.ConfigService.set('personalAccount', personalAccount + this.amount);
+
+        this.trigger('submit');
+
+        this.close();
+    }
+
+    /**
+     * Render footer
+     */
+    renderFooter() {
+        return _.button({ dynamicContent: true, class: 'widget widget--button align-right' }, 'Transfer ' + this.amount + ' DKK').click(() => {
+            this.onClickTransfer();
+        });
+    }
+}
+
+module.exports = Transfer;
 
 /***/ })
 /******/ ]);

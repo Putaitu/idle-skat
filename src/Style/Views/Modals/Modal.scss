@@ -4,8 +4,8 @@
 }
 
 @keyframes modal__fly-in {
-    0% { transform: translateY(-3rem); }
-    100% { transform: none; }
+    0% { transform: translate(-50%, -60%); }
+    100% { transform: translate(-50%, -50%); }
 }
 
 .modal {
@@ -24,6 +24,7 @@
         right: 1rem;
         color: dimgrey;
         width: 2rem;
+        min-width: 0;
         height: 2rem;
         display: block;
 
@@ -36,12 +37,34 @@
     &__dialog {
         animation: modal__fly-in 0.5s ease;
         position: absolute;
-        top: 1rem;
-        left: 1rem;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
         height: calc(100% - 2rem);
         width: calc(100% - 2rem);
         border-radius: 2rem;
         border: 1px solid dimgrey;
-        background-color: lightgrey;
+        background-color: white;
+        display: flex;
+        flex-direction: column;
+        padding: 1rem;
     }
+    
+    &__header {
+        margin-bottom: 1rem;
+    }
+
+    &__footer {
+        margin-top: 1rem;
+    }
+
+    &__body {
+        flex-grow: 1;
+    }
+
+    &.small &__dialog {
+        max-width: 20rem;
+        max-height: 10rem;
+    }
+
 }

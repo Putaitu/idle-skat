@@ -1,5 +1,19 @@
 .widget {
     display: block;
+
+    &.text {
+        &-center {
+            text-align: center;
+        }
+        
+        &-left {
+            text-align: left;
+        }
+        
+        &-right {
+            text-align: right;
+        }
+    }
 }
 
 .widget, .widget-group {
@@ -21,7 +35,6 @@
 
 .widget-group {
     display: flex;
-    max-width: 34rem;
     margin-bottom: 1rem;
     
     .widget {

@@ -9,7 +9,7 @@ class ViewController {
      */
     static init() {
         Crisp.Router.route('/', this.index);
-        Crisp.Router.route('/b-skat-estimation', this.bskat);
+        Crisp.Router.route('/b-tax-estimation', this.btax);
         Crisp.Router.route('/session', this.session);
     
         Crisp.Router.init();
@@ -25,11 +25,11 @@ class ViewController {
     }
 
     /**
-     * B-skat
+     * B tax
      */
-    static bskat() {
+    static btax() {
         _.replace(document.body,
-            new Game.Views.Pages.BSkatEstimation() 
+            new Game.Views.Pages.BTaxEstimation() 
         );
     }
 

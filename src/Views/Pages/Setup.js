@@ -9,8 +9,8 @@ class Setup extends Crisp.View {
 
         this.model = {
             name: 'My Company Aps',
-            total: 30000,
-            capital: 3000
+            total: 7500,
+            capital: 5000
         };
             
         this.fetch();
@@ -69,11 +69,14 @@ class Setup extends Crisp.View {
      * @param {InputEvent} e
      */
     onClickNext(e) {
+        // We clear localStorage this point to make sure we start with a clean slate
+        localStorage.clear();
+
         Game.Services.ConfigService.set('personalAccount', this.model.total - this.model.capital);
         Game.Services.ConfigService.set('companyAccount', this.model.capital);
         Game.Services.ConfigService.set('companyName', this.model.name);
 
-        Crisp.Router.go('/b-skat-estimation');
+        Crisp.Router.go('/b-tax-estimation');
     }
 
     /**

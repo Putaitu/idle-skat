@@ -9,8 +9,9 @@
     font-weight: bold;
     border-radius: 1rem;
     border: 0;
-    max-width: 10rem;
+    min-width: 8rem;
     text-align: center;
+    white-space: nowrap;
 
     &.warning {
         background-color: yellow;

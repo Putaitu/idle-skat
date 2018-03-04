@@ -49,27 +49,6 @@ class Notifications extends Game.Views.Drawers.Drawer {
     }
 
     /**
-     * Cleans up expired notifications
-     */
-    cleanExpired() {
-        let date = Game.Services.TimeService.currentTime;
-        let hasChanged = false;
-
-        for(let key in this.model) {
-            let entry = this.model[key];
-
-            if(entry.expiresOn && entry.expiresOn.getTime() <= date.getTime()) {
-                delete this.model[key];
-                hasChanged = true;
-            }
-        }
-
-        if(hasChanged) {
-            this.save();
-        }
-    }
-
-    /**
      * Save changes
      */
     save() {
@@ -80,7 +59,6 @@ class Notifications extends Game.Views.Drawers.Drawer {
      * Heartbeat
      */
     heartbeat() {
-        this.cleanExpired();
         this.update();
     }
 
@@ -90,7 +68,7 @@ class Notifications extends Game.Views.Drawers.Drawer {
     renderPreview() {
         let currentDate = Game.Services.TimeService.currentTime;
 
-        return _.div({class: 'drawer__preview drawer--notifications__entries'},
+        return _.div({dynamicChildren: true, class: 'drawer__preview drawer--notifications__entries'},
             _.each(this.model, (key, notification) => {
                 return _.div({class: 'drawer--notifications__entry'},
                     _.do(() => {
@@ -98,9 +76,12 @@ class Notifications extends Game.Views.Drawers.Drawer {
 
                         let percent = ((currentDate.getTime() - notification.createdOn.getTime()) / (notification.expiresOn.getTime() - notification.createdOn.getTime())) * 100;
 
-                        if(percent >= 100) { percent = 100; }
+                        if(percent >= 100) {
+                            notification.isExpired = true;
+                            percent = 100;
+                        }
 
-                        return _.div({'data-cr-dynamic': true, class: 'drawer--notifications__entry__progress', style: 'width: ' + percent + '%'});
+                        return _.div({dynamicAttributes: true, class: 'drawer--notifications__entry__progress', style: 'width: ' + percent + '%'});
                     }),
                     _.if(notification.title,
                         _.div({class: 'drawer--notifications__entry__title'}, notification.title)
@@ -111,18 +92,32 @@ class Notifications extends Game.Views.Drawers.Drawer {
                     _.do(() => {
                         if(!notification.action) { return; }
 
-                        return _.button({class: 'drawer--notifications__entry__action widget widget--button ' + (notification.type || '')}, notification.action.label)
+                        return _.button({dynamicAttributes: true, class: 'drawer--notifications__entry__action widget widget--button ' + (notification.isExpired ? 'alert' : notification.type || '')}, notification.action.label)
                             .click((e) => { 
-                                e.currentTarget.parentElement.classList.toggle('out', true);
-                               
-                                setTimeout(() => {
-                                    delete this.model[key];
-                                    this.save();
-                                }, 500);
-
                                 if(typeof this[notification.action.onClick] !== 'function') { return; }
 
-                                this[notification.action.onClick](key);
+                                this[notification.action.onClick](notification)
+                                .then((message) => {
+                                    e.currentTarget.parentElement.classList.toggle('out', true);
+                                   
+                                    setTimeout(() => {
+                                        delete this.model[key];
+                                        this.save();
+                                    }, 500);
+
+                                    if(message) {
+                                        new Game.Views.Modals.Message({
+                                            title: 'Success',
+                                            message: message
+                                        });
+                                    }
+                                })
+                                .catch((e) => {
+                                    new Game.Views.Modals.Message({
+                                        title: 'Error',
+                                        message: e.message
+                                    });
+                                });
                             })
                     })
                 );
@@ -140,28 +135,28 @@ class Notifications extends Game.Views.Drawers.Drawer {
     /**
      * Event: Click pay B tax
      *
-     * @param {String} key
+     * @param {Object} notification
      */
-    onClickPayBTax() {
-        alert('Pay B tax'); 
+    onClickPayBTax(notification) {
+        return Game.Services.SessionService.payBTax(notification.createdOn);
     }
     
     /**
      * Event: Click pay VAT
      *
-     * @param {String} key
+     * @param {Object} notification
      */
-    onClickPayVAT() {
-        alert('Pay VAT'); 
+    onClickPayVAT(notification) {
+        return Game.Services.SessionService.payVat(notification.createdOn);
     }
    
     /**
      * Event: Click report VAT
      *
-     * @param {String} key
+     * @param {Object} notification
      */
-    onClickReportVAT() {
-        alert('Report VAT'); 
+    onClickReportVAT(notification) {
+        return Game.Services.SessionService.reportVat(notification.createdOn);
     }
 }
 

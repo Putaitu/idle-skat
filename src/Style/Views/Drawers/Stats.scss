@@ -1,0 +1,22 @@
+.drawer--stats {
+    top: 0;
+    bottom: auto;
+    background-color: dimgrey;
+    color: lightgrey;
+    padding: 1rem;
+    width: 100%;
+
+    &__preview {
+        display: flex;
+        justify-content: center;
+
+        &__company, &__personal {
+            max-width: 20rem;
+        }
+
+        &__company, &__personal, &__transations {
+            flex-shrink: 0;
+            flex-grow: 1;
+        }
+    }
+}

@@ -25,11 +25,7 @@ class Timeline extends Game.Views.Drawers.Drawer {
             return {
                 type: 'alert',
                 title: 'VAT due',
-                message: 'VAT payment was due on ' + date.prettyPrint() + ', but was not paid',
-                action: {
-                    label: 'Pay VAT',
-                    onClick: 'onClickPayVAT'
-                }
+                isSilent: true
             };
         }
         
@@ -52,7 +48,7 @@ class Timeline extends Game.Views.Drawers.Drawer {
                 message: 'VAT payment can be made, and is due on ' + expiresOn.prettyPrint(),
                 expiresOn: expiresOn,
                 action: {
-                    label: 'Pay VAT',
+                    label: 'Pay VAT (' + Game.Services.SessionService.getVat(date.getFullYear(), date.getQuarter()).amount + ' DKK)',
                     onClick: 'onClickPayVAT'
                 }
             };
@@ -94,7 +90,7 @@ class Timeline extends Game.Views.Drawers.Drawer {
                 message: 'B tax payment can be made, and is due on ' + expiresOn.prettyPrint(),
                 expiresOn: expiresOn,
                 action: {
-                    label: 'Pay B tax',
+                    label: 'Pay B tax (' + Math.round(Game.Services.ConfigService.get('btax', 0) / 12) + ' DKK)',
                     onClick: 'onClickPayBTax'
                 }
             };
@@ -105,11 +101,7 @@ class Timeline extends Game.Views.Drawers.Drawer {
             return {
                 type: 'alert',
                 title: 'B tax due',
-                message: 'B tax payment was due on ' + date.prettyPrint() + ', but was not paid',
-                action: {
-                    label: 'Pay B-skat',
-                    onClick: 'onClickPayBTax'
-                }
+                isSilent: true
             };
         }
     }
@@ -127,13 +119,7 @@ class Timeline extends Game.Views.Drawers.Drawer {
      * Heartbeat
      */
     heartbeat() {
-        let currentDate = Game.Services.TimeService.currentDate;
-        
-        if(this.lastDate !== currentDate) {
-            this._render();  
-        }
-        
-        this.lastDate = currentDate; 
+        this.update();
     }
 
     /**
@@ -149,7 +135,7 @@ class Timeline extends Game.Views.Drawers.Drawer {
     renderPreview() {
         let date = Game.Services.TimeService.currentTime;
 
-        return _.div({class: 'drawer__preview drawer--timeline__scroller'},
+        return _.div({dynamicContent: true, class: 'drawer__preview drawer--timeline__scroller'},
             _.div({class: 'drawer--timeline__scroller__year'},
                 date.getFullYear()
             ),
@@ -165,7 +151,7 @@ class Timeline extends Game.Views.Drawers.Drawer {
 
                     let notification = this.getNotification(currentDate);
                    
-                    if(notification && day === 0) {
+                    if(notification && day === 0 && !notification.isSilent) {
                         Game.Views.Drawers.Notifications.set(notification);
                     }
 

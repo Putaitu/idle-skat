@@ -2,4 +2,18 @@
     white-space: nowrap;
     line-height: 2;
     padding: 0 0.5rem;
+
+    &.vat {
+        &:after {
+            content: '+VAT';
+            vertical-align: super;
+            font-size: 0.5rem;
+            font-weight: bold;
+            padding: 0.1rem 0.2rem;
+            border-radius: 0.25rem;
+            background-color: teal;
+            color: white;
+            margin-left: 0.25rem;
+        }
+    }
 }

@@ -1,9 +1,5 @@
 'use strict';
 
-const MACHINE_DELAY = 4;
-
-let machineCounter = 0;
-
 class Session extends Crisp.View {
     /**
      * Constructor
@@ -26,135 +22,93 @@ class Session extends Crisp.View {
      * Heartbeat
      */
     heartbeat() {
-        if(!document.hasFocus()) { return; }
+        this.element.classList.toggle('paused', !document.hasFocus());
+        
+        if(!document.hasFocus() || Game.Services.TimeService.isPaused) { return; }
 
         // Tick time 
         Game.Services.TimeService.tick();
        
         this.timeline.heartbeat();
         this.notifications.heartbeat();
+        this.stats.heartbeat();
 
-        /*
         // Sell one unit every second
-        this.model.company.sellUnit();
+        Game.Services.SessionService.sellUnit();
 
         // Automatically produce units
-        machineCounter++;
+        Game.Services.SessionService.autoProduceUnits();
         
-        if(machineCounter >= MACHINE_DELAY) {
-            for(let i = 0; i < this.model.company.machines; i++) {
-                this.model.company.produceUnit();
-            }
-
-            machineCounter = 0;
-        }
-
-        // Update the VAT record drawer
-        Game.Views.Drawers.VATRecordDrawer.update();
-
-        // Update the financial record drawer
-        Game.Views.Drawers.FinancialRecordDrawer.update();
-
-        // Render the level
-        this._render();
-        */
-
-        // Save the current state
-        this.model.save();
+        // Update the view
+        this.update();
     }
 
     /**
-     * Renders an input field
+     * Event: Changed unit price
      *
-     * @param {String} key
-     * @param {String} label
-     * @param {String} description
-     * @param {Boolean} readOnly
-     *
-     * @returns {HTMLElement} Field element
+     * @param {Number} price
      */
-    renderInputField(key, label, description, readOnly) {
-        let type = 'text';
+    onChangeUnitPrice(price) {
+        Game.Services.SessionService.setUnitPrice(price);
 
-        if(typeof this.model.company[key] === 'number') {
-            type = 'number';
-        }
-        
-        return _.div({class: 'page--level__user-input__field'},
-            _.h4({class: 'page--level__user-input__field__label'}, label || ''),
-            _.div({class: 'page--level__user-input__field__description'}, description || ''),
-            _.input({disabled: readOnly, type: type, class: 'widget widget--input', value: this.model.company[key] || ''})
-                .on('change', (e) => {
-                    if(readOnly) { return; }
+        this.update();
+    }
 
-                    this.model.company[key] = e.currentTarget.value;
+    /*
+     * Event: Click buy machine
+     */
+    onClickBuyMachine() {
+        Game.Services.SessionService.buyMachine();
 
-                    this.model.save();
-                    Game.Views.Widgets.PlayerInfo.update();
-                    
-                    this.fetch();
-                })
-        );
+        this.update();
     }
     
-    /**
-     * Renders a button
-     *
-     * @param {String} key
-     * @param {String} label
-     * @param {String} description
-     * @param {String} action
-     * @param {Function} onClick
-     *
-     * @returns {HTMLElement} Field element
+    /*
+     * Event: Click produce
      */
-    renderButton(key, label, description, action, onClick) {
-        return _.div({class: 'page--level__user-input__field'},
-            _.h4({class: 'page--level__user-input__field__label'}, (label || '') + ': ' + this.model.company[key]),
-            _.div({class: 'page--level__user-input__field__description'}, description || ''),
-            _.button({class: 'widget widget--button'}, action)
-                .on('click', (e) => {
-                    onClick();
-                    
-                    this.model.save();
-                    Game.Views.Widgets.PlayerInfo.update();
+    onClickProduce() {
+        Game.Services.SessionService.produceUnit();
 
-                    this.fetch();
-                })
-        );
-    }
-
-    /**
-     * Renders a calculation field
-     *
-     * @param {String} label
-     * @param {String} result
-     */
-    renderCalculationField(label, result) {
-        return _.div({class: 'page--level__calculations__field'},
-            _.h4({class: 'page--level__calculations__field__label'}, label),
-            _.div({class: 'page--level__calculations__field__result'}, result)
-        );
+        this.update();
     }
 
     /**
      * Template
      */
     template() {
-        return _.div({class: 'page page--level'},
-            _.div({class: 'page--level__numbers'},
-                _.div({class: 'page--level__user-input'},
-                    this.renderInputField('unitPrice', 'Unit price'),
-                    this.renderButton('machines', 'Machines', 'Price: 10000 kr.', 'Purchase', () => { this.model.company.purchaseMachine(); }),
-                    this.renderButton('inventory', 'Inventory', 'Cost: ' + this.model.company.unitProductionCost + ' kr.', 'Produce', () => { this.model.company.produceUnit(); }),
-                )/*,
-                _.div({class: 'page--level__calculations'},
-                    _.div({class: 'page--level__calculations__inner'},
-                        this.renderCalculationField('Sales', this.model.financialRecord.currentReport.sales + ' kr.'),
-                        this.renderCalculationField('Production cost', this.model.financialRecord.currentReport.productionCost + ' kr.') 
-                    )
-                )*/
+        let year = Game.Services.TimeService.currentYear;
+        let month = Game.Services.TimeService.currentMonth;
+
+        return _.div({class: 'page page--session'},
+            _.div({class: 'page--session__user-input'},
+                _.div({class: 'widget-group'},
+                    _.div({class: 'widget widget--label'}, 'Unit price'),
+                    _.input({class: 'widget widget--input text-center', type: 'number', value: Game.Services.ConfigService.get('unitPrice', Game.DEFAULT_UNIT_PRICE)})
+                        .on('input', (e) => { this.onChangeUnitPrice(e.currentTarget.value); }),
+                    _.div({dynamicContent: true, class: 'widget widget--label text-right vat'}, (Game.Services.ConfigService.get('unitPrice', Game.DEFAULT_UNIT_PRICE) * 1.25) + ' DKK')
+                ),
+                _.div({class: 'widget-group'},
+                    _.div({dynamicContent: true, class: 'widget widget--label'}, 'Machines: ' + Game.Services.ConfigService.get('machines', 0)),
+                    _.button({class: 'widget widget--button'}, 'Buy machine (' + Game.MACHINE_PRICE + ' DKK)')
+                        .click((e) => { this.onClickBuyMachine(); }),
+                    _.div({class: 'widget widget--label text-right vat'}, (Game.MACHINE_PRICE * 1.25) + ' DKK')
+                ),
+                _.div({class: 'widget-group'},
+                    _.div({dynamicContent: true, class: 'widget widget--label'}, 'Inventory: ' + Game.Services.ConfigService.get('inventory', 0)),
+                    _.button({class: 'widget widget--button'}, 'Produce (' + Game.PRODUCTION_COST + ' DKK)')
+                        .click((e) => { this.onClickProduce(); }),
+                    _.div({class: 'widget widget--label text-right vat'}, (Game.PRODUCTION_COST * 1.25) + ' DKK')
+                ),
+                _.div({class: 'widget-group'},
+                    _.div({class: 'class: widget widget--label'}, 'Sales this year (estimated ' + Game.Services.ConfigService.get('estimatedIncome', 0).toString() + '):'),
+                    _.div({dynamicContent: true, class: 'class: widget widget--label'}, Game.Services.SessionService.getSales(year).toString())
+                ),
+                _.div({class: 'widget-group'},
+                    _.div({class: 'class: widget widget--label'}, 'Cost this year:'),
+                    _.div({dynamicContent: true, class: 'class: widget widget--label'}, Game.Services.SessionService.getCost(year).toString())
+                )
             ),
+            this.stats = new Game.Views.Drawers.Stats(),
             this.notifications = new Game.Views.Drawers.Notifications(),
             this.timeline = new Game.Views.Drawers.Timeline()
         );

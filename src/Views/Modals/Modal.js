@@ -19,6 +19,8 @@ class Modal extends Crisp.View {
         }
 
         _.append(document.body, this);
+
+        Game.Services.TimeService.isPaused = true;
     }
 
     /**
@@ -41,6 +43,8 @@ class Modal extends Crisp.View {
      */
     close() {
         this.remove();
+
+        Game.Services.TimeService.isPaused = false;
     }
 
     /**
@@ -54,11 +58,13 @@ class Modal extends Crisp.View {
      * Template
      */
     template() {
-        return _.div({class: 'modal modal--' + this.className},
+        return _.div({class: 'modal modal--' + this.className + ' ' + (this.size || 'large')},
             _.div({class: 'modal__dialog'},
                 _.button({class: 'modal__close widget widget--button'})
                     .click(() => {
                         this.close();
+
+                        this.trigger('cancel');
                     }),
                 _.div({class: 'modal__header'},
                     this.renderHeader()
