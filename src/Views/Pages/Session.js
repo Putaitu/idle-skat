@@ -121,7 +121,15 @@ class Session extends Crisp.View {
                     _.div({class: 'class: widget widget--label'}, 'Cost this year:'),
                     _.div({dynamicContent: true, class: 'class: widget widget--label'}, Game.Services.SessionService.getCost(year).toString())
                 )
-            ),
+            )
+        );
+    }
+
+    /**
+     * Post render
+     */
+    postrender() {
+        _.append(this.element, 
             this.stats.element,
             this.notifications.element,
             this.timeline.element,

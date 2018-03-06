@@ -3213,7 +3213,14 @@ class Session extends Crisp.View {
             this.onClickBuyMachine();
         }), _.div({ class: 'widget widget--label text-right vat' }, Game.MACHINE_PRICE * 1.25 + ' DKK')), _.div({ class: 'widget-group' }, _.div({ dynamicContent: true, class: 'widget widget--label' }, 'Inventory: ' + Game.Services.ConfigService.get('inventory', 0)), _.button({ class: 'widget widget--button' }, 'Produce (' + Game.PRODUCTION_COST + ' DKK)').click(e => {
             this.onClickProduce();
-        }), _.div({ class: 'widget widget--label text-right vat' }, Game.PRODUCTION_COST * 1.25 + ' DKK')), _.div({ class: 'widget-group' }, _.div({ class: 'class: widget widget--label' }, 'Sales this year (estimated ' + Game.Services.ConfigService.get('estimatedIncome', 0).toString() + '):'), _.div({ dynamicContent: true, class: 'class: widget widget--label' }, Game.Services.SessionService.getSales(year).toString())), _.div({ class: 'widget-group' }, _.div({ class: 'class: widget widget--label' }, 'Cost this year:'), _.div({ dynamicContent: true, class: 'class: widget widget--label' }, Game.Services.SessionService.getCost(year).toString()))), this.stats.element, this.notifications.element, this.timeline.element, this.coinStack.element);
+        }), _.div({ class: 'widget widget--label text-right vat' }, Game.PRODUCTION_COST * 1.25 + ' DKK')), _.div({ class: 'widget-group' }, _.div({ class: 'class: widget widget--label' }, 'Sales this year (estimated ' + Game.Services.ConfigService.get('estimatedIncome', 0).toString() + '):'), _.div({ dynamicContent: true, class: 'class: widget widget--label' }, Game.Services.SessionService.getSales(year).toString())), _.div({ class: 'widget-group' }, _.div({ class: 'class: widget widget--label' }, 'Cost this year:'), _.div({ dynamicContent: true, class: 'class: widget widget--label' }, Game.Services.SessionService.getCost(year).toString()))));
+    }
+
+    /**
+     * Post render
+     */
+    postrender() {
+        _.append(this.element, this.stats.element, this.notifications.element, this.timeline.element, this.coinStack.element);
     }
 }
 
