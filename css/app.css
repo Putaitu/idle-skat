@@ -770,7 +770,7 @@ h1, h2, h3, h4, h5, h6 {
     height: 2rem;
     display: block; }
     .modal__close:after {
-      content: '\2716';
+      content: '✖';
       display: block; }
   .modal__dialog {
     animation: modal__fly-in 0.5s ease;
@@ -811,6 +811,47 @@ h1, h2, h3, h4, h5, h6 {
       padding: 0 0.5rem;
       text-align: right; }
 
+@keyframes coin-stack__coin-drop {
+  0% {
+    transform: translateY(-10rem);
+    opacity: 0; }
+  100% {
+    transform: none;
+    opacity: 1; } }
+
+.coin-stack {
+  transition: height 1s step-start;
+  bottom: 0;
+  margin: 1rem;
+  text-align: center; }
+  .coin-stack__stack, .coin-stack__coin {
+    width: 100px;
+    background-size: 100% auto;
+    background-image: url("../img/coin.png"); }
+  .coin-stack__stack {
+    height: 100%;
+    position: relative;
+    margin-bottom: 1rem; }
+    .coin-stack__stack:after {
+      content: '';
+      background-image: radial-gradient(rgba(0, 0, 0, 0.2), transparent 80%);
+      width: calc(100% + 1rem);
+      left: -0.5rem;
+      bottom: -0.5rem;
+      display: block;
+      position: absolute;
+      height: 1rem;
+      border-radius: 50%;
+      z-index: -1; }
+  .coin-stack__coin {
+    position: absolute;
+    height: 10px;
+    animation-fill-mode: forwards; }
+    .coin-stack__coin.in {
+      animation: coin-stack__coin-drop 0.4s ease; }
+    .coin-stack__coin.out {
+      animation: coin-stack__coin-drop 0.4s ease reverse; }
+
 .page {
   width: calc(100% - 2rem);
   max-width: 70rem;
@@ -843,6 +884,11 @@ h1, h2, h3, h4, h5, h6 {
 
 .page--session {
   margin-top: 6rem; }
+  .page--session .coin-stack {
+    position: fixed;
+    bottom: 10rem;
+    left: 50%;
+    transform: translateX(-50%); }
   .page--session.paused:after {
     content: 'PAUSED';
     display: block;

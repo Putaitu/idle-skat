@@ -1,0 +1,57 @@
+@keyframes coin-stack__coin-drop {
+    0% {
+        transform: translateY(-10rem);
+        opacity: 0;
+    }
+
+    100% {
+        transform: none;
+        opacity: 1;
+    }
+}
+
+.coin-stack {
+    transition: height 1s step-start;
+    bottom: 0;
+    margin: 1rem;
+    text-align: center;
+    
+    &__stack, &__coin {
+        width: 100px;
+        background-size: 100% auto;
+        background-image: url('../img/coin.png');
+    }
+    
+    &__stack {
+        height: 100%;
+        position: relative;
+        margin-bottom: 1rem;
+        
+        &:after {
+            content: '';
+            background-image: radial-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0) 80%);
+            width: calc(100% + 1rem);;
+            left: -0.5rem;
+            bottom: -0.5rem;
+            display: block;
+            position: absolute;
+            height: 1rem;
+            border-radius: 50%;
+            z-index: -1;
+        }
+    }
+
+    &__coin {
+        position: absolute;
+        height: 10px;
+        animation-fill-mode: forwards;
+        
+        &.in {
+            animation: coin-stack__coin-drop 0.4s ease;
+        }
+
+        &.out {
+            animation: coin-stack__coin-drop 0.4s ease reverse;
+        }
+    }
+}

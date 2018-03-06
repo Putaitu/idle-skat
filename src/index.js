@@ -59,6 +59,7 @@ Game.Views.Drawers.Notifications = require('./Views/Drawers/Notifications');
 
 Game.Views.Charts = {};
 Game.Views.Charts.PieChart = require('./Views/Charts/PieChart');
+Game.Views.Charts.CoinStack = require('./Views/Charts/CoinStack');
 
 Game.Views.Pages = {};
 Game.Views.Pages.Setup = require('./Views/Pages/Setup');

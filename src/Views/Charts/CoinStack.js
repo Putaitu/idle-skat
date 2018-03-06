@@ -7,12 +7,10 @@ class CoinStack extends Crisp.View {
     constructor(params) {
         super(params);
 
-        this.model = this.model || {};
-        this.model.amount = this.model.amount || 0;
-        this.model.currentAmount = this.model.amount;
-        this.model.coinHeight = this.model.coinHeight || 0;
-        this.model.label = this.model.label || '';
-        this.model.color = this.model.color || '#000000';
+        this.currentAmount = this.amount;
+        this.coinHeight = this.coinHeight || 10;
+        this.label = this.label || '';
+        this.color = this.color || '#000000';
 
         this.fetch();
     }
@@ -47,12 +45,12 @@ class CoinStack extends Crisp.View {
      * Updates the stack height
      */
     update() {
-        if(this.model.amount > this.model.currentAmount) {
-            this.model.currentAmount++;
+        if(this.amount > this.currentAmount) {
+            this.currentAmount++;
 
-            let targetAmount = this.model.currentAmount;
+            let targetAmount = this.currentAmount;
 
-            let coin = _.div({class: 'coin-stack__coin in', style: 'bottom: ' + ((this.model.currentAmount - 1) * this.model.coinHeight) + 'px'});
+            let coin = _.div({class: 'coin-stack__coin in', style: 'bottom: ' + ((this.currentAmount - 1) * this.coinHeight) + 'px'});
 
             setTimeout(() => {
                 this.update();
@@ -65,14 +63,14 @@ class CoinStack extends Crisp.View {
 
             _.append(this.stackElement, coin);
 
-        } else if(this.model.amount < this.model.currentAmount) {
-            this.model.currentAmount--;
+        } else if(this.amount < this.currentAmount) {
+            this.currentAmount--;
             
-            let targetAmount = this.model.currentAmount;
+            let targetAmount = this.currentAmount;
                 
             this.stackElement.setAttribute('style', this.getAmountStyle(targetAmount));
 
-            let coin = _.div({class: 'coin-stack__coin out', style: 'bottom: ' + (this.model.currentAmount * this.model.coinHeight) + 'px'});
+            let coin = _.div({class: 'coin-stack__coin out', style: 'bottom: ' + (this.currentAmount * this.coinHeight) + 'px'});
 
             setTimeout(() => {
                 this.update();
@@ -96,7 +94,7 @@ class CoinStack extends Crisp.View {
 
         amount = Math.round(amount);
 
-        this.model.amount = amount;
+        this._amount = amount;
 
         this.update();
     }
@@ -107,7 +105,7 @@ class CoinStack extends Crisp.View {
      * @returns {Number} Amount
      */
     get amount() {
-        return this.model.amount;
+        return this._amount || 0;
     }
 
     /**
@@ -118,7 +116,7 @@ class CoinStack extends Crisp.View {
      * @returns {String} Amount style
      */
     getAmountStyle(amount) {
-        return 'height: calc(' + (amount || this.model.amount) + ' * ' + this.model.coinHeight + 'px);'; 
+        return 'height: calc(' + (amount || this.amount) + ' * ' + this.coinHeight + 'px);'; 
     }
 
     /**
@@ -127,7 +125,7 @@ class CoinStack extends Crisp.View {
     template() {
         return _.div({class: 'coin-stack'},
             _.div({class: 'coin-stack__stack', style: this.getAmountStyle()}),
-            _.div({class: 'coin-stack__label', style: 'color: ' + this.model.color}, this.model.label)
+            _.div({class: 'coin-stack__label', style: 'color: ' + this.color}, this.label)
         );
     }
 }

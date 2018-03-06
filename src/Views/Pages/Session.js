@@ -9,8 +9,15 @@ class Session extends Crisp.View {
 
         this.model = Game.Models.Player.current;
             
-        this.fetch();
+        this.stats = new Game.Views.Drawers.Stats();
+        this.notifications = new Game.Views.Drawers.Notifications();
+        this.timeline = new Game.Views.Drawers.Timeline();
+        this.coinStack = new Game.Views.Charts.CoinStack({
+            amount: Math.round(Game.Services.ConfigService.get('personalAccount', 0) / 1000)
+        });
 
+        this.fetch();
+        
         setInterval(() => {
             if(Game.isPaused) { return; }
 
@@ -32,6 +39,13 @@ class Session extends Crisp.View {
         this.timeline.heartbeat();
         this.notifications.heartbeat();
         this.stats.heartbeat();
+
+        // Update coin stack
+        let stackAmount = Math.round(Game.Services.ConfigService.get('personalAccount', 0) / 1000);
+        
+        if(stackAmount !== this.coinStack.amount) {
+            this.coinStack.amount = stackAmount;
+        }
 
         // Sell one unit every second
         Game.Services.SessionService.sellUnit();
@@ -108,9 +122,10 @@ class Session extends Crisp.View {
                     _.div({dynamicContent: true, class: 'class: widget widget--label'}, Game.Services.SessionService.getCost(year).toString())
                 )
             ),
-            this.stats = new Game.Views.Drawers.Stats(),
-            this.notifications = new Game.Views.Drawers.Notifications(),
-            this.timeline = new Game.Views.Drawers.Timeline()
+            this.stats.element,
+            this.notifications.element,
+            this.timeline.element,
+            this.coinStack.element
         );
     }
 }

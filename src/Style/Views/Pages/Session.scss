@@ -1,6 +1,13 @@
 .page--session {
     margin-top: 6rem;
 
+    .coin-stack {
+        position: fixed;
+        bottom: 10rem;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
     &.paused {
         &:after {
             content: 'PAUSED';
