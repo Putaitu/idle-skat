@@ -125,7 +125,7 @@ class SessionService {
         }
             
         // Round to 2 decimals
-        vat[year][quarter].amount = Math.round((vat[year][quarter].amount) * 100) / 100;
+        vat[year][quarter].amount = Math.round(vat[year][quarter].amount * 100) / 100;
             
         return vat[year][quarter];
     }
@@ -199,13 +199,13 @@ class SessionService {
     }
 
     /**
-     * Sells a unit
+     * Sells an appropriate amount of units
      */
     static sellUnit() {
         let inventory = Game.Services.ConfigService.get('inventory', 0);
 
         if(inventory < 1) { return; }
-        
+
         let year = Game.Services.TimeService.currentYear;
         let month = Game.Services.TimeService.currentMonth;
        
@@ -222,6 +222,7 @@ class SessionService {
                 
         Game.Services.ConfigService.set('inventory', inventory - 1);
         Game.Services.ConfigService.set('companyAccount', companyAccount + unitPrice);
+        Game.Services.ConfigService.set('lastSale', Date.now());
     }
 
     /**
@@ -241,7 +242,7 @@ class SessionService {
     
         // Specific month
         if(year && month) {
-            result = sales[year][month];
+            result = parseFloat(sales[year][month]);
 
         // Specific year
         } else if(month) {
@@ -249,7 +250,7 @@ class SessionService {
                 result += parseFloat(sales[y][m]) || 0;
             }
         
-        // result sales
+        // Result sales
         } else {
             for(let y in sales) {
                 for(let m in sales[y]) {
@@ -338,7 +339,7 @@ class SessionService {
                 result += parseFloat(cost[y][m]) || 0;
             }
         
-        // result cost
+        // Result cost
         } else {
             for(let y in cost) {
                 for(let m in cost[y]) {
@@ -419,11 +420,11 @@ class SessionService {
     }
 
     /**
-     * Gets sales per second
+     * Gets sales per day
      *
-     * @returns {Number} Sales per second
+     * @returns {Number} Sales per day
      */
-    static getSalesPerSecond() {
+    static getSalesPerDay() {
         let factor = this.getDemandFactor();
 
         if(factor <= 0) { return 0; }

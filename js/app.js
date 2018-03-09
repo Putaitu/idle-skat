@@ -174,6 +174,7 @@ class ConfigService {
 
         if (!!parseFloat(value)) {
             value = parseFloat(value);
+            value = Math.round(value * 100) / 100;
         }
 
         try {
@@ -214,6 +215,7 @@ class ConfigService {
         // Parse number
         if (!!parseFloat(value)) {
             value = parseFloat(value);
+            value = Math.round(value * 100) / 100;
         }
 
         this.cache[key] = value;
@@ -794,7 +796,7 @@ class SessionService {
     }
 
     /**
-     * Sells a unit
+     * Sells an appropriate amount of units
      */
     static sellUnit() {
         let inventory = Game.Services.ConfigService.get('inventory', 0);
@@ -819,6 +821,7 @@ class SessionService {
 
         Game.Services.ConfigService.set('inventory', inventory - 1);
         Game.Services.ConfigService.set('companyAccount', companyAccount + unitPrice);
+        Game.Services.ConfigService.set('lastSale', Date.now());
     }
 
     /**
@@ -842,7 +845,7 @@ class SessionService {
 
         // Specific month
         if (year && month) {
-            result = sales[year][month];
+            result = parseFloat(sales[year][month]);
 
             // Specific year
         } else if (month) {
@@ -850,7 +853,7 @@ class SessionService {
                 result += parseFloat(sales[y][m]) || 0;
             }
 
-            // result sales
+            // Result sales
         } else {
             for (let y in sales) {
                 for (let m in sales[y]) {
@@ -955,7 +958,7 @@ class SessionService {
                 result += parseFloat(cost[y][m]) || 0;
             }
 
-            // result cost
+            // Result cost
         } else {
             for (let y in cost) {
                 for (let m in cost[y]) {
@@ -1048,11 +1051,11 @@ class SessionService {
     }
 
     /**
-     * Gets sales per second
+     * Gets sales per day
      *
-     * @returns {Number} Sales per second
+     * @returns {Number} Sales per day
      */
-    static getSalesPerSecond() {
+    static getSalesPerDay() {
         let factor = this.getDemandFactor();
 
         if (factor <= 0) {
@@ -3342,16 +3345,31 @@ class Session extends Crisp.View {
         this.fetch();
 
         setInterval(() => {
-            if (Game.isPaused) {
-                return;
-            }
-
             this.heartbeat();
         }, 1000);
+
+        setTimeout(() => {
+            this.sellUnit();
+        }, Game.Services.SessionService.getDemandFactor() * 1000);
     }
 
     /**
-     * Heartbeat
+     * Sells a unit
+     */
+    sellUnit() {
+        setTimeout(() => {
+            this.sellUnit();
+        }, Game.Services.SessionService.getDemandFactor() * 1000);
+
+        if (!document.hasFocus() || Game.Services.TimeService.isPaused) {
+            return;
+        }
+
+        Game.Services.SessionService.sellUnit();
+    }
+
+    /**
+     * Heartbeat (once per second)
      */
     heartbeat() {
         this.element.classList.toggle('paused', !document.hasFocus());
@@ -3375,10 +3393,10 @@ class Session extends Crisp.View {
             this.coinStack.amount = stackAmount;
         }
 
-        // Sell one unit every second
+        // Sells units
         Game.Services.SessionService.sellUnit();
 
-        // Automatically produce units
+        // Automatically produce units, if applicable
         Game.Services.SessionService.autoProduceUnits();
     }
 
@@ -3507,7 +3525,7 @@ class Controls extends Game.Views.Drawers.Drawer {
             this.onClickBuyMachine();
         }), _.div({ class: 'widget widget--label text-right vat' }, Game.MACHINE_PRICE + ' DKK')), _.div({ dynamicContent: true, class: 'drawer--controls__heading' }, 'Inventory: ' + Game.Services.ConfigService.get('inventory', 0)), _.div({ class: 'widget-group' }, _.button({ class: 'widget widget--button' }, 'Produce').click(e => {
             this.onClickProduce();
-        }), _.div({ class: 'widget widget--label text-right vat' }, Game.PRODUCTION_COST + ' DKK')), _.div({ class: 'drawer--controls__heading' }, 'Statistics for ' + year), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Est. sales:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.ConfigService.get('estimatedIncome', 0) + ' DKK')), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Actual sales:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.SessionService.getSales(year) + ' DKK')), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Cost:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.SessionService.getCost(year) + ' DKK')), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Sales per day:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.SessionService.getSalesPerSecond()))];
+        }), _.div({ class: 'widget widget--label text-right vat' }, Game.PRODUCTION_COST + ' DKK')), _.div({ class: 'drawer--controls__heading' }, 'Statistics for ' + year), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Est. sales:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.ConfigService.get('estimatedIncome', 0) + ' DKK')), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Actual sales:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.SessionService.getSales(year) + ' DKK')), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Cost:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.SessionService.getCost(year) + ' DKK')), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Sales per day:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.SessionService.getSalesPerDay()))];
     }
 
     /**

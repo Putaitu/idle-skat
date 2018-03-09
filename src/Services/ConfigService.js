@@ -15,6 +15,7 @@ class ConfigService {
 
         if(!!parseFloat(value)) {
             value = parseFloat(value);
+            value = Math.round(value * 100) / 100;
         }
 
         try {
@@ -52,6 +53,7 @@ class ConfigService {
         // Parse number
         if(!!parseFloat(value)) {
             value = parseFloat(value);    
+            value = Math.round(value * 100) / 100;
         }
 
         this.cache[key] = value;

@@ -12,14 +12,29 @@ class Session extends Crisp.View {
         this.fetch();
         
         setInterval(() => {
-            if(Game.isPaused) { return; }
-
             this.heartbeat();
         }, 1000);
+
+        setTimeout(() => {
+            this.sellUnit();
+        }, Game.Services.SessionService.getDemandFactor() * 1000);
     }
 
     /**
-     * Heartbeat
+     * Sells a unit
+     */
+    sellUnit() {
+        setTimeout(() => {
+            this.sellUnit();
+        }, Game.Services.SessionService.getDemandFactor() * 1000);
+        
+        if(!document.hasFocus() || Game.Services.TimeService.isPaused) { return; }
+
+        Game.Services.SessionService.sellUnit();
+    }
+
+    /**
+     * Heartbeat (once per second)
      */
     heartbeat() {
         this.element.classList.toggle('paused', !document.hasFocus());
@@ -41,10 +56,10 @@ class Session extends Crisp.View {
             this.coinStack.amount = stackAmount;
         }
 
-        // Sell one unit every second
+        // Sells units
         Game.Services.SessionService.sellUnit();
 
-        // Automatically produce units
+        // Automatically produce units, if applicable
         Game.Services.SessionService.autoProduceUnits();
     }
 

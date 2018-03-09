@@ -81,7 +81,7 @@ class Controls extends Game.Views.Drawers.Drawer {
             ),
             _.div({class: 'widget-group'},
                 _.div({class: 'widget widget--label'}, 'Sales per day:'),
-                _.div({dynamicContent: true, class: 'widget widget--label text-right'}, Game.Services.SessionService.getSalesPerSecond())
+                _.div({dynamicContent: true, class: 'widget widget--label text-right'}, Game.Services.SessionService.getSalesPerDay())
             )
         ];
     }
