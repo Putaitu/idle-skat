@@ -1,17 +1,23 @@
 .drawer--stats {
-    top: 0;
-    bottom: auto;
-    background-color: dimgrey;
-    color: lightgrey;
-    padding: 1rem;
     width: 100%;
 
     &__preview {
         display: flex;
         justify-content: center;
 
+        .widget--label:last-child {
+            font-size: 2rem;
+            color: white;
+        }
+
         &__company, &__personal {
             max-width: 20rem;
+        }
+
+        &__transactions {
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         &__company, &__personal, &__transations {

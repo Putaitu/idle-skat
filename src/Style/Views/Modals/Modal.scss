@@ -1,13 +1,3 @@
-@keyframes modal__fade-in {
-    0% { opacity: 0; }
-    100% { opacity: 1; }
-}
-
-@keyframes modal__fly-in {
-    0% { transform: translate(-50%, -60%); }
-    100% { transform: translate(-50%, -50%); }
-}
-
 .modal {
     position: fixed;
     top: 0;
@@ -15,18 +5,30 @@
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.25);
-    animation: modal__fade-in 0.5s ease;
+    z-index: 300;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+
+    &.in {
+        opacity: 1;
+    }
+
+    &.in &__dialog {
+        transform: translate(-50%, -50%);
+    }
 
     &__close {
         padding: 0;
         position: absolute;
-        top: 1rem;
-        right: 1rem;
+        top: 0.5rem;
+        right: 0.5rem;
         color: dimgrey;
-        width: 2rem;
+        width: 1rem;
         min-width: 0;
-        height: 2rem;
+        height: 1rem;
         display: block;
+        font-size: 0.8rem;
+        line-height: 1rem;
 
         &:after {
             content: '✖';
@@ -35,16 +37,18 @@
     }
 
     &__dialog {
-        animation: modal__fly-in 0.5s ease;
         position: absolute;
         top: 50%;
         left: 50%;
-        transform: translate(-50%, -50%);
-        height: calc(100% - 2rem);
+        transform: translate(-50%, -60%);
+        transition: transform 0.5s ease;
         width: calc(100% - 2rem);
-        border-radius: 2rem;
-        border: 1px solid dimgrey;
-        background-color: white;
+        max-width: 60rem;
+        border-radius: 0.2rem;
+        border: 1px solid black;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.5);
+        background-color: dimgrey;
+        color: lightgrey;
         display: flex;
         flex-direction: column;
         padding: 1rem;
@@ -64,7 +68,7 @@
 
     &.small &__dialog {
         max-width: 20rem;
-        max-height: 10rem;
+        height: auto;
     }
 
 }

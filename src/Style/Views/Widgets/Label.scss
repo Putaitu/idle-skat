@@ -2,6 +2,8 @@
     white-space: nowrap;
     line-height: 2;
     padding: 0 0.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
 
     &.vat {
         &:after {

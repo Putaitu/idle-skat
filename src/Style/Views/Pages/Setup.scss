@@ -1,9 +1,11 @@
 .page--setup {
     &__input {
         margin: 1rem auto;
+
     }
 
     &__pie-chart {
-        margin: 3rem auto 0 auto;
+        margin: 0 auto 1rem auto;
+        max-width: 30vh;
     }
 }

@@ -70,7 +70,7 @@ class Notifications extends Game.Views.Drawers.Drawer {
 
         return _.div({dynamicChildren: true, class: 'drawer__preview drawer--notifications__entries'},
             _.each(this.model, (key, notification) => {
-                return _.div({class: 'drawer--notifications__entry'},
+                let entry = _.div({class: 'drawer--notifications__entry'},
                     _.do(() => {
                         if(!notification.expiresOn) { return; }
 
@@ -98,11 +98,12 @@ class Notifications extends Game.Views.Drawers.Drawer {
 
                                 this[notification.action.onClick](notification)
                                 .then((message) => {
-                                    e.currentTarget.parentElement.classList.toggle('out', true);
+                                    entry.classList.toggle('out', true);
                                    
                                     setTimeout(() => {
                                         delete this.model[key];
                                         this.save();
+                                        this.fetch();
                                     }, 500);
 
                                     if(message) {
@@ -113,6 +114,10 @@ class Notifications extends Game.Views.Drawers.Drawer {
                                     }
                                 })
                                 .catch((e) => {
+                                    if(!e) { return; }
+
+                                    console.log(e);
+
                                     new Game.Views.Modals.Message({
                                         title: 'Error',
                                         message: e.message
@@ -121,6 +126,8 @@ class Notifications extends Game.Views.Drawers.Drawer {
                             })
                     })
                 );
+
+                return entry;
             })
         );
     }

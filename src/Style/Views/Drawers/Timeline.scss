@@ -1,43 +1,53 @@
 .drawer--timeline {
+    position: relative;
+
     &__scroller {
-        overflow-x: hidden;
-        overflow-y: visible;
-        padding-top: 4rem;
+        overflow: hidden;
 
         &__year {
-            font-size: 2rem;
+            font-size: 1rem;
             padding-left: 1rem;
-            margin-bottom: 0.5rem;
+            color: white;
+            font-weight: bold;
+            position: absolute;
+            z-index: 20;
+            bottom: 2rem;
+            left: 5rem;
         }
 
         &__month, &__day__month {
-            font-size: 1.5rem;
-            color: grey;
-            bottom: 5rem;
+            font-weight: bold;
+            font-size: 1rem;
+            bottom: 2rem;
             position: absolute;
             left: 0;
             padding-left: 1rem;
-            background-color: white;
+            background-color: dimgrey;
+            color: white;
+            opacity: 0.8;
         }
 
         &__days {
             display: flex;
-            padding-top: 4rem;
+            padding-top: 2rem;
         }
 
         &__day {
-            flex-basis: 3rem;
-            width: 3rem;
-            min-width: 3rem;
+            font-size: 0.8rem;
+            flex-basis: 2rem;
+            width: 2rem;
+            color: white;
+            font-weight: bold;
+            min-width: 2rem;
             position: relative;
-            border-left: 1px solid lightgrey;
+            border-left: 1px solid rgba(255, 255, 255, 0.2);
 
             &__month {
                 &:after {
                     content: '';
                     display: block;
                     height: 6.5rem;
-                    border-left: 1px solid grey;
+                    border-left: 1px solid rgba(255, 255, 255, 0.2);
                     position: absolute;
                     left: -1px;
                     top: 0;
@@ -46,32 +56,54 @@
 
             &__number {
                 text-align: center;
-                line-height: 3rem;
+                line-height: 2rem;
+                opacity: 0.5;
             }
 
             &__notification {
                 position: absolute;
-                bottom: 100%;
-                left: 50%;
+                bottom: calc(100% + 0.5rem);
+                left: 0.25rem;
                 transform-origin: 0% 100%;
                 display: inline-block;
-                border-radius: 1.5rem 1.5rem 1.5rem 0;
                 border: 0;
                 padding: 0.25rem 0.5rem;
                 line-height: 1;
-                transform: rotate(-25deg);
                 white-space: nowrap;
                 font-weight: bold;
                 font-size: 0.7rem;
+                border-radius: 0.2rem;
+                z-index: 30;
+
+                &:after {
+                   top: 100%;
+                   left: 0.75rem;
+                   border: solid transparent;
+                   content: '';
+                   height: 0;
+                   width: 0;
+                   position: absolute;
+                   pointer-events: none;
+                   border-width: 0.5rem;
+                   margin-left: -0.5rem;
+                } 
 
                 &.alert {
-                    background-color: red;
+                    background-color: darkred;
                     color: white;
+
+                    &:after {
+                       border-top-color: darkred;
+                    }
                 }
                 
                 &.warning {
-                    background-color: yellow;
+                    background-color: gold;
                     color: black;
+
+                    &:after {
+                       border-top-color: gold;
+                    }
                 }
             }
         }

@@ -53,10 +53,13 @@ class SessionService {
      * @return {Promise}
      */
     static reportVat(date) {
-        let tool = new Game.Views.Modals.VATReportingTool({ date: date });
+        let tool = new Game.Views.Modals.VATReportingTool({
+            year: date.getFullYear(),
+            quarter: date.getQuarter()
+        });
 
         return new Promise((resolve, reject) => {
-            tool.on('done', () => {
+            tool.on('submit', () => {
                 resolve();
             });
 
@@ -106,7 +109,7 @@ class SessionService {
 
         if(!quarter) { return vat[year]; }
 
-        if(!vat[year][quarter]) { vat[year][quarter] = { amount: 0, isPaid: false }; }
+        if(!vat[year][quarter]) { vat[year][quarter] = { amount: 0, isPaid: false, isReported: false }; }
 
         let firstMonth = ((quarter - 1) * 3) + 1;
         let lastMonth = firstMonth + 2;
@@ -118,10 +121,46 @@ class SessionService {
             let vatSales = (sales / 1.25) * 0.25;
             let vatCost = (cost / 1.25) * 0.25;
 
-            vat[year][quarter].amount += vatSales + vatCost;
+            vat[year][quarter].amount += vatSales - vatCost;
+        }
+            
+        // Round to 2 decimals
+        vat[year][quarter].amount = Math.round((vat[year][quarter].amount) * 100) / 100;
+            
+        return vat[year][quarter];
+    }
+
+    /**
+     * Sets VAT info
+     *
+     * @param {Number} year
+     * @param {Number} quarter
+     * @param {Boolean} isReported
+     * @param {Boolean} isPaid
+     * @param {Number} amount
+     */
+    static setVat(year, quarter, isReported, isPaid, amount) {
+        if(!year) { throw new Error('Year is required'); }
+        if(!quarter) { throw new Error('Quarter is required'); }
+
+        let vat = Game.Services.ConfigService.get('vat', {});
+        
+        if(!vat[year]) { vat[year] = {}; }
+        if(!vat[year][quarter]) { vat[year][quarter] = {} }
+        
+        if(isReported !== undefined) {
+            vat.isReported = isReported;
         }
 
-        return vat[year][quarter];
+        if(isPaid !== undefined) {
+            vat.isPaid = isPaid;
+        }
+
+        if(amount !== undefined) {
+            vat.amount = amount;
+        }
+
+        Game.Services.ConfigService.set('vat', vat);
     }
 
     /**
@@ -141,11 +180,11 @@ class SessionService {
 
         let companyAccount = Game.Services.ConfigService.get('companyAccount', 0);
 
-        if(companyAccount < amount) {
+        if(companyAccount < vat.amount) {
             return Promise.reject('You don\'t have enough money in your company account to pay VAT');
         }
 
-        Game.Services.ConfigService.set('companyAccount', companyAccount - amount);
+        Game.Services.ConfigService.set('companyAccount', companyAccount - vat.amount);
 
         return Promise.resolve('VAT for ' + year + ' Q' + quarter + ' has been paid');
     }
@@ -175,8 +214,8 @@ class SessionService {
         let cost = this.getCost(year, month);
         let unitPrice = Game.Services.ConfigService.get('unitPrice', Game.DEFAULT_UNIT_PRICE);
 
-        sales += unitPrice;
-        cost += Game.PRODUCTION_COST;
+        sales += unitPrice * 1.25;
+        cost += Game.PRODUCTION_COST * 1.25;
 
         this.setSales(year, month, sales);
         this.setCost(year, month, cost);
@@ -221,7 +260,33 @@ class SessionService {
 
         return result;
     }
-    
+   
+    /**
+     * Gets sales per quarter
+     *
+     * @param {Number} year
+     * @param {Number} quarter
+     *
+     * @returns {Number} Sales per quarter
+     */
+    static getSalesQuarter(year, quarter) {
+        let result = 0;
+
+        let month = (quarter - 1) * 3 + 1;
+
+        result += this.getSales(year, month);
+        
+        month++;
+
+        result += this.getSales(year, month);
+        
+        month++;
+        
+        result += this.getSales(year, month);
+
+        return result;
+    }
+
     /**
      * Sets the sales numbers
      *
@@ -282,9 +347,35 @@ class SessionService {
             }
         }
 
-        return result;
+        return Math.round(result);
     }
     
+    /**
+     * Gets cost per quarter
+     *
+     * @param {Number} year
+     * @param {Number} quarter
+     *
+     * @returns {Number} Cost per quarter
+     */
+    static getCostQuarter(year, quarter) {
+        let result = 0;
+
+        let month = (quarter - 1) * 3 + 1;
+
+        result += this.getCost(year, month);
+        
+        month++;
+
+        result += this.getCost(year, month);
+        
+        month++;
+        
+        result += this.getCost(year, month);
+
+        return result;
+    }
+
     /**
      * Sets the cost numbers
      *
@@ -309,6 +400,35 @@ class SessionService {
         cost[year][month] = amount;
         
         Game.Services.ConfigService.set('cost', cost);
+    }
+
+    /**
+     * Gets the demand
+     *
+     * @returns {Number} Demand factor
+     */
+    static getDemandFactor() {
+        let unitPrice = Game.Services.ConfigService.get('unitPrice', 0);
+
+        // Nobody wants units above 1000 DKK 
+        if(unitPrice > 1000) {
+            return 0;
+        }
+
+        return unitPrice/100;
+    }
+
+    /**
+     * Gets sales per second
+     *
+     * @returns {Number} Sales per second
+     */
+    static getSalesPerSecond() {
+        let factor = this.getDemandFactor();
+
+        if(factor <= 0) { return 0; }
+
+        return Math.round(Math.pow(factor, -1));
     }
 }
 

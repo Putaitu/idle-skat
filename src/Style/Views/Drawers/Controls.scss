@@ -1,0 +1,25 @@
+.drawer--controls {
+    padding: 1rem;
+    width: 20rem;
+
+    &__heading {
+        color: white;
+        font-weight: bold;
+
+        &:not(:first-child) {
+            margin-top: 2rem;
+        }
+    }
+
+    .widget-group {
+        margin-bottom: 0;
+
+        .widget {
+            min-width: 50%;
+
+            &--label {
+                padding: 0;
+            }
+        }
+    }
+}

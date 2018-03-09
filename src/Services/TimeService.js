@@ -43,7 +43,7 @@ Date.prototype.addMonths = function(m) {
 Date.prototype.getMonthName = function() {
     const names = [
         'January',
-        'Fabruary',
+        'February',
         'March',
         'April',
         'May',

@@ -1,6 +1,7 @@
 .page--b-tax-estimation {
     &__pie-chart {
-        margin: 3rem auto 0 auto;
+        margin: 1rem auto 1rem auto;
+        max-width: 30vh;
     }
 
     &__final {

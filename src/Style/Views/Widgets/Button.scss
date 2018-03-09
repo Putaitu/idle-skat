@@ -1,25 +1,31 @@
 .widget--button {
     line-height: 2;
     text-decoration: none;
-    padding: 0 1rem;
-    background-color: lightgrey;
+    padding: 0 0.5rem;
     text-transform: uppercase;
     cursor: pointer;
     color: dimgrey;
     font-weight: bold;
-    border-radius: 1rem;
+    border-radius: 0.2rem;
     border: 0;
     min-width: 8rem;
     text-align: center;
     white-space: nowrap;
+    
+    background-image: linear-gradient(lightgrey, darkgrey);
+    border: 1px solid darkgrey;
+    text-shadow: 0px 1px 1px rgba(255, 255, 255, 0.5);
 
     &.warning {
-        background-color: yellow;
-        color: black;
+        background-image: linear-gradient(yellow, gold);
+        color: sienna;
+        border-color: goldenrod;
     }
 
     &.alert {
-        background-color: red;
+        background-image: linear-gradient(red, darkred);
         color: white;
+        border-color: darkred;
+        text-shadow: none;
     }
 }

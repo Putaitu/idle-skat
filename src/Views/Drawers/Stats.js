@@ -24,7 +24,7 @@ class Stats extends Game.Views.Drawers.Drawer {
     renderPreview() {
         return _.div({class: 'drawer__preview drawer--stats__preview'},
             _.div({class: 'drawer--stats__preview__company'},
-                _.div({dynamicContent: true, class: 'widget widget--label text-center'}, 'Company account: ' + Game.Services.ConfigService.get('companyAccount', 0) + ' DKK')
+                _.div({dynamicContent: true, class: 'widget widget--label text-center'}, '🏭 ' + Game.Services.ConfigService.get('companyAccount', 0) + ' DKK')
             ),
             _.div({class: 'drawer--stats__preview__transactions'},
                 _.button({class: 'widget widget--button align-center'}, 'Transfer ➜')
@@ -33,7 +33,7 @@ class Stats extends Game.Views.Drawers.Drawer {
                     })
             ),
             _.div({class: 'drawer--stats__preview__personal'},
-                _.div({dynamicContent: true, class: 'widget widget--label text-center'}, 'Personal account: ' + Game.Services.ConfigService.get('personalAccount', 0) + ' DKK')
+                _.div({dynamicContent: true, class: 'widget widget--label text-center'}, '💰 ' + Game.Services.ConfigService.get('personalAccount', 0) + ' DKK')
             )
         );
     }

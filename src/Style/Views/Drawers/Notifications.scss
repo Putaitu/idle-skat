@@ -1,13 +1,14 @@
 .drawer--notifications {
-    position: fixed;
-    left: 0;
-    bottom: 12rem;
+    overflow-y: auto;
+    padding: 1rem;
+    flex-grow: 1;
+    width: 20rem;
 
     &__entry {
         border-radius: 0.2rem;
         padding: 1rem;
         position: relative;
-        background-color: dimgrey;
+        background-color: rgba(0, 0, 0, 0.3);
         color: lightgrey;
         transition: transform 0.5s ease;
 
@@ -16,7 +17,7 @@
         }
 
         &.out {
-            transform: translateX(-100%);
+            transform: translateX(150%);
         }
 
         &__progress {
@@ -24,13 +25,15 @@
             top: 0;
             left: 0;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.25);
+            background-color: rgba(255, 255, 255, 0.1);
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
             pointer-events: none;
         }
 
         &__title {
             font-weight: bold;
             position: relative;
+            color: white;
             z-index: 1;
             margin-bottom: 0.25rem;
         }

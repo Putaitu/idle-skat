@@ -84,29 +84,31 @@ class Setup extends Crisp.View {
      */
     template() {
         return _.div({class: 'page page--setup'},
-            _.h1({class: 'page__title'}, 'Setup'),
-            _.div({class: 'page--setup__input'},
-                _.div({class: 'widget-group align-center'},
-                    _.label({class: 'widget widget--label'}, 'Company name'),
-                    _.input({class: 'widget widget--input', type: 'text', name: 'name', placeholder: 'E.g. "My Company ApS"', value: this.model.name})
-                        .on('input', (e) => { this.onChangeName(e); })
+            _.div({class: 'page__container'},
+                _.h1({class: 'page__title'}, 'Setup'),
+                _.div({class: 'page--setup__input'},
+                    _.div({class: 'widget-group align-center'},
+                        _.label({class: 'widget widget--label'}, 'Company name'),
+                        _.input({class: 'widget widget--input', type: 'text', name: 'name', placeholder: 'E.g. "My Company ApS"', value: this.model.name})
+                            .on('input', (e) => { this.onChangeName(e); })
+                    ),
+                    _.div({class: 'widget-group align-center'},
+                        _.label({class: 'widget widget--label'}, 'Capital'),
+                        _.input({class: 'widget widget--input', type: 'number', min: 0, max: this.model.account, step: 1000, name: 'capital', placeholder: 'E.g. 3000', value: this.model.capital})
+                            .on('input', (e) => { this.onChangeCapital(e); })
+                    )
                 ),
-                _.div({class: 'widget-group align-center'},
-                    _.label({class: 'widget widget--label'}, 'Capital'),
-                    _.input({class: 'widget widget--input', type: 'number', min: 0, max: this.model.account, step: 1000, name: 'capital', placeholder: 'E.g. 3000', value: this.model.capital})
-                        .on('input', (e) => { this.onChangeCapital(e); })
-                )
-            ),
-            this.pieChart = new Game.Views.Charts.PieChart({
-                className: 'page--setup__pie-chart',
-                model: {
-                    account: { percent: 1 - (this.model.capital / this.model.total), label: 'Personal account', value: this.model.total - this.model.capital, color: 'green' },
-                    capital: { percent: this.model.capital / this.model.total, label: 'Capital', value: this.model.capital, color: 'blue' },
-                    total: { percent: 1, label: 'Total funds', color: 'transparent', value: this.model.total }
-                }
-            }),
-            _.button({class: 'widget widget--button align-right'}, 'Next')
-                .click((e) => { this.onClickNext(e); })
+                this.pieChart = new Game.Views.Charts.PieChart({
+                    className: 'page--setup__pie-chart',
+                    model: {
+                        account: { percent: 1 - (this.model.capital / this.model.total), label: 'Personal account', value: this.model.total - this.model.capital, color: 'green' },
+                        capital: { percent: this.model.capital / this.model.total, label: 'Capital', value: this.model.capital, color: 'blue' },
+                        total: { percent: 1, label: 'Total funds', color: 'transparent', value: this.model.total }
+                    }
+                }),
+                _.button({class: 'widget widget--button align-right'}, 'Next')
+                    .click((e) => { this.onClickNext(e); })
+            )
         );
     }
 }

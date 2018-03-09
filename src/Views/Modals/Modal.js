@@ -20,6 +20,11 @@ class Modal extends Crisp.View {
 
         _.append(document.body, this);
 
+        wait(0.1)
+        .then(() => {
+            this.element.classList.toggle('in');
+        });
+
         Game.Services.TimeService.isPaused = true;
     }
 
@@ -42,9 +47,17 @@ class Modal extends Crisp.View {
      * Closes this modal
      */
     close() {
-        this.remove();
+        this.trigger('close');
 
-        Game.Services.TimeService.isPaused = false;
+        this.element.classList.remove('in');
+
+        wait(0.5)
+        .then(() => {
+            this.remove(); 
+            Game.Services.TimeService.isPaused = false;
+        
+            this.trigger('closed');
+        });
     }
 
     /**
@@ -55,10 +68,19 @@ class Modal extends Crisp.View {
     }
 
     /**
+     * Check is is open
+     *
+     * @returns {Boolean} Is open
+     */
+    get isOpen() {
+        return this.element.classList.contains('in');
+    }
+
+    /**
      * Template
      */
     template() {
-        return _.div({class: 'modal modal--' + this.className + ' ' + (this.size || 'large')},
+        return _.div({class: 'modal ' + (this.isOpen ? 'in' : '') + ' modal--' + this.className + ' ' + (this.size || 'large')},
             _.div({class: 'modal__dialog'},
                 _.button({class: 'modal__close widget widget--button'})
                     .click(() => {

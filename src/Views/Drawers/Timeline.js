@@ -143,7 +143,7 @@ class Timeline extends Game.Views.Drawers.Drawer {
                 date.getMonthName()
             ),
             _.div({class: 'drawer--timeline__scroller__days'},
-                _.loop(30, (day) => {
+                _.loop(60, (day) => {
                     let currentDate = new Date(date);
 
                     currentDate.addDays(day);

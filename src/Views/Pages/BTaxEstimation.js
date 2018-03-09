@@ -115,7 +115,13 @@ class BTaxEstimation extends Crisp.View {
      * @param {InputEvent} e
      */
     onClickDone(e) {
-        if(this.model.btax <= 0) { return alert('Please calculate your B tax first'); } 
+        if(this.model.btax <= 0) {
+            new Game.Views.Modals.Message({
+                message: 'Please calculate your B tax first'
+            });
+
+            return;
+        } 
 
         // Save the estimated income
         Game.Services.ConfigService.set('estimatedIncome', this.model.income);
@@ -137,27 +143,29 @@ class BTaxEstimation extends Crisp.View {
      */
     template() {
         return _.div({class: 'page page--b-tax-estimation'},
-            _.h1({class: 'page__title'}, 'B tax estimation for ' + Game.Services.TimeService.currentYear),
-            _.div({class: 'page--b-tax-estimation__input'},
-                _.div({class: 'widget-group align-center'},
-                    _.label({class: 'widget widget--label'}, 'Target income for ' + Game.Services.TimeService.currentYear),
-                    _.input({class: 'widget widget--input', type: 'number', step: 1000, min: 0, value: this.model.income})
-                        .on('input', (e) => { this.onChangeIncome(e); })
+            _.div({class: 'page__container'},
+                _.h1({class: 'page__title'}, 'B tax estimation for ' + Game.Services.TimeService.currentYear),
+                _.div({class: 'page--b-tax-estimation__input'},
+                    _.div({class: 'widget-group align-center'},
+                        _.label({class: 'widget widget--label'}, 'Target income for ' + Game.Services.TimeService.currentYear),
+                        _.input({class: 'widget widget--input', type: 'number', step: 1000, min: 0, value: this.model.income})
+                            .on('input', (e) => { this.onChangeIncome(e); })
+                    ),
+                    _.button({class: 'widget widget--button align-center'}, 'Calculate B tax')
+                        .click((e) => { this.onClickCalculate(e); })
                 ),
-                _.button({class: 'widget widget--button align-center'}, 'Calculate B tax')
-                    .click((e) => { this.onClickCalculate(e); })
-            ),
-            this.pieChart = new Game.Views.Charts.PieChart({
-                className: 'page--b-tax-estimation__pie-chart',
-                showPercentage: true,
-                model: {
-                    btax: { showPercentage: true, percent: this.model.btax / this.model.income, label: 'B tax', value: this.model.btax, color: 'blue' },
-                    income: { percent: 1 - (this.model.btax / this.model.income), label: 'Target income', color: 'green', value: this.model.income }
-                }
-            }),
-            this.finalBTax = _.div({class: 'page--b-tax-estimation__final'}),
-            _.button({class: 'widget widget--button align-right'}, 'Done')
-                .click((e) => { this.onClickDone(e); })
+                this.pieChart = new Game.Views.Charts.PieChart({
+                    className: 'page--b-tax-estimation__pie-chart',
+                    showPercentage: true,
+                    model: {
+                        btax: { showPercentage: true, percent: this.model.btax / this.model.income, label: 'B tax', value: this.model.btax, color: 'blue' },
+                        income: { percent: 1 - (this.model.btax / this.model.income), label: 'Target income', color: 'green', value: this.model.income }
+                    }
+                }),
+                this.finalBTax = _.div({class: 'page--b-tax-estimation__final'}),
+                _.button({class: 'widget widget--button align-right'}, 'Done')
+                    .click((e) => { this.onClickDone(e); })
+            )
         );
     }
 }

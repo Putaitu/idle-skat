@@ -56,6 +56,7 @@ Game.Views.Drawers.Drawer = require('./Views/Drawers/Drawer');
 Game.Views.Drawers.Timeline = require('./Views/Drawers/Timeline');
 Game.Views.Drawers.Stats = require('./Views/Drawers/Stats');
 Game.Views.Drawers.Notifications = require('./Views/Drawers/Notifications');
+Game.Views.Drawers.Controls = require('./Views/Drawers/Controls');
 
 Game.Views.Charts = {};
 Game.Views.Charts.PieChart = require('./Views/Charts/PieChart');
