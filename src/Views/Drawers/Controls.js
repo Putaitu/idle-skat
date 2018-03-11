@@ -41,9 +41,9 @@ class Controls extends Game.Views.Drawers.Drawer {
     }
 
     /**
-     * Renders the preview
+     * Renders the content
      */
-    renderPreview() {
+    renderContent() {
         let year = Game.Services.TimeService.currentYear;
         let month = Game.Services.TimeService.currentMonth;
 
@@ -85,11 +85,6 @@ class Controls extends Game.Views.Drawers.Drawer {
             )
         ];
     }
-
-    /**
-     * Renders the toggle
-     */
-    renderToggle() { return null; }
 }
 
 module.exports = Controls;

@@ -162,6 +162,8 @@ class SessionService {
         if(!quarter) { return vat[year]; }
 
         if(!vat[year][quarter]) { vat[year][quarter] = { amount: 0, isPaid: false, isReported: false }; }
+            
+        vat[year][quarter].amount = 0;
 
         let firstMonth = ((quarter - 1) * 3) + 1;
         let lastMonth = firstMonth + 2;
@@ -474,6 +476,15 @@ class SessionService {
         }
 
         return unitPrice/100;
+    }
+
+    /**
+     * Gets the sales delay in milliseconds
+     *
+     * @returns {Number} Sales delay
+     */
+    static getSalesDelay() {
+        return this.getDemandFactor() * 1000 * 24 / Game.Services.TimeService.hoursPerSecond;
     }
 
     /**

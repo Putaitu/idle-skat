@@ -129,9 +129,18 @@ class TimeService {
     static tick() {
         let time = this.currentTime;
 
-        time.addHours(this.hoursPerSecond || 6);
+        time.addHours(this.hoursPerSecond);
 
         Game.Services.ConfigService.set('time', time.getTime());
+    }
+
+    /**
+     * Gets hours per second
+     *
+     * @returns {Number} Hours per second
+     */
+    static get hoursPerSecond() {
+        return 6 * (this.speed || 1);
     }
 
     /**

@@ -124,6 +124,7 @@ Game.Views.Modals.VATReportingTool = __webpack_require__(19);
 Game.Views.Drawers = {};
 Game.Views.Drawers.Drawer = __webpack_require__(20);
 Game.Views.Drawers.Timeline = __webpack_require__(21);
+Game.Views.Drawers.QuestLog = __webpack_require__(34);
 Game.Views.Drawers.Stats = __webpack_require__(22);
 Game.Views.Drawers.Notifications = __webpack_require__(23);
 Game.Views.Drawers.Controls = __webpack_require__(24);
@@ -358,9 +359,18 @@ class TimeService {
     static tick() {
         let time = this.currentTime;
 
-        time.addHours(this.hoursPerSecond || 6);
+        time.addHours(this.hoursPerSecond);
 
         Game.Services.ConfigService.set('time', time.getTime());
+    }
+
+    /**
+     * Gets hours per second
+     *
+     * @returns {Number} Hours per second
+     */
+    static get hoursPerSecond() {
+        return 6 * (this.speed || 1);
     }
 
     /**
@@ -755,6 +765,8 @@ class SessionService {
             vat[year][quarter] = { amount: 0, isPaid: false, isReported: false };
         }
 
+        vat[year][quarter].amount = 0;
+
         let firstMonth = (quarter - 1) * 3 + 1;
         let lastMonth = firstMonth + 2;
 
@@ -1110,6 +1122,15 @@ class SessionService {
         }
 
         return unitPrice / 100;
+    }
+
+    /**
+     * Gets the sales delay in milliseconds
+     *
+     * @returns {Number} Sales delay
+     */
+    static getSalesDelay() {
+        return this.getDemandFactor() * 1000 * 24 / Game.Services.TimeService.hoursPerSecond;
     }
 
     /**
@@ -2206,7 +2227,7 @@ class Transfer extends Game.Views.Modals.Modal {
      * Render footer
      */
     renderFooter() {
-        return _.button({ dynamicContent: true, class: 'widget widget--button align-right' }, 'Transfer ' + this.amount + ' DKK').click(() => {
+        return _.button({ dynamicContent: true, class: 'widget widget--button success align-right' }, 'Transfer ' + this.amount + ' DKK').click(() => {
             this.onClickTransfer();
         });
     }
@@ -2332,68 +2353,39 @@ module.exports = VATReportingTool;
  */
 
 class Drawer extends Crisp.View {
-    /**
-     * Constructor
-     */
-    constructor(params) {
-        super(params);
+  /**
+   * Constructor
+   */
+  constructor(params) {
+    super(params);
 
-        this.model = this.model || {};
+    this.model = this.model || {};
 
-        this.fetch();
-    }
+    this.fetch();
+  }
 
-    /**
-     * Gets whether or not this view is expanded
-     */
-    get isExpanded() {
-        let toggle = this.element.querySelector('.drawer__toggle');
+  /**
+   * Gets the class name
+   *
+   * @returns {String} Class name
+   */
+  get className() {
+    return 'drawer-' + this.name.replace('Drawer', '').replace(/([A-Z])/g, '-$1').trim().toLowerCase();
+  }
 
-        if (!toggle) {
-            return false;
-        }
+  /**
+   * Renders this content
+   *
+   * @returns {HTMLElement} Element
+   */
+  renderContent() {}
 
-        return toggle.checked;
-    }
-
-    /**
-     * Renders the content of the drawer
-     */
-    renderContent() {}
-
-    /**
-     * Renders the preview of the drawer
-     */
-    renderPreview() {
-        return _.div({ class: 'drawer__preview' }, _.label({ class: 'drawer__preview__label' }, this.name.replace('Drawer', '').replace(/([A-Z])/g, ' $1').trim()));
-    }
-
-    /**
-     * Updates this drawer (static)
-     */
-    static update() {
-        let drawer = Crisp.View.get(this);
-
-        if (!drawer) {
-            return;
-        }
-
-        drawer.update();
-    }
-
-    /**
-     * Renders the toggle
-     */
-    renderToggle() {
-        return _.input({ type: 'checkbox', class: 'drawer__toggle', checked: this.isExpanded });
-    }
-
-    /**
-     * Template
-     */
-    template() {
-        return _.div({ class: 'drawer drawer-' + this.name.replace('Drawer', '').replace(/([A-Z])/g, '-$1').trim().toLowerCase() }, this.renderToggle(), this.renderPreview(), this.renderContent());
-    }
+  /**
+   * Template
+   */
+  template() {
+    return _.div({ class: 'drawer ' + this.className }, this.renderContent());
+  }
 }
 
 module.exports = Drawer;
@@ -2571,7 +2563,7 @@ class Timeline extends Game.Views.Drawers.Drawer {
     onClickPlay() {
         Game.Services.TimeService.isPaused = false;
 
-        Game.Services.TimeService.hoursPerSecond = 6;
+        Game.Services.TimeService.speed = 1;
 
         this.update();
     }
@@ -2584,7 +2576,7 @@ class Timeline extends Game.Views.Drawers.Drawer {
     onClickFastForward(factor) {
         Game.Services.TimeService.isPaused = false;
 
-        Game.Services.TimeService.hoursPerSecond = 6 * factor;
+        Game.Services.TimeService.speed = factor;
 
         this.update();
     }
@@ -2599,11 +2591,11 @@ class Timeline extends Game.Views.Drawers.Drawer {
             return 'paused';
         }
 
-        if (Game.Services.TimeService.hoursPerSecond === 6 * 2) {
+        if (Game.Services.TimeService.speed === 2) {
             return 'ffwdx2';
         }
 
-        if (Game.Services.TimeService.hoursPerSecond === 6 * 4) {
+        if (Game.Services.TimeService.speed === 4) {
             return 'ffwdx4';
         }
 
@@ -2611,9 +2603,9 @@ class Timeline extends Game.Views.Drawers.Drawer {
     }
 
     /**
-     * Renders the preview
+     * Renders the content
      */
-    renderPreview() {
+    renderContent() {
         let date = Game.Services.TimeService.currentTime;
 
         return _.div({ class: 'drawer__preview' }, _.div({ dynamicContent: true, class: 'drawer--timeline__controls' }, _.div({ class: 'widget-group' }, _.button({ class: 'widget widget--button small' + (this.state === 'paused' ? ' active' : ''), title: 'Pause' }, '⏸').click(() => {
@@ -2645,13 +2637,6 @@ class Timeline extends Game.Views.Drawers.Drawer {
             }));
         }))));
     }
-
-    /**
-     * Renders the main content
-     */
-    renderContent() {
-        return _.div({ class: 'drawer__content drawer--timeline__days' });
-    }
 }
 
 module.exports = Timeline;
@@ -2669,13 +2654,6 @@ module.exports = Timeline;
 
 class Stats extends Game.Views.Drawers.Drawer {
     /**
-     * Renders the toggle
-     */
-    renderToggle() {
-        return null;
-    }
-
-    /**
      * Heartbeat
      */
     heartbeat() {
@@ -2685,8 +2663,8 @@ class Stats extends Game.Views.Drawers.Drawer {
     /**
      * Renders the preview
      */
-    renderPreview() {
-        return _.div({ class: 'drawer__preview drawer--stats__preview' }, _.div({ class: 'drawer--stats__preview__company' }, _.div({ dynamicContent: true, class: 'widget widget--label text-center' }, '🏭 ' + Game.Services.ConfigService.get('companyAccount', 0) + ' DKK')), _.div({ class: 'drawer--stats__preview__transactions' }, _.button({ class: 'widget widget--button align-center' }, 'Transfer ➜').click(() => {
+    renderContent() {
+        return _.div({ class: 'drawer__preview drawer--stats__preview' }, _.div({ class: 'drawer--stats__preview__company' }, _.div({ dynamicContent: true, class: 'widget widget--label text-center' }, '🏭 ' + Game.Services.ConfigService.get('companyAccount', 0) + ' DKK')), _.div({ class: 'drawer--stats__preview__transactions' }, _.button({ class: 'widget widget--button success align-center' }, 'Transfer ➜').click(() => {
             new Game.Views.Modals.Transfer();
         })), _.div({ class: 'drawer--stats__preview__personal' }, _.div({ dynamicContent: true, class: 'widget widget--label text-center' }, '💰 ' + Game.Services.ConfigService.get('personalAccount', 0) + ' DKK')));
     }
@@ -2767,9 +2745,9 @@ class Notifications extends Game.Views.Drawers.Drawer {
     }
 
     /**
-     * Renders the preview
+     * Renders the content
      */
-    renderPreview() {
+    renderContent() {
         let currentDate = Game.Services.TimeService.currentTime;
 
         return _.div({ dynamicChildren: true, class: 'drawer__preview drawer--notifications__entries' }, _.each(this.model, (key, notification) => {
@@ -2828,13 +2806,6 @@ class Notifications extends Game.Views.Drawers.Drawer {
 
             return entry;
         }));
-    }
-
-    /**
-     * Renders the toggle
-     */
-    renderToggle() {
-        return null;
     }
 
     /**
@@ -2916,9 +2887,9 @@ class Controls extends Game.Views.Drawers.Drawer {
     }
 
     /**
-     * Renders the preview
+     * Renders the content
      */
-    renderPreview() {
+    renderContent() {
         let year = Game.Services.TimeService.currentYear;
         let month = Game.Services.TimeService.currentMonth;
 
@@ -2929,13 +2900,6 @@ class Controls extends Game.Views.Drawers.Drawer {
         }), _.div({ class: 'widget widget--label text-right vat' }, Game.MACHINE_PRICE + ' DKK')), _.div({ dynamicContent: true, class: 'drawer--controls__heading' }, 'Inventory: ' + Game.Services.ConfigService.get('inventory', 0)), _.div({ class: 'widget-group' }, _.button({ class: 'widget widget--button' }, 'Produce').click(e => {
             this.onClickProduce();
         }), _.div({ class: 'widget widget--label text-right vat' }, Game.PRODUCTION_COST + ' DKK')), _.div({ class: 'drawer--controls__heading' }, 'Statistics for ' + year), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Est. sales:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.ConfigService.get('estimatedIncome', 0) + ' DKK')), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Actual sales:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.SessionService.getSales(year) + ' DKK')), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Cost:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.SessionService.getCost(year) + ' DKK')), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Sales per day:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.SessionService.getSalesPerDay()))];
-    }
-
-    /**
-     * Renders the toggle
-     */
-    renderToggle() {
-        return null;
     }
 }
 
@@ -3604,7 +3568,7 @@ class Session extends Crisp.View {
 
         setTimeout(() => {
             this.sellUnit();
-        }, Game.Services.SessionService.getDemandFactor() * 1000 * (Game.Services.TimeService.hoursPerSecond / 24));
+        }, Game.Services.SessionService.getSalesDelay());
     }
 
     /**
@@ -3613,7 +3577,7 @@ class Session extends Crisp.View {
     sellUnit() {
         setTimeout(() => {
             this.sellUnit();
-        }, Game.Services.SessionService.getDemandFactor() * 1000 * (Game.Services.TimeService.hoursPerSecond / 24));
+        }, Game.Services.SessionService.getSalesDelay());
 
         if (!document.hasFocus() || Game.Services.TimeService.isPaused) {
             return;
@@ -3635,6 +3599,7 @@ class Session extends Crisp.View {
         // Tick time 
         Game.Services.TimeService.tick();
 
+        this.questLog.heartbeat();
         this.controls.heartbeat();
         this.timeline.heartbeat();
         this.notifications.heartbeat();
@@ -3647,9 +3612,6 @@ class Session extends Crisp.View {
             this.coinStack.amount = stackAmount;
         }
 
-        // Sells units
-        Game.Services.SessionService.sellUnit();
-
         // Automatically produce units, if applicable
         Game.Services.SessionService.autoProduceUnits();
     }
@@ -3660,7 +3622,7 @@ class Session extends Crisp.View {
     template() {
         return _.div({ class: 'page page--session' }, _.div({ class: 'page--session__panel top' }, this.stats = new Game.Views.Drawers.Stats()), _.div({ class: 'page--session__panel middle' }, _.div({ class: 'page--session__panel left' }, this.controls = new Game.Views.Drawers.Controls()), _.div({ class: 'page--session__panel center' }, this.coinStack = new Game.Views.Charts.CoinStack({
             amount: Math.round(Game.Services.ConfigService.get('personalAccount', 0) / 1000)
-        })), _.div({ class: 'page--session__panel right' }, this.notifications = new Game.Views.Drawers.Notifications())), _.div({ class: 'page--session__panel bottom' }, this.timeline = new Game.Views.Drawers.Timeline()));
+        })), _.div({ class: 'page--session__panel right' }, this.questLog = new Game.Views.Drawers.QuestLog(), this.notifications = new Game.Views.Drawers.Notifications())), _.div({ class: 'page--session__panel bottom' }, this.timeline = new Game.Views.Drawers.Timeline()));
     }
 }
 
@@ -3714,6 +3676,91 @@ class ViewController {
 ViewController.init();
 
 module.exports = ViewController;
+
+/***/ }),
+/* 31 */,
+/* 32 */,
+/* 33 */,
+/* 34 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+class QuestLog extends Game.Views.Drawers.Drawer {
+    /**
+     * Constructor
+     */
+    constructor(params) {
+        super(params);
+
+        // Test quest
+        this.setQuest('Test', 'Reach 10000 DKK to get this quest', () => {
+            return this.personalAccount >= 10000;
+        });
+    }
+
+    /**
+     * Gets the current amount in the personal account
+     *
+     * @returns {Number} Amount
+     */
+    get personalAccount() {
+        return Game.Services.ConfigService.get('personalAccount', 0);
+    }
+
+    /**
+     * Defines a quest
+     *
+     * @param {String} title
+     * @param {String} message
+     * @param {Function} isComplete
+     */
+    setQuest(title, message, isComplete) {
+        if (!this.quests) {
+            this.quests = [];
+        }
+
+        this.quests.push({
+            title: title,
+            message: message,
+            isComplete: isComplete
+        });
+    }
+
+    /**
+     * Gets the current quest
+     */
+    get currentQuest() {
+        for (let quest of this.quests || []) {
+            if (!quest.isComplete()) {
+                return quest;
+            }
+        }
+    }
+
+    /**
+     * Hearbeat
+     */
+    heartbeat() {
+        this.fetch();
+    }
+
+    /**
+     * Renders the content
+     */
+    renderContent() {
+        let quest = this.currentQuest;
+
+        if (!quest) {
+            return;
+        }
+
+        return _.div({ class: this.className + '__quest' }, _.div({ class: this.className + '__quest__title' }, quest.title), _.div({ class: this.className + '__quest__message' }, quest.message));
+    }
+}
+
+module.exports = QuestLog;
 
 /***/ })
 /******/ ]);

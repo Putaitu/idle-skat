@@ -17,7 +17,7 @@ class Session extends Crisp.View {
 
         setTimeout(() => {
             this.sellUnit();
-        }, Game.Services.SessionService.getDemandFactor() * 1000 * (Game.Services.TimeService.hoursPerSecond / 24));
+        }, Game.Services.SessionService.getSalesDelay());
     }
 
     /**
@@ -26,7 +26,7 @@ class Session extends Crisp.View {
     sellUnit() {
         setTimeout(() => {
             this.sellUnit();
-        }, Game.Services.SessionService.getDemandFactor() * 1000 * (Game.Services.TimeService.hoursPerSecond / 24));
+        }, Game.Services.SessionService.getSalesDelay());
         
         if(!document.hasFocus() || Game.Services.TimeService.isPaused) { return; }
 
@@ -44,6 +44,7 @@ class Session extends Crisp.View {
         // Tick time 
         Game.Services.TimeService.tick();
        
+        this.questLog.heartbeat();
         this.controls.heartbeat();
         this.timeline.heartbeat();
         this.notifications.heartbeat();
@@ -55,9 +56,6 @@ class Session extends Crisp.View {
         if(stackAmount !== this.coinStack.amount) {
             this.coinStack.amount = stackAmount;
         }
-
-        // Sells units
-        Game.Services.SessionService.sellUnit();
 
         // Automatically produce units, if applicable
         Game.Services.SessionService.autoProduceUnits();
@@ -81,6 +79,7 @@ class Session extends Crisp.View {
                     })
                 ),
                 _.div({class: 'page--session__panel right'},
+                    this.questLog = new Game.Views.Drawers.QuestLog(),
                     this.notifications = new Game.Views.Drawers.Notifications()
                 )
             ),

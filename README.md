@@ -3,7 +3,7 @@
 ## Working on this project
 
 1. Using a terminal, clone this repo
-   `git clone https://github.com/Putaitu/idle-skat.git`
+   `git clone https://github.com/Putaitu/idle-skat.git --recursive`
 
 2. Make sure WebPack is installed
    `npm install -g webpack`

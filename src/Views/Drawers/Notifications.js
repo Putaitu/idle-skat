@@ -63,9 +63,9 @@ class Notifications extends Game.Views.Drawers.Drawer {
     }
 
     /**
-     * Renders the preview
+     * Renders the content
      */
-    renderPreview() {
+    renderContent() {
         let currentDate = Game.Services.TimeService.currentTime;
 
         return _.div({dynamicChildren: true, class: 'drawer__preview drawer--notifications__entries'},
@@ -130,13 +130,6 @@ class Notifications extends Game.Views.Drawers.Drawer {
                 return entry;
             })
         );
-    }
-
-    /**
-     * Renders the toggle
-     */
-    renderToggle() {
-        return null;
     }
 
     /**

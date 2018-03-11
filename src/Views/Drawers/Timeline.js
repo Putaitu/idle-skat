@@ -168,7 +168,7 @@ class Timeline extends Game.Views.Drawers.Drawer {
     onClickPlay() {
         Game.Services.TimeService.isPaused = false;
 
-        Game.Services.TimeService.hoursPerSecond = 6;
+        Game.Services.TimeService.speed = 1;
         
         this.update();
     }
@@ -181,7 +181,7 @@ class Timeline extends Game.Views.Drawers.Drawer {
     onClickFastForward(factor) {
         Game.Services.TimeService.isPaused = false;
 
-        Game.Services.TimeService.hoursPerSecond = 6 * factor;
+        Game.Services.TimeService.speed = factor;
 
         this.update();
     }
@@ -196,11 +196,11 @@ class Timeline extends Game.Views.Drawers.Drawer {
             return 'paused';
         }
 
-        if(Game.Services.TimeService.hoursPerSecond === 6 * 2) {
+        if(Game.Services.TimeService.speed === 2) {
             return 'ffwdx2';
         }
         
-        if(Game.Services.TimeService.hoursPerSecond === 6 * 4) {
+        if(Game.Services.TimeService.speed === 4) {
             return 'ffwdx4';
         }
             
@@ -208,9 +208,9 @@ class Timeline extends Game.Views.Drawers.Drawer {
     }
 
     /**
-     * Renders the preview
+     * Renders the content
      */
-    renderPreview() {
+    renderContent() {
         let date = Game.Services.TimeService.currentTime;
 
         return _.div({class: 'drawer__preview'},
@@ -262,15 +262,6 @@ class Timeline extends Game.Views.Drawers.Drawer {
                     })
                 )
             )
-        );
-    }
-
-    /**
-     * Renders the main content
-     */
-    renderContent() {
-        return _.div({class: 'drawer__content drawer--timeline__days'},
-
         );
     }
 }

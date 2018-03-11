@@ -618,6 +618,11 @@ h1, h2, h3, h4, h5, h6 {
   .widget--button.active, .widget--button:active {
     background-image: linear-gradient(darkgrey, grey);
     color: lightgrey; }
+  .widget--button.success {
+    background-image: linear-gradient(chartreuse, darkgreen);
+    color: white;
+    border-color: forestgreen;
+    text-shadow: none; }
   .widget--button.warning {
     background-image: linear-gradient(yellow, gold);
     color: sienna;
@@ -852,6 +857,27 @@ h1, h2, h3, h4, h5, h6 {
       min-width: 50%; }
       .drawer--controls .widget-group .widget--label {
         padding: 0; }
+
+.drawer--quest-log {
+  padding: 1rem; }
+  .drawer--quest-log:empty {
+    display: none; }
+  .drawer--quest-log__quest {
+    border-radius: 0.2rem;
+    padding: 1rem;
+    position: relative;
+    background-color: rgba(0, 0, 0, 0.3);
+    color: lightgrey; }
+    .drawer--quest-log__quest__title {
+      font-weight: bold;
+      position: relative;
+      color: white;
+      z-index: 1;
+      margin-bottom: 0.25rem; }
+    .drawer--quest-log__quest__message {
+      position: relative;
+      z-index: 1;
+      margin-bottom: 0.25rem; }
 
 .modal {
   position: fixed;

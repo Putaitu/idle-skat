@@ -26,6 +26,13 @@
         color: lightgrey;
     }
 
+    &.success {
+        background-image: linear-gradient(chartreuse, darkgreen);
+        color: white;
+        border-color: forestgreen;
+        text-shadow: none;
+    }
+
     &.warning {
         background-image: linear-gradient(yellow, gold);
         color: sienna;

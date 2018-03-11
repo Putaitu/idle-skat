@@ -14,62 +14,28 @@ class Drawer extends Crisp.View {
 
         this.fetch();
     }
-    
+   
     /**
-     * Gets whether or not this view is expanded
+     * Gets the class name
+     *
+     * @returns {String} Class name
      */
-    get isExpanded() {
-        let toggle = this.element.querySelector('.drawer__toggle');
-
-        if(!toggle) { return false; }
-
-        return toggle.checked;
+    get className() {
+        return 'drawer-' + this.name.replace('Drawer', '').replace(/([A-Z])/g, '-$1').trim().toLowerCase();
     }
 
     /**
-     * Renders the content of the drawer
+     * Renders this content
+     *
+     * @returns {HTMLElement} Element
      */
     renderContent() {}
-    
-    /**
-     * Renders the preview of the drawer
-     */
-    renderPreview() {
-        return _.div({class: 'drawer__preview'},
-            _.label({class: 'drawer__preview__label'},
-                this.name
-                    .replace('Drawer', '')
-                    .replace(/([A-Z])/g, ' $1')
-                    .trim()
-            )
-        );
-    }
-
-    /**
-     * Updates this drawer (static)
-     */
-    static update() {
-        let drawer = Crisp.View.get(this);
-
-        if(!drawer) { return; }
-
-        drawer.update();
-    }
-
-    /**
-     * Renders the toggle
-     */
-    renderToggle() {
-        return _.input({type: 'checkbox', class: 'drawer__toggle', checked: this.isExpanded});
-    }
 
     /**
      * Template
      */
     template() {
-        return _.div({class: 'drawer drawer-' + this.name.replace('Drawer', '').replace(/([A-Z])/g, '-$1').trim().toLowerCase()},
-            this.renderToggle(),
-            this.renderPreview(),
+        return _.div({class: 'drawer ' + this.className},
             this.renderContent()
         );
     }
