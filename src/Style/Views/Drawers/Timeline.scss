@@ -1,8 +1,26 @@
 .drawer--timeline {
     position: relative;
 
+    .drawer__preview {
+        display: flex;
+    }
+
+    &__controls {
+        flex-basis: 6rem;
+        padding: 0 0.5rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+
+        .widget-group {
+            margin: 0;
+        }
+    }
+
     &__scroller {
         overflow: hidden;
+        flex-grow: 1;
+        position: relative;
 
         &__year {
             font-size: 1rem;

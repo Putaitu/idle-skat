@@ -1,20 +1,30 @@
 .widget--button {
-    line-height: 2;
+    line-height: 2rem;
     text-decoration: none;
     padding: 0 0.5rem;
     text-transform: uppercase;
     cursor: pointer;
-    color: dimgrey;
     font-weight: bold;
     border-radius: 0.2rem;
     border: 0;
     min-width: 8rem;
     text-align: center;
     white-space: nowrap;
-    
+    text-shadow: 0px 1px 1px rgba(255, 255, 255, 0.5);
+
     background-image: linear-gradient(lightgrey, darkgrey);
     border: 1px solid darkgrey;
-    text-shadow: 0px 1px 1px rgba(255, 255, 255, 0.5);
+    color: dimgrey;
+
+    &.small {
+        min-width: 0;
+        max-width: 2rem;
+    }
+
+    &.active, &:active {
+        background-image: linear-gradient(darkgrey, grey);
+        color: lightgrey;
+    }
 
     &.warning {
         background-image: linear-gradient(yellow, gold);
@@ -27,5 +37,23 @@
         color: white;
         border-color: darkred;
         text-shadow: none;
+    }
+}
+
+.widget-group .widget--button {
+    &:first-child:not(:last-child) {
+        border-bottom-right-radius: 0;
+        border-top-right-radius: 0;
+    }
+
+    &:not(:first-child):not(:last-child) {
+        border-radius: 0;
+        border-left-width: 0;
+    }
+    
+    &:last-child:not(:first-child) {
+        border-bottom-left-radius: 0;
+        border-top-left-radius: 0;
+        border-left-width: 0;
     }
 }

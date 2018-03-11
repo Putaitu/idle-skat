@@ -37,7 +37,7 @@ class Notifications extends Game.Views.Drawers.Drawer {
 
         if(!instance) { return; }
 
-        notification.createdOn = Game.Services.TimeService.currentTime;
+        notification.createdOn = Game.Services.TimeService.currentTime.reset();
 
         let key = notification.createdOn.getTime().toString();
 

@@ -11,7 +11,7 @@ window.Game = {
     MACHINE_PRICE: 10000,
     MACHINE_CAPACITY: 1,
     PRODUCTION_COST: 10,
-    DEFAULT_UNIT_PRICE: 10
+    DEFAULT_UNIT_PRICE: 20
 };
 
 // -------------------

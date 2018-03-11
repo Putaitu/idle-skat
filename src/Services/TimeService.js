@@ -1,7 +1,5 @@
 'use strict';
 
-const HOURS_PER_SECOND = 24; 
-
 /**
  * Resets hours, minutes and seconds of a date
  */
@@ -131,7 +129,7 @@ class TimeService {
     static tick() {
         let time = this.currentTime;
 
-        time.addHours(HOURS_PER_SECOND);
+        time.addHours(this.hoursPerSecond || 6);
 
         Game.Services.ConfigService.set('time', time.getTime());
     }

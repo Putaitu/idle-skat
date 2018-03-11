@@ -11,7 +11,7 @@ class BTaxEstimation extends Crisp.View {
         super(params);
 
         this.model = {
-            income: 96000,
+            income: 30000,
             btax: 0
         };
 
@@ -127,7 +127,7 @@ class BTaxEstimation extends Crisp.View {
         Game.Services.ConfigService.set('estimatedIncome', this.model.income);
 
         // Save the B tax estimate
-        Game.Services.ConfigService.set('btax', this.model.btax);
+        Game.Services.ConfigService.set('btaxAmount', this.model.btax);
 
         // Check if setup is complete
         if(!Game.Services.ConfigService.set('completedSetup')) {

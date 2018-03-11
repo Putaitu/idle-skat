@@ -53,9 +53,17 @@ class SessionService {
      * @return {Promise}
      */
     static reportVat(date) {
+        let year = date.getFullYear();
+        let quarter = date.getQuarter() - 1;
+
+        if(quarter < 1) {
+            quarter = 4;
+            year--;
+        }
+
         let tool = new Game.Views.Modals.VATReportingTool({
-            year: date.getFullYear(),
-            quarter: date.getQuarter()
+            year: year,
+            quarter: quarter
         });
 
         return new Promise((resolve, reject) => {
@@ -70,6 +78,40 @@ class SessionService {
     }
 
     /**
+     * Gets the B tax information
+     *
+     * @param {Number} year
+     * @param {Number} month
+     *
+     * @returns { Object} B Tax info
+     */
+    static getBTax(year, month) {
+        let btax = Game.Services.ConfigService.get('btax', {});
+
+        if(!btax[year]) { btax[year] = {}; }
+        if(!btax[year][month]) { btax[year][month] = { isPaid: false, amount: Math.round(Game.Services.ConfigService.get('btaxAmount', 0) / 12) }; }
+
+        return btax[year][month];
+    }
+    
+    /**
+     * Sets the B tax information
+     *
+     * @param {Number} year
+     * @param {Number} month
+     * @param {Object} info
+     */
+    static setBTax(year, month, info) {
+        let btax = Game.Services.ConfigService.get('btax', {});
+
+        if(!btax[year]) { btax[year] = {}; }
+
+        btax[year][month] = info;
+
+        Game.Services.ConfigService.set('btax', btax);
+    }
+
+    /**
      * Pay B tax
      *
      * @param {Date} date
@@ -77,7 +119,13 @@ class SessionService {
      * @return {Promise}
      */
     static payBTax(date) {
-        let amount = Game.Services.ConfigService.get('btax', 0);
+        let btax = this.getBTax(date.getFullYear(), date.getMonth() + 1);
+
+        if(btax.isPaid) { 
+            return Promise.reject(new Error('You\'ve already paid B tax for ' + date.getMonthName() + ' ' + date.getFullYear()));
+        }
+
+        let amount = Game.Services.ConfigService.get('btaxAmount', 0);
 
         if(amount > 0) { amount = Math.round(amount/12); }
         
@@ -88,8 +136,12 @@ class SessionService {
         }
 
         Game.Services.ConfigService.set('companyAccount', companyAccount - amount);
-        
-        return Promise.resolve('B tax for ' + date.getMonthName() + ' ' + date.getFullYear() + ' has been paid');
+
+        btax.isPaid = true;
+
+        this.setBTax(date.getFullYear(), date.getMonth() + 1, btax);
+
+        return Promise.resolve();
     }
     
     /**
@@ -149,15 +201,15 @@ class SessionService {
         if(!vat[year][quarter]) { vat[year][quarter] = {} }
         
         if(isReported !== undefined) {
-            vat.isReported = isReported;
+            vat[year][quarter].isReported = isReported;
         }
 
         if(isPaid !== undefined) {
-            vat.isPaid = isPaid;
+            vat[year][quarter].isPaid = isPaid;
         }
 
         if(amount !== undefined) {
-            vat.amount = amount;
+            vat[year][quarter].amount = amount;
         }
 
         Game.Services.ConfigService.set('vat', vat);
@@ -172,7 +224,12 @@ class SessionService {
      */
     static payVat(date) {
         let year = date.getFullYear();
-        let quarter = date.getQuarter();
+        let quarter = date.getQuarter() - 1;
+
+        if(quarter < 1) {
+            quarter = 4;
+            year--;
+        }
 
         let vat = this.getVat(year, quarter);
 
@@ -242,7 +299,7 @@ class SessionService {
     
         // Specific month
         if(year && month) {
-            result = parseFloat(sales[year][month]);
+            result = parseFloat(sales[year][month]) || 0;
 
         // Specific year
         } else if(month) {
@@ -331,7 +388,7 @@ class SessionService {
     
         // Specific month
         if(year && month) {
-            result = cost[year][month];
+            result = parseFloat(cost[year][month]) || 0;
 
         // Specific year
         } else if(month) {
@@ -429,7 +486,7 @@ class SessionService {
 
         if(factor <= 0) { return 0; }
 
-        return Math.round(Math.pow(factor, -1));
+        return Math.round(Math.pow(factor, -1) * 100) / 100;
     }
 }
 

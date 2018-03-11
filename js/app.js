@@ -81,7 +81,7 @@ window.Game = {
     MACHINE_PRICE: 10000,
     MACHINE_CAPACITY: 1,
     PRODUCTION_COST: 10,
-    DEFAULT_UNIT_PRICE: 10
+    DEFAULT_UNIT_PRICE: 20
 };
 
 // -------------------
@@ -126,22 +126,22 @@ Game.Views.Drawers.Drawer = __webpack_require__(20);
 Game.Views.Drawers.Timeline = __webpack_require__(21);
 Game.Views.Drawers.Stats = __webpack_require__(22);
 Game.Views.Drawers.Notifications = __webpack_require__(23);
-Game.Views.Drawers.Controls = __webpack_require__(33);
+Game.Views.Drawers.Controls = __webpack_require__(24);
 
 Game.Views.Charts = {};
-Game.Views.Charts.PieChart = __webpack_require__(24);
-Game.Views.Charts.CoinStack = __webpack_require__(25);
+Game.Views.Charts.PieChart = __webpack_require__(25);
+Game.Views.Charts.CoinStack = __webpack_require__(26);
 
 Game.Views.Pages = {};
-Game.Views.Pages.Setup = __webpack_require__(26);
-Game.Views.Pages.BTaxEstimation = __webpack_require__(27);
-Game.Views.Pages.Session = __webpack_require__(28);
+Game.Views.Pages.Setup = __webpack_require__(27);
+Game.Views.Pages.BTaxEstimation = __webpack_require__(28);
+Game.Views.Pages.Session = __webpack_require__(29);
 
 // -------------------
 // Controllers
 // -------------------
 Game.Controllers = {};
-Game.Controllers.ViewController = __webpack_require__(29);
+Game.Controllers.ViewController = __webpack_require__(30);
 
 /***/ }),
 /* 1 */
@@ -233,11 +233,10 @@ module.exports = ConfigService;
 "use strict";
 
 
-const HOURS_PER_SECOND = 24;
-
 /**
  * Resets hours, minutes and seconds of a date
  */
+
 Date.prototype.reset = function () {
     this.setHours(0);
     this.setMinutes(0);
@@ -359,7 +358,7 @@ class TimeService {
     static tick() {
         let time = this.currentTime;
 
-        time.addHours(HOURS_PER_SECOND);
+        time.addHours(this.hoursPerSecond || 6);
 
         Game.Services.ConfigService.set('time', time.getTime());
     }
@@ -630,9 +629,17 @@ class SessionService {
      * @return {Promise}
      */
     static reportVat(date) {
+        let year = date.getFullYear();
+        let quarter = date.getQuarter() - 1;
+
+        if (quarter < 1) {
+            quarter = 4;
+            year--;
+        }
+
         let tool = new Game.Views.Modals.VATReportingTool({
-            year: date.getFullYear(),
-            quarter: date.getQuarter()
+            year: year,
+            quarter: quarter
         });
 
         return new Promise((resolve, reject) => {
@@ -647,6 +654,46 @@ class SessionService {
     }
 
     /**
+     * Gets the B tax information
+     *
+     * @param {Number} year
+     * @param {Number} month
+     *
+     * @returns { Object} B Tax info
+     */
+    static getBTax(year, month) {
+        let btax = Game.Services.ConfigService.get('btax', {});
+
+        if (!btax[year]) {
+            btax[year] = {};
+        }
+        if (!btax[year][month]) {
+            btax[year][month] = { isPaid: false, amount: Math.round(Game.Services.ConfigService.get('btaxAmount', 0) / 12) };
+        }
+
+        return btax[year][month];
+    }
+
+    /**
+     * Sets the B tax information
+     *
+     * @param {Number} year
+     * @param {Number} month
+     * @param {Object} info
+     */
+    static setBTax(year, month, info) {
+        let btax = Game.Services.ConfigService.get('btax', {});
+
+        if (!btax[year]) {
+            btax[year] = {};
+        }
+
+        btax[year][month] = info;
+
+        Game.Services.ConfigService.set('btax', btax);
+    }
+
+    /**
      * Pay B tax
      *
      * @param {Date} date
@@ -654,7 +701,13 @@ class SessionService {
      * @return {Promise}
      */
     static payBTax(date) {
-        let amount = Game.Services.ConfigService.get('btax', 0);
+        let btax = this.getBTax(date.getFullYear(), date.getMonth() + 1);
+
+        if (btax.isPaid) {
+            return Promise.reject(new Error('You\'ve already paid B tax for ' + date.getMonthName() + ' ' + date.getFullYear()));
+        }
+
+        let amount = Game.Services.ConfigService.get('btaxAmount', 0);
 
         if (amount > 0) {
             amount = Math.round(amount / 12);
@@ -668,7 +721,11 @@ class SessionService {
 
         Game.Services.ConfigService.set('companyAccount', companyAccount - amount);
 
-        return Promise.resolve('B tax for ' + date.getMonthName() + ' ' + date.getFullYear() + ' has been paid');
+        btax.isPaid = true;
+
+        this.setBTax(date.getFullYear(), date.getMonth() + 1, btax);
+
+        return Promise.resolve();
     }
 
     /**
@@ -744,15 +801,15 @@ class SessionService {
         }
 
         if (isReported !== undefined) {
-            vat.isReported = isReported;
+            vat[year][quarter].isReported = isReported;
         }
 
         if (isPaid !== undefined) {
-            vat.isPaid = isPaid;
+            vat[year][quarter].isPaid = isPaid;
         }
 
         if (amount !== undefined) {
-            vat.amount = amount;
+            vat[year][quarter].amount = amount;
         }
 
         Game.Services.ConfigService.set('vat', vat);
@@ -767,7 +824,12 @@ class SessionService {
      */
     static payVat(date) {
         let year = date.getFullYear();
-        let quarter = date.getQuarter();
+        let quarter = date.getQuarter() - 1;
+
+        if (quarter < 1) {
+            quarter = 4;
+            year--;
+        }
 
         let vat = this.getVat(year, quarter);
 
@@ -845,7 +907,7 @@ class SessionService {
 
         // Specific month
         if (year && month) {
-            result = parseFloat(sales[year][month]);
+            result = parseFloat(sales[year][month]) || 0;
 
             // Specific year
         } else if (month) {
@@ -950,7 +1012,7 @@ class SessionService {
 
         // Specific month
         if (year && month) {
-            result = cost[year][month];
+            result = parseFloat(cost[year][month]) || 0;
 
             // Specific year
         } else if (month) {
@@ -1062,7 +1124,7 @@ class SessionService {
             return 0;
         }
 
-        return Math.round(Math.pow(factor, -1));
+        return Math.round(Math.pow(factor, -1) * 100) / 100;
     }
 }
 
@@ -2380,13 +2442,25 @@ class Timeline extends Game.Views.Drawers.Drawer {
             let expiresOn = new Date(date).addMonths(1);
             expiresOn.setDate(1);
 
+            let year = date.getFullYear();
+            let quarter = date.getQuarter() - 1;
+
+            if (quarter < 1) {
+                quarter = 4;
+                year--;
+            }
+
+            if (Game.Services.SessionService.getVat(year, quarter).isPaid) {
+                return;
+            }
+
             return {
                 type: 'warning',
                 title: 'Pay VAT',
                 message: 'VAT payment can be made, and is due on ' + expiresOn.prettyPrint(),
                 expiresOn: expiresOn,
                 action: {
-                    label: 'Pay VAT (' + Game.Services.SessionService.getVat(date.getFullYear(), date.getQuarter()).amount + ' DKK)',
+                    label: 'Pay VAT (' + Game.Services.SessionService.getVat(year, quarter).amount + ' DKK)',
                     onClick: 'onClickPayVAT'
                 }
             };
@@ -2399,6 +2473,18 @@ class Timeline extends Game.Views.Drawers.Drawer {
         date.getMonth() === 6 || // ...july or...
         date.getMonth() === 9 // ...october
         )) {
+            let year = date.getFullYear();
+            let quarter = date.getQuarter() - 1;
+
+            if (quarter < 1) {
+                quarter = 4;
+                year--;
+            }
+
+            if (Game.Services.SessionService.getVat(year, quarter).isReported) {
+                return;
+            }
+
             let expiresOn = new Date(date).addMonths(1);
             expiresOn.setDate(24);
 
@@ -2416,6 +2502,12 @@ class Timeline extends Game.Views.Drawers.Drawer {
 
         // Able to pay B tax
         if (date.getDate() === 1) {
+            let btax = Game.Services.SessionService.getBTax(date.getFullYear(), date.getMonth() + 1);
+
+            if (btax.isPaid) {
+                return;
+            }
+
             let expiresOn = new Date(date);
             expiresOn.setDate(22);
 
@@ -2425,7 +2517,7 @@ class Timeline extends Game.Views.Drawers.Drawer {
                 message: 'B tax payment can be made, and is due on ' + expiresOn.prettyPrint(),
                 expiresOn: expiresOn,
                 action: {
-                    label: 'Pay B tax (' + Math.round(Game.Services.ConfigService.get('btax', 0) / 12) + ' DKK)',
+                    label: 'Pay B tax (' + btax.amount + ' DKK)',
                     onClick: 'onClickPayBTax'
                 }
             };
@@ -2465,12 +2557,74 @@ class Timeline extends Game.Views.Drawers.Drawer {
     }
 
     /**
+     * Event: Click pause
+     */
+    onClickPause() {
+        Game.Services.TimeService.isPaused = true;
+
+        this.update();
+    }
+
+    /**
+     * Event: Click pause
+     */
+    onClickPlay() {
+        Game.Services.TimeService.isPaused = false;
+
+        Game.Services.TimeService.hoursPerSecond = 6;
+
+        this.update();
+    }
+
+    /**
+     * Event: Click fast forward
+     *
+     * @param {Number} factor
+     */
+    onClickFastForward(factor) {
+        Game.Services.TimeService.isPaused = false;
+
+        Game.Services.TimeService.hoursPerSecond = 6 * factor;
+
+        this.update();
+    }
+
+    /**
+     * Gets the state of the timeline
+     *
+     * @returns {String} State
+     */
+    get state() {
+        if (Game.Services.TimeService.isPaused) {
+            return 'paused';
+        }
+
+        if (Game.Services.TimeService.hoursPerSecond === 6 * 2) {
+            return 'ffwdx2';
+        }
+
+        if (Game.Services.TimeService.hoursPerSecond === 6 * 4) {
+            return 'ffwdx4';
+        }
+
+        return 'playing';
+    }
+
+    /**
      * Renders the preview
      */
     renderPreview() {
         let date = Game.Services.TimeService.currentTime;
 
-        return _.div({ dynamicContent: true, class: 'drawer__preview drawer--timeline__scroller' }, _.div({ class: 'drawer--timeline__scroller__year' }, date.getFullYear()), _.div({ class: 'drawer--timeline__scroller__month' }, date.getMonthName()), _.div({ class: 'drawer--timeline__scroller__days' }, _.loop(60, day => {
+        return _.div({ class: 'drawer__preview' }, _.div({ dynamicContent: true, class: 'drawer--timeline__controls' }, _.div({ class: 'widget-group' }, _.button({ class: 'widget widget--button small' + (this.state === 'paused' ? ' active' : ''), title: 'Pause' }, '⏸').click(() => {
+            this.onClickPause();
+        }), _.button({ class: 'widget widget--button small' + (this.state === 'playing' ? ' active' : ''), title: 'Play' }, '▶️').click(() => {
+            this.onClickPlay();
+        }), _.button({ class: 'widget widget--button small' + (this.state === 'ffwdx2' ? ' active' : '') }, '⏩').click(() => {
+            this.onClickFastForward(2);
+        }), _.button({ class: 'widget widget--button small' + (this.state === 'ffwdx4' ? ' active' : '') }, '⏭').click(() => {
+            this.onClickFastForward(4);
+        }))), _.div({ dynamicContent: true, class: 'drawer--timeline__scroller' }, _.div({ class: 'drawer--timeline__scroller__year' }, date.getFullYear()), _.div({ class: 'drawer--timeline__scroller__month' }, date.getMonthName()), _.div({ class: 'drawer--timeline__scroller__days' }, _.loop(60, day => {
             let currentDate = new Date(date);
 
             currentDate.addDays(day);
@@ -2489,7 +2643,7 @@ class Timeline extends Game.Views.Drawers.Drawer {
 
                 return _.div({ class: 'drawer--timeline__scroller__day__notification ' + (notification.type || '') }, notification.title);
             }));
-        })));
+        }))));
     }
 
     /**
@@ -2587,7 +2741,7 @@ class Notifications extends Game.Views.Drawers.Drawer {
             return;
         }
 
-        notification.createdOn = Game.Services.TimeService.currentTime;
+        notification.createdOn = Game.Services.TimeService.currentTime.reset();
 
         let key = notification.createdOn.getTime().toString();
 
@@ -2715,6 +2869,80 @@ module.exports = Notifications;
 
 /***/ }),
 /* 24 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * Controls
+ */
+
+class Controls extends Game.Views.Drawers.Drawer {
+    /**
+     * Heartbeat
+     */
+    heartbeat() {
+        this.update();
+    }
+
+    /**
+     * Event: Changed unit price
+     *
+     * @param {Number} price
+     */
+    onChangeUnitPrice(price) {
+        Game.Services.SessionService.setUnitPrice(price);
+
+        this.heartbeat();
+    }
+
+    /*
+     * Event: Click buy machine
+     */
+    onClickBuyMachine() {
+        Game.Services.SessionService.buyMachine();
+
+        this.heartbeat();
+    }
+
+    /*
+     * Event: Click produce
+     */
+    onClickProduce() {
+        Game.Services.SessionService.produceUnit();
+
+        this.heartbeat();
+    }
+
+    /**
+     * Renders the preview
+     */
+    renderPreview() {
+        let year = Game.Services.TimeService.currentYear;
+        let month = Game.Services.TimeService.currentMonth;
+
+        return [_.div({ class: 'drawer--controls__heading' }, 'Unit price'), _.div({ class: 'widget-group' }, _.input({ class: 'widget widget--input', type: 'number', value: Game.Services.ConfigService.get('unitPrice', Game.DEFAULT_UNIT_PRICE) }).on('input', e => {
+            this.onChangeUnitPrice(e.currentTarget.value);
+        }), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, '+' + Game.Services.ConfigService.get('unitPrice', Game.DEFAULT_UNIT_PRICE) * 0.25 + ' DKK VAT')), _.div({ dynamicContent: true, class: 'drawer--controls__heading' }, 'Machines: ' + Game.Services.ConfigService.get('machines', 0)), _.div({ class: 'widget-group' }, _.button({ class: 'widget widget--button' }, 'Buy machine').click(e => {
+            this.onClickBuyMachine();
+        }), _.div({ class: 'widget widget--label text-right vat' }, Game.MACHINE_PRICE + ' DKK')), _.div({ dynamicContent: true, class: 'drawer--controls__heading' }, 'Inventory: ' + Game.Services.ConfigService.get('inventory', 0)), _.div({ class: 'widget-group' }, _.button({ class: 'widget widget--button' }, 'Produce').click(e => {
+            this.onClickProduce();
+        }), _.div({ class: 'widget widget--label text-right vat' }, Game.PRODUCTION_COST + ' DKK')), _.div({ class: 'drawer--controls__heading' }, 'Statistics for ' + year), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Est. sales:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.ConfigService.get('estimatedIncome', 0) + ' DKK')), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Actual sales:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.SessionService.getSales(year) + ' DKK')), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Cost:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.SessionService.getCost(year) + ' DKK')), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Sales per day:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.SessionService.getSalesPerDay()))];
+    }
+
+    /**
+     * Renders the toggle
+     */
+    renderToggle() {
+        return null;
+    }
+}
+
+module.exports = Controls;
+
+/***/ }),
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2912,7 +3140,7 @@ class PieChart extends Crisp.View {
 module.exports = PieChart;
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2927,8 +3155,8 @@ class CoinStack extends Crisp.View {
 
         this.currentAmount = this.amount;
         this.coinHeight = this.coinHeight || 10;
-        this.label = this.label || '';
         this.color = this.color || '#000000';
+        this.maxCoinsPerStack = this.maxCoinsPerStack || 10;
 
         this.fetch();
     }
@@ -3041,17 +3269,43 @@ class CoinStack extends Crisp.View {
     }
 
     /**
+     * Gets the amount of stacks
+     *
+     * @returns {Number} Stacks
+     */
+    get stackCount() {
+        return Math.ceil(this.amount / this.maxCoinsPerStack);
+    }
+
+    /**
+     * Gets the amount of coins in a stack
+     *
+     * @param {Number} index
+     *
+     * @returns {Number} Amount
+     */
+    getStackAmount(index) {
+        if (index === 0) {
+            return this.amount % this.maxCoinsPerStack;
+        }
+
+        return this.maxCoinsPerStack;
+    }
+
+    /**
      * Template
      */
     template() {
-        return _.div({ class: 'coin-stack' }, _.div({ class: 'coin-stack__stack', style: this.getAmountStyle() }), _.div({ class: 'coin-stack__label', style: 'color: ' + this.color }, this.label));
+        return _.div({ class: 'coin-stack' }, _.loop(this.stackCount, i => {
+            return _.div({ class: 'coin-stack__stack', style: this.getAmountStyle(this.getStackAmount(i)) });
+        }));
     }
 }
 
 module.exports = CoinStack;
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3162,7 +3416,7 @@ class Setup extends Crisp.View {
 module.exports = Setup;
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3180,7 +3434,7 @@ class BTaxEstimation extends Crisp.View {
         super(params);
 
         this.model = {
-            income: 96000,
+            income: 30000,
             btax: 0
         };
 
@@ -3292,7 +3546,7 @@ class BTaxEstimation extends Crisp.View {
         Game.Services.ConfigService.set('estimatedIncome', this.model.income);
 
         // Save the B tax estimate
-        Game.Services.ConfigService.set('btax', this.model.btax);
+        Game.Services.ConfigService.set('btaxAmount', this.model.btax);
 
         // Check if setup is complete
         if (!Game.Services.ConfigService.set('completedSetup')) {
@@ -3327,7 +3581,7 @@ class BTaxEstimation extends Crisp.View {
 module.exports = BTaxEstimation;
 
 /***/ }),
-/* 28 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3350,7 +3604,7 @@ class Session extends Crisp.View {
 
         setTimeout(() => {
             this.sellUnit();
-        }, Game.Services.SessionService.getDemandFactor() * 1000);
+        }, Game.Services.SessionService.getDemandFactor() * 1000 * (Game.Services.TimeService.hoursPerSecond / 24));
     }
 
     /**
@@ -3359,7 +3613,7 @@ class Session extends Crisp.View {
     sellUnit() {
         setTimeout(() => {
             this.sellUnit();
-        }, Game.Services.SessionService.getDemandFactor() * 1000);
+        }, Game.Services.SessionService.getDemandFactor() * 1000 * (Game.Services.TimeService.hoursPerSecond / 24));
 
         if (!document.hasFocus() || Game.Services.TimeService.isPaused) {
             return;
@@ -3413,7 +3667,7 @@ class Session extends Crisp.View {
 module.exports = Session;
 
 /***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3460,83 +3714,6 @@ class ViewController {
 ViewController.init();
 
 module.exports = ViewController;
-
-/***/ }),
-/* 30 */,
-/* 31 */,
-/* 32 */,
-/* 33 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-/**
- * Controls
- */
-
-class Controls extends Game.Views.Drawers.Drawer {
-    /**
-     * Heartbeat
-     */
-    heartbeat() {
-        this.update();
-    }
-
-    /**
-     * Event: Changed unit price
-     *
-     * @param {Number} price
-     */
-    onChangeUnitPrice(price) {
-        Game.Services.SessionService.setUnitPrice(price);
-
-        this.heartbeat();
-    }
-
-    /*
-     * Event: Click buy machine
-     */
-    onClickBuyMachine() {
-        Game.Services.SessionService.buyMachine();
-
-        this.heartbeat();
-    }
-
-    /*
-     * Event: Click produce
-     */
-    onClickProduce() {
-        Game.Services.SessionService.produceUnit();
-
-        this.heartbeat();
-    }
-
-    /**
-     * Renders the preview
-     */
-    renderPreview() {
-        let year = Game.Services.TimeService.currentYear;
-        let month = Game.Services.TimeService.currentMonth;
-
-        return [_.div({ class: 'drawer--controls__heading' }, 'Unit price'), _.div({ class: 'widget-group' }, _.input({ class: 'widget widget--input', type: 'number', value: Game.Services.ConfigService.get('unitPrice', Game.DEFAULT_UNIT_PRICE) }).on('input', e => {
-            this.onChangeUnitPrice(e.currentTarget.value);
-        }), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, '+' + Game.Services.ConfigService.get('unitPrice', Game.DEFAULT_UNIT_PRICE) * 0.25 + ' DKK VAT')), _.div({ dynamicContent: true, class: 'drawer--controls__heading' }, 'Machines: ' + Game.Services.ConfigService.get('machines', 0)), _.div({ class: 'widget-group' }, _.button({ class: 'widget widget--button' }, 'Buy machine').click(e => {
-            this.onClickBuyMachine();
-        }), _.div({ class: 'widget widget--label text-right vat' }, Game.MACHINE_PRICE + ' DKK')), _.div({ dynamicContent: true, class: 'drawer--controls__heading' }, 'Inventory: ' + Game.Services.ConfigService.get('inventory', 0)), _.div({ class: 'widget-group' }, _.button({ class: 'widget widget--button' }, 'Produce').click(e => {
-            this.onClickProduce();
-        }), _.div({ class: 'widget widget--label text-right vat' }, Game.PRODUCTION_COST + ' DKK')), _.div({ class: 'drawer--controls__heading' }, 'Statistics for ' + year), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Est. sales:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.ConfigService.get('estimatedIncome', 0) + ' DKK')), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Actual sales:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.SessionService.getSales(year) + ' DKK')), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Cost:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.SessionService.getCost(year) + ' DKK')), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Sales per day:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.SessionService.getSalesPerDay()))];
-    }
-
-    /**
-     * Renders the toggle
-     */
-    renderToggle() {
-        return null;
-    }
-}
-
-module.exports = Controls;
 
 /***/ })
 /******/ ]);

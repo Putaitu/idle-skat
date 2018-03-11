@@ -17,7 +17,7 @@ class Session extends Crisp.View {
 
         setTimeout(() => {
             this.sellUnit();
-        }, Game.Services.SessionService.getDemandFactor() * 1000);
+        }, Game.Services.SessionService.getDemandFactor() * 1000 * (Game.Services.TimeService.hoursPerSecond / 24));
     }
 
     /**
@@ -26,7 +26,7 @@ class Session extends Crisp.View {
     sellUnit() {
         setTimeout(() => {
             this.sellUnit();
-        }, Game.Services.SessionService.getDemandFactor() * 1000);
+        }, Game.Services.SessionService.getDemandFactor() * 1000 * (Game.Services.TimeService.hoursPerSecond / 24));
         
         if(!document.hasFocus() || Game.Services.TimeService.isPaused) { return; }
 

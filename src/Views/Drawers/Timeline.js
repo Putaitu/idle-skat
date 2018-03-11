@@ -42,13 +42,23 @@ class Timeline extends Game.Views.Drawers.Drawer {
             let expiresOn = new Date(date).addMonths(1);
             expiresOn.setDate(1); 
 
+            let year = date.getFullYear();
+            let quarter = date.getQuarter() - 1;
+
+            if(quarter < 1) {
+                quarter = 4;
+                year--;
+            }
+
+            if(Game.Services.SessionService.getVat(year, quarter).isPaid) { return; }
+
             return {
                 type: 'warning',
                 title: 'Pay VAT',
                 message: 'VAT payment can be made, and is due on ' + expiresOn.prettyPrint(),
                 expiresOn: expiresOn,
                 action: {
-                    label: 'Pay VAT (' + Game.Services.SessionService.getVat(date.getFullYear(), date.getQuarter()).amount + ' DKK)',
+                    label: 'Pay VAT (' + Game.Services.SessionService.getVat(year, quarter).amount + ' DKK)',
                     onClick: 'onClickPayVAT'
                 }
             };
@@ -64,6 +74,16 @@ class Timeline extends Game.Views.Drawers.Drawer {
                 date.getMonth() === 9    // ...october
             )
         ) {
+            let year = date.getFullYear();
+            let quarter = date.getQuarter() - 1;
+
+            if(quarter < 1) {
+                quarter = 4;
+                year--;
+            }
+
+            if(Game.Services.SessionService.getVat(year, quarter).isReported) { return; }
+            
             let expiresOn = new Date(date).addMonths(1); 
             expiresOn.setDate(24);
 
@@ -81,6 +101,10 @@ class Timeline extends Game.Views.Drawers.Drawer {
 
         // Able to pay B tax
         if(date.getDate() === 1) {
+            let btax = Game.Services.SessionService.getBTax(date.getFullYear(), date.getMonth() + 1);
+
+            if(btax.isPaid) { return; }
+
             let expiresOn = new Date(date);
             expiresOn.setDate(22);
             
@@ -90,7 +114,7 @@ class Timeline extends Game.Views.Drawers.Drawer {
                 message: 'B tax payment can be made, and is due on ' + expiresOn.prettyPrint(),
                 expiresOn: expiresOn,
                 action: {
-                    label: 'Pay B tax (' + Math.round(Game.Services.ConfigService.get('btax', 0) / 12) + ' DKK)',
+                    label: 'Pay B tax (' + btax.amount + ' DKK)',
                     onClick: 'onClickPayBTax'
                 }
             };
@@ -130,45 +154,113 @@ class Timeline extends Game.Views.Drawers.Drawer {
     }
 
     /**
+     * Event: Click pause
+     */
+    onClickPause() {
+        Game.Services.TimeService.isPaused = true;
+
+        this.update();
+    }
+    
+    /**
+     * Event: Click pause
+     */
+    onClickPlay() {
+        Game.Services.TimeService.isPaused = false;
+
+        Game.Services.TimeService.hoursPerSecond = 6;
+        
+        this.update();
+    }
+
+    /**
+     * Event: Click fast forward
+     *
+     * @param {Number} factor
+     */
+    onClickFastForward(factor) {
+        Game.Services.TimeService.isPaused = false;
+
+        Game.Services.TimeService.hoursPerSecond = 6 * factor;
+
+        this.update();
+    }
+
+    /**
+     * Gets the state of the timeline
+     *
+     * @returns {String} State
+     */
+    get state() {
+        if(Game.Services.TimeService.isPaused) {
+            return 'paused';
+        }
+
+        if(Game.Services.TimeService.hoursPerSecond === 6 * 2) {
+            return 'ffwdx2';
+        }
+        
+        if(Game.Services.TimeService.hoursPerSecond === 6 * 4) {
+            return 'ffwdx4';
+        }
+            
+        return 'playing';
+    }
+
+    /**
      * Renders the preview
      */
     renderPreview() {
         let date = Game.Services.TimeService.currentTime;
 
-        return _.div({dynamicContent: true, class: 'drawer__preview drawer--timeline__scroller'},
-            _.div({class: 'drawer--timeline__scroller__year'},
-                date.getFullYear()
+        return _.div({class: 'drawer__preview'},
+            _.div({dynamicContent: true, class: 'drawer--timeline__controls'},
+                _.div({class: 'widget-group'},
+                    _.button({class: 'widget widget--button small' + (this.state === 'paused' ? ' active' : ''), title: 'Pause'}, '⏸')
+                        .click(() => { this.onClickPause(); }),
+                    _.button({class: 'widget widget--button small' + (this.state === 'playing' ? ' active' : ''), title: 'Play'}, '▶️')
+                        .click(() => { this.onClickPlay(); }),
+                    _.button({class: 'widget widget--button small' + (this.state === 'ffwdx2' ? ' active' : '')}, '⏩')
+                        .click(() => { this.onClickFastForward(2); }),
+                    _.button({class: 'widget widget--button small' + (this.state === 'ffwdx4' ? ' active' : '')}, '⏭')
+                        .click(() => { this.onClickFastForward(4); })
+                )
             ),
-            _.div({class: 'drawer--timeline__scroller__month'},
-                date.getMonthName()
-            ),
-            _.div({class: 'drawer--timeline__scroller__days'},
-                _.loop(60, (day) => {
-                    let currentDate = new Date(date);
+            _.div({dynamicContent: true, class: 'drawer--timeline__scroller'},
+                _.div({class: 'drawer--timeline__scroller__year'},
+                    date.getFullYear()
+                ),
+                _.div({class: 'drawer--timeline__scroller__month'},
+                    date.getMonthName()
+                ),
+                _.div({class: 'drawer--timeline__scroller__days'},
+                    _.loop(60, (day) => {
+                        let currentDate = new Date(date);
 
-                    currentDate.addDays(day);
-                    currentDate.reset();
+                        currentDate.addDays(day);
+                        currentDate.reset();
 
-                    let notification = this.getNotification(currentDate);
-                   
-                    if(notification && day === 0 && !notification.isSilent) {
-                        Game.Views.Drawers.Notifications.set(notification);
-                    }
+                        let notification = this.getNotification(currentDate);
+                       
+                        if(notification && day === 0 && !notification.isSilent) {
+                            Game.Views.Drawers.Notifications.set(notification);
+                        }
 
-                    return _.div({class: 'drawer--timeline__scroller__day ' + (currentDate.getDate() % 2 === 0 ? 'even' : 'odd')},
-                        _.if(currentDate.getDate() === 1 && day > 0,
-                            _.div({class: 'drawer--timeline__scroller__day__month'}, currentDate.getMonthName())
-                        ),
-                        _.div({class: 'drawer--timeline__scroller__day__number', 'data-number': currentDate.getDate()},
-                            currentDate.getDate(),
-                        ),
-                        _.do(() => { 
-                            if(!notification) { return; }
+                        return _.div({class: 'drawer--timeline__scroller__day ' + (currentDate.getDate() % 2 === 0 ? 'even' : 'odd')},
+                            _.if(currentDate.getDate() === 1 && day > 0,
+                                _.div({class: 'drawer--timeline__scroller__day__month'}, currentDate.getMonthName())
+                            ),
+                            _.div({class: 'drawer--timeline__scroller__day__number', 'data-number': currentDate.getDate()},
+                                currentDate.getDate(),
+                            ),
+                            _.do(() => { 
+                                if(!notification) { return; }
 
-                            return _.div({class: 'drawer--timeline__scroller__day__notification ' + (notification.type || '')}, notification.title);
-                        })
-                    );
-                })
+                                return _.div({class: 'drawer--timeline__scroller__day__notification ' + (notification.type || '')}, notification.title);
+                            })
+                        );
+                    })
+                )
             )
         );
     }
