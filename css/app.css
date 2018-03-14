@@ -453,6 +453,9 @@ h1, h2, h3, h4, h5, h6 {
       border-width: 0.5rem;
       margin-left: -0.5rem; }
 
+.widget.stretch, .widget-group.stretch {
+  width: 100%; }
+
 .widget.align-center, .widget-group.align-center {
   margin-left: auto;
   margin-right: auto; }
@@ -466,9 +469,14 @@ h1, h2, h3, h4, h5, h6 {
 .widget-group {
   display: flex;
   margin-bottom: 1rem; }
+  .widget-group__separator {
+    flex-grow: 1; }
   .widget-group .widget {
     flex-basis: 0;
+    flex-shrink: 0;
     flex-grow: 1; }
+  .widget-group.stretch .widget {
+    flex-grow: 0; }
 
 .widget--label {
   white-space: nowrap;
@@ -608,10 +616,12 @@ h1, h2, h3, h4, h5, h6 {
   min-width: 8rem;
   text-align: center;
   white-space: nowrap;
-  text-shadow: 0px 1px 1px rgba(255, 255, 255, 0.5);
   background-image: linear-gradient(lightgrey, darkgrey);
   border: 1px solid darkgrey;
   color: dimgrey; }
+  .widget--button[disabled] {
+    opacity: 0.75;
+    pointer-events: none; }
   .widget--button.small {
     min-width: 0;
     max-width: 2rem; }
@@ -621,17 +631,19 @@ h1, h2, h3, h4, h5, h6 {
   .widget--button.success {
     background-image: linear-gradient(chartreuse, darkgreen);
     color: white;
-    border-color: forestgreen;
-    text-shadow: none; }
-  .widget--button.warning {
+    border-color: forestgreen; }
+  .widget--button.yellow {
     background-image: linear-gradient(yellow, gold);
     color: sienna;
     border-color: goldenrod; }
-  .widget--button.alert {
+  .widget--button.blue {
+    background-image: linear-gradient(deepskyblue, dodgerblue);
+    color: powderblue;
+    border-color: dodgerblue; }
+  .widget--button.red {
     background-image: linear-gradient(red, darkred);
     color: white;
-    border-color: darkred;
-    text-shadow: none; }
+    border-color: darkred; }
 
 .widget-group .widget--button:first-child:not(:last-child) {
   border-bottom-right-radius: 0;
@@ -770,22 +782,27 @@ h1, h2, h3, h4, h5, h6 {
           pointer-events: none;
           border-width: 0.5rem;
           margin-left: -0.5rem; }
-        .drawer--timeline__scroller__day__notification.alert {
+        .drawer--timeline__scroller__day__notification.red {
           background-color: darkred;
           color: white; }
-          .drawer--timeline__scroller__day__notification.alert:after {
+          .drawer--timeline__scroller__day__notification.red:after {
             border-top-color: darkred; }
-        .drawer--timeline__scroller__day__notification.warning {
+        .drawer--timeline__scroller__day__notification.yellow {
           background-color: gold;
           color: black; }
-          .drawer--timeline__scroller__day__notification.warning:after {
+          .drawer--timeline__scroller__day__notification.yellow:after {
             border-top-color: gold; }
+        .drawer--timeline__scroller__day__notification.blue {
+          background-color: dodgerblue;
+          color: black; }
+          .drawer--timeline__scroller__day__notification.blue:after {
+            border-top-color: dodgerblue; }
 
 .drawer--notifications {
   overflow-y: auto;
   padding: 1rem;
   flex-grow: 1;
-  width: 20rem; }
+  width: 26rem; }
   .drawer--notifications__entry {
     border-radius: 0.2rem;
     padding: 1rem;
@@ -818,11 +835,14 @@ h1, h2, h3, h4, h5, h6 {
     .drawer--notifications__entry__action {
       position: relative;
       z-index: 1; }
-    .drawer--notifications__entry.warning {
+    .drawer--notifications__entry.yellow {
       background-color: yellow;
       color: black; }
-    .drawer--notifications__entry.alert {
+    .drawer--notifications__entry.red {
       background-color: red;
+      color: white; }
+    .drawer--notifications__entry.blue {
+      background-color: lightblue;
       color: white; }
 
 .drawer--stats {
@@ -845,7 +865,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .drawer--controls {
   padding: 1rem;
-  width: 20rem; }
+  width: 26rem; }
   .drawer--controls__heading {
     color: white;
     font-weight: bold; }

@@ -50,6 +50,10 @@
 }
 
 .widget, .widget-group {
+    &.stretch {
+        width: 100%;
+    }
+
     &.align {
         &-center {
             margin-left: auto;
@@ -70,8 +74,19 @@
     display: flex;
     margin-bottom: 1rem;
     
+    &__separator {
+        flex-grow: 1;
+    }
+
     .widget {
         flex-basis: 0;
+        flex-shrink: 0;
         flex-grow: 1;
+    }
+
+    &.stretch {
+        .widget {
+            flex-grow: 0;
+        }
     }
 }

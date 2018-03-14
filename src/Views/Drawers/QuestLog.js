@@ -1,5 +1,8 @@
 'use strict';
 
+/**
+ * A visual representation of quests
+ */
 class QuestLog extends Game.Views.Drawers.Drawer {
     /**
      * Constructor
@@ -7,13 +10,16 @@ class QuestLog extends Game.Views.Drawers.Drawer {
     constructor(params) {
         super(params);
 
-        // Test quest
         this.setQuest(
-            'Test',
-            'Reach 10000 DKK to get this quest',
-            () => {
-                return this.personalAccount >= 10000;
-            }
+            'Machines',
+            'Reach ' + Game.MACHINE_PERSONAL_ACCOUNT_MINIMUM + ' DKK to get machines',
+            () => { return this.personalAccount >= Game.MACHINE_PERSONAL_ACCOUNT_MINIMUM; }
+        );
+        
+        this.setQuest(
+            'Overdraft',
+            'Reach ' + Game.OVERDRAFT_PERSONAL_ACCOUNT_MINIMUM + ' DKK to get an overdraft allowance',
+            () => { return this.personalAccount >= Game.OVERDRAFT_PERSONAL_ACCOUNT_MINIMUM; }
         );
     }
 
@@ -45,11 +51,25 @@ class QuestLog extends Game.Views.Drawers.Drawer {
 
     /**
      * Gets the current quest
+     * NOTE: Side effect, stores completed quests in cache
      */
     get currentQuest() {
+        let currentQuest;
+        let completedQuests = Game.Services.ConfigService.get('completedQuests', []);
+
         for(let quest of this.quests || []) {
-            if(!quest.isComplete()) { return quest; }
+            if(!currentQuest && !quest.isComplete()) {
+                currentQuest = quest;
+            }
+
+            if(quest.isComplete() && completedQuests.indexOf(quest.title) < 0) {
+                completedQuests.push(quest.title);
+            }
         }
+
+        Game.Services.ConfigService.set('completedQuests', completedQuests);
+
+        return currentQuest;
     }
 
     /**

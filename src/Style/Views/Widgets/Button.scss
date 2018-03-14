@@ -10,11 +10,15 @@
     min-width: 8rem;
     text-align: center;
     white-space: nowrap;
-    text-shadow: 0px 1px 1px rgba(255, 255, 255, 0.5);
 
     background-image: linear-gradient(lightgrey, darkgrey);
     border: 1px solid darkgrey;
     color: dimgrey;
+
+    &[disabled] {
+        opacity: 0.75;
+        pointer-events: none;
+    }
 
     &.small {
         min-width: 0;
@@ -30,20 +34,24 @@
         background-image: linear-gradient(chartreuse, darkgreen);
         color: white;
         border-color: forestgreen;
-        text-shadow: none;
     }
 
-    &.warning {
+    &.yellow {
         background-image: linear-gradient(yellow, gold);
         color: sienna;
         border-color: goldenrod;
     }
+    
+    &.blue {
+        background-image: linear-gradient(deepskyblue, dodgerblue);
+        color: powderblue;
+        border-color: dodgerblue;
+    }
 
-    &.alert {
+    &.red {
         background-image: linear-gradient(red, darkred);
         color: white;
         border-color: darkred;
-        text-shadow: none;
     }
 }
 

@@ -106,7 +106,7 @@
                    margin-left: -0.5rem;
                 } 
 
-                &.alert {
+                &.red {
                     background-color: darkred;
                     color: white;
 
@@ -115,12 +115,21 @@
                     }
                 }
                 
-                &.warning {
+                &.yellow {
                     background-color: gold;
                     color: black;
 
                     &:after {
                        border-top-color: gold;
+                    }
+                }
+                
+                &.blue {
+                    background-color: dodgerblue;
+                    color: black;
+
+                    &:after {
+                       border-top-color: dodgerblue;
                     }
                 }
             }

@@ -145,9 +145,10 @@ class BTaxEstimation extends Crisp.View {
         return _.div({class: 'page page--b-tax-estimation'},
             _.div({class: 'page__container'},
                 _.h1({class: 'page__title'}, 'B tax estimation for ' + Game.Services.TimeService.currentYear),
+                _.p({class: 'widget widget--label text-center'}, 'Estimate how much profit you will make in the coming year, you will pay your b-tax based on this amount'),
                 _.div({class: 'page--b-tax-estimation__input'},
                     _.div({class: 'widget-group align-center'},
-                        _.label({class: 'widget widget--label'}, 'Target income for ' + Game.Services.TimeService.currentYear),
+                        _.label({class: 'widget widget--label'}, 'Target profit for ' + Game.Services.TimeService.currentYear),
                         _.input({class: 'widget widget--input', type: 'number', step: 1000, min: 0, value: this.model.income})
                             .on('input', (e) => { this.onChangeIncome(e); })
                     ),
@@ -159,12 +160,18 @@ class BTaxEstimation extends Crisp.View {
                     showPercentage: true,
                     model: {
                         btax: { showPercentage: true, percent: this.model.btax / this.model.income, label: 'B tax', value: this.model.btax, color: 'blue' },
-                        income: { percent: 1 - (this.model.btax / this.model.income), label: 'Target income', color: 'green', value: this.model.income }
+                        income: { percent: 1 - (this.model.btax / this.model.income), label: 'Target profit', color: 'green', value: this.model.income }
                     }
                 }),
                 this.finalBTax = _.div({class: 'page--b-tax-estimation__final'}),
-                _.button({class: 'widget widget--button align-right'}, 'Done')
-                    .click((e) => { this.onClickDone(e); })
+                _.div({class: 'widget-group align-right stretch'},
+                    _.if(!Game.Services.ConfigService.set('completedSetup'),
+                        _.a({href: '#/', class: 'widget widget--button'}, 'Back'),
+                        _.div({class: 'widget-group__separator'})
+                    ),
+                    _.button({class: 'widget widget--button'}, 'Done')
+                        .click((e) => { this.onClickDone(e); })
+                )
             )
         );
     }

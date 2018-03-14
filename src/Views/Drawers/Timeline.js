@@ -12,23 +12,6 @@ class Timeline extends Game.Views.Drawers.Drawer {
      * @returns {Object} Notification
      */
     getNotification(date) {
-        // Pay VAT due date
-        if(
-            date.getDate() === 1 && // The first day of...
-            (
-                date.getMonth() === 2 || // ...march or...
-                date.getMonth() === 5 || // ...june or...
-                date.getMonth() === 8 || // ...september or...
-                date.getMonth() === 11   // ...december
-            )
-        ) {
-            return {
-                type: 'alert',
-                title: 'VAT due',
-                isSilent: true
-            };
-        }
-        
         // Able to pay VAT
         if(
             date.getDate() === 24 && // The 24th day of...
@@ -50,10 +33,13 @@ class Timeline extends Game.Views.Drawers.Drawer {
                 year--;
             }
 
+            // Exclude first occurence
+            if(year < Game.Services.TimeService.startTime.getFullYear()) { return; }
+
             if(Game.Services.SessionService.getVat(year, quarter).isPaid) { return; }
 
             return {
-                type: 'warning',
+                type: 'yellow',
                 title: 'Pay VAT',
                 message: 'VAT payment can be made, and is due on ' + expiresOn.prettyPrint(),
                 expiresOn: expiresOn,
@@ -81,6 +67,9 @@ class Timeline extends Game.Views.Drawers.Drawer {
                 quarter = 4;
                 year--;
             }
+            
+            // Exclude first occurence
+            if(year < Game.Services.TimeService.startTime.getFullYear()) { return; }
 
             if(Game.Services.SessionService.getVat(year, quarter).isReported) { return; }
             
@@ -88,7 +77,7 @@ class Timeline extends Game.Views.Drawers.Drawer {
             expiresOn.setDate(24);
 
             return {
-                type: 'warning',
+                type: 'yellow',
                 title: 'Report VAT',
                 message: 'VAT can be reported, and payment can be made starting ' + expiresOn.prettyPrint(),
                 expiresOn: expiresOn,
@@ -109,7 +98,7 @@ class Timeline extends Game.Views.Drawers.Drawer {
             expiresOn.setDate(22);
             
             return {
-                type: 'warning',
+                type: 'blue',
                 title: 'Pay B tax',
                 message: 'B tax payment can be made, and is due on ' + expiresOn.prettyPrint(),
                 expiresOn: expiresOn,
@@ -117,15 +106,6 @@ class Timeline extends Game.Views.Drawers.Drawer {
                     label: 'Pay B tax (' + btax.amount + ' DKK)',
                     onClick: 'onClickPayBTax'
                 }
-            };
-        }
-        
-        // B tax payment due
-        if(date.getDate() === 22) {
-            return {
-                type: 'alert',
-                title: 'B tax due',
-                isSilent: true
             };
         }
     }

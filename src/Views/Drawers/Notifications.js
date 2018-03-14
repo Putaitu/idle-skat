@@ -92,7 +92,7 @@ class Notifications extends Game.Views.Drawers.Drawer {
                     _.do(() => {
                         if(!notification.action) { return; }
 
-                        return _.button({dynamicAttributes: true, class: 'drawer--notifications__entry__action widget widget--button ' + (notification.isExpired ? 'alert' : notification.type || '')}, notification.action.label)
+                        return _.button({dynamicAttributes: true, class: 'drawer--notifications__entry__action widget widget--button ' + (notification.isExpired ? 'red' : notification.type || '')}, notification.action.label)
                             .click((e) => { 
                                 if(typeof this[notification.action.onClick] !== 'function') { return; }
 

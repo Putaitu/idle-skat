@@ -18,13 +18,41 @@ class SessionService {
     }
 
     /**
+     * Checks if a quest has been completed
+     *
+     * @param {String} title
+     *
+     * @returns {Boolean} Has been completed
+     */
+    static isQuestComplete(title) {
+        let completedQuests = Game.Services.ConfigService.get('completedQuests', []);
+       
+        return completedQuests.indexOf(title) > -1;
+    }
+
+    /**
+     * Checks if the player can afford a certain amount
+     *
+     * @param {Number} amount
+     *
+     * @returns {Boolean} Can afford
+     */
+    static canAfford(amount) {
+        let companyAccount = Game.Services.ConfigService.get('companyAccount', 0);
+
+        if(!this.isQuestComplete('Overdraft') && companyAccount < amount) { return false; }
+        if(this.isQuestComplete('Overdraft') && companyAccount + Game.OVERDRAFT_AMOUNT < amount) { return false; }
+
+        return true;
+    }
+
+    /**
      * Produces a unit
      */
     static produceUnit() {
+        if(!this.canAfford(Game.PRODUCTION_COST)) { return; }
+
         let companyAccount = Game.Services.ConfigService.get('companyAccount', 0);
-
-        if(companyAccount < Game.PRODUCTION_COST) { return; }
-
         let inventory = Game.Services.ConfigService.get('inventory', 0);
 
         Game.Services.ConfigService.set('inventory', inventory + 1);
@@ -35,10 +63,9 @@ class SessionService {
      * Buys a machine
      */
     static buyMachine() {
+        if(!this.canAfford(Game.MACHINE_PRICE)) { return; }
+
         let companyAccount = Game.Services.ConfigService.get('companyAccount', 0);
-
-        if(companyAccount < Game.MACHINE_PRICE) { return; }
-
         let machines = Game.Services.ConfigService.get('machines', 0);
 
         Game.Services.ConfigService.set('machines', machines + 1);
@@ -129,11 +156,11 @@ class SessionService {
 
         if(amount > 0) { amount = Math.round(amount/12); }
         
-        let companyAccount = Game.Services.ConfigService.get('companyAccount', 0);
-
-        if(companyAccount < amount) {
+        if(!this.canAfford(amount)) {
             return Promise.reject(new Error('You don\'t have enough money in your company account to pay B tax'));
         }
+       
+        let companyAccount = Game.Services.ConfigService.get('companyAccount', 0);
 
         Game.Services.ConfigService.set('companyAccount', companyAccount - amount);
 
@@ -237,11 +264,11 @@ class SessionService {
 
         if(vat.isPaid) { return; }
 
-        let companyAccount = Game.Services.ConfigService.get('companyAccount', 0);
-
-        if(companyAccount < vat.amount) {
+        if(!this.canAfford(vat.amount)) {
             return Promise.reject('You don\'t have enough money in your company account to pay VAT');
         }
+
+        let companyAccount = Game.Services.ConfigService.get('companyAccount', 0);
 
         Game.Services.ConfigService.set('companyAccount', companyAccount - vat.amount);
 
