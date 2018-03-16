@@ -11,6 +11,13 @@
         }
     }
 
+    &__actual-profit {
+        font-weight: bold;
+        color: white;
+        text-decoration-line: underline;
+        text-decoration-style: double;
+    }
+
     .widget-group {
         margin-bottom: 0;
 

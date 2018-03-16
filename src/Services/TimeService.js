@@ -124,6 +124,24 @@ class TimeService {
     }
 
     /**
+     * Sets paused time
+     *
+     * @param {Boolean} isPaused
+     */
+    static set isPaused(isPaused) {
+        this._isPaused = isPaused;
+    }
+
+    /**
+     * Gets paused time
+     *
+     * @returns {Boolean} Is paused
+     */
+    static get isPaused() {
+        return !document.hasFocus() || !!document.querySelector('.modal') || !!this._isPaused;
+    }
+
+    /**
      * Ticks the time
      */
     static tick() {

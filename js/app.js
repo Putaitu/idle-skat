@@ -357,6 +357,24 @@ class TimeService {
     }
 
     /**
+     * Sets paused time
+     *
+     * @param {Boolean} isPaused
+     */
+    static set isPaused(isPaused) {
+        this._isPaused = isPaused;
+    }
+
+    /**
+     * Gets paused time
+     *
+     * @returns {Boolean} Is paused
+     */
+    static get isPaused() {
+        return !document.hasFocus() || !!document.querySelector('.modal') || !!this._isPaused;
+    }
+
+    /**
      * Ticks the time
      */
     static tick() {
@@ -2072,8 +2090,6 @@ class Modal extends Crisp.View {
         wait(0.1).then(() => {
             this.element.classList.toggle('in');
         });
-
-        Game.Services.TimeService.isPaused = true;
     }
 
     /**
@@ -2101,7 +2117,6 @@ class Modal extends Crisp.View {
 
         wait(0.5).then(() => {
             this.remove();
-            Game.Services.TimeService.isPaused = false;
 
             this.trigger('closed');
         });
@@ -2128,9 +2143,9 @@ class Modal extends Crisp.View {
      */
     template() {
         return _.div({ class: 'modal ' + (this.isOpen ? 'in' : '') + ' modal--' + this.className + ' ' + (this.size || 'large') }, _.div({ class: 'modal__dialog' }, _.button({ class: 'modal__close widget widget--button' }).click(() => {
-            this.close();
-
             this.trigger('cancel');
+
+            this.close();
         }), _.div({ class: 'modal__header' }, this.renderHeader()), _.div({ class: 'modal__body' }, this.renderBody()), _.div({ class: 'modal__footer' }, this.renderFooter())));
     }
 }
@@ -2149,42 +2164,104 @@ module.exports = Modal;
  */
 
 class Message extends Game.Views.Modals.Modal {
-  /**
-   * Constructor
-   */
-  constructor(params) {
-    super(params);
-  }
+    /**
+     * Constructor
+     */
+    constructor(params) {
+        super(params);
+    }
 
-  /**
-   * Pre render
-   */
-  prerender() {
-    this.size = this.size || 'small';
-  }
+    /**
+     * Pre render
+     */
+    prerender() {
+        this.size = this.size || 'small';
+    }
 
-  /**
-   * Renders the header
-   */
-  renderHeader() {
-    return _.div({ class: 'modal--message__title' }, this.title);
-  }
+    /**
+     * Renders the header
+     */
+    renderHeader() {
+        return _.div({ class: 'modal--message__title' }, this.title);
+    }
 
-  /**
-   * Renders the body
-   */
-  renderBody() {
-    return _.div({ class: 'modal--message__message' }, this.message);
-  }
+    /**
+     * Renders the body
+     */
+    renderBody() {
+        return _.div({ class: 'modal--message__message' }, this.message);
+    }
 
-  /**
-   * Renders the footer
-   */
-  renderFooter() {
-    return _.button({ class: 'widget widget--button align-right' }, 'OK').click(() => {
-      this.close();
-    });
-  }
+    /**
+     * Post render
+     */
+    postrender() {
+        this.applyFocus();
+    }
+
+    /**
+     * Focuses this modal, if a focus has been set
+     */
+    applyFocus() {
+        if (!this.focus) {
+            return;
+        }
+
+        let focus = document.querySelector(this.focus.element);
+
+        if (!focus) {
+            throw new Error('Modal couldn\'t find element "' + this.focus.element + '"');
+        }
+
+        focus = focus.getBoundingClientRect();
+
+        let dialog = this.element.querySelector('.modal__dialog');
+
+        if (!this.focus.side) {
+            this.focus.side = 'right';
+        }
+        if (!this.focus.align) {
+            this.focus.align = 'top';
+        }
+
+        dialog.classList.add('focused');
+        dialog.classList.add(this.focus.side);
+        dialog.classList.add('align-' + this.focus.align);
+
+        switch (this.focus.side) {
+            case 'right':
+                dialog.style.top = focus.top + focus.height / 2 + 'px';
+                dialog.style.left = focus.left + focus.width + 'px';
+                break;
+
+            case 'left':
+                dialog.style.top = focus.top + focus.height / 2 + 'px';
+                dialog.style.right = window.innerWidth - focus.right + focus.width + 'px';
+                console.log(window.innerWidth, focus);
+                break;
+
+            case 'top':
+                dialog.style.bottom = window.innerHeight - focus.top + 'px';
+                dialog.style.left = focus.left + focus.width / 2 + 'px';
+                break;
+
+            case 'bottom':
+                dialog.style.top = focus.bottom + 'px';
+                dialog.style.left = focus.left + focus.width / 2 + 'px';
+                break;
+        }
+    }
+
+    /**
+     * Renders the footer
+     */
+    renderFooter() {
+        return _.button({ class: 'widget widget--button align-right' }, 'OK').click(() => {
+            this.trigger('ok');
+
+            this.close();
+        });
+    }
 }
 
 module.exports = Message;
@@ -2687,6 +2764,8 @@ class QuestLog extends Game.Views.Drawers.Drawer {
         this.setQuest('Overdraft', 'Reach ' + Game.OVERDRAFT_PERSONAL_ACCOUNT_MINIMUM + ' DKK to get an overdraft allowance', () => {
             return this.personalAccount >= Game.OVERDRAFT_PERSONAL_ACCOUNT_MINIMUM;
         });
+
+        this.fetch();
     }
 
     /**
@@ -2786,9 +2865,9 @@ class Stats extends Game.Views.Drawers.Drawer {
      * Renders the preview
      */
     renderContent() {
-        return _.div({ class: 'drawer__preview drawer--stats__preview' }, _.div({ class: 'drawer--stats__preview__company' }, _.div({ dynamicContent: true, class: 'widget widget--label text-center' }, '🏭 ' + Game.Services.ConfigService.get('companyAccount', 0) + ' DKK')), _.div({ class: 'drawer--stats__preview__transactions' }, _.button({ class: 'widget widget--button success align-center' }, 'Transfer ➜').click(() => {
+        return _.div({ class: 'drawer__preview drawer--stats__preview' }, _.div({ class: 'drawer--stats__preview__company' }, _.div({ dynamicContent: true, class: 'widget widget--label text-center drawer--stats__company-account' }, '🏭 ' + Game.Services.ConfigService.get('companyAccount', 0) + ' DKK')), _.div({ class: 'drawer--stats__preview__transactions' }, _.button({ class: 'widget widget--button success align-center' }, 'Transfer ➜').click(() => {
             new Game.Views.Modals.Transfer();
-        })), _.div({ class: 'drawer--stats__preview__personal' }, _.div({ dynamicContent: true, class: 'widget widget--label text-center' }, '💰 ' + Game.Services.ConfigService.get('personalAccount', 0) + ' DKK')));
+        })), _.div({ class: 'drawer--stats__preview__personal' }, _.div({ dynamicContent: true, class: 'widget widget--label text-center drawer--stats__personal-account' }, '💰 ' + Game.Services.ConfigService.get('personalAccount', 0) + ' DKK')));
     }
 }
 
@@ -2873,7 +2952,7 @@ class Notifications extends Game.Views.Drawers.Drawer {
         let currentDate = Game.Services.TimeService.currentTime;
 
         return _.div({ dynamicChildren: true, class: 'drawer__preview drawer--notifications__entries' }, _.each(this.model, (key, notification) => {
-            let entry = _.div({ class: 'drawer--notifications__entry' }, _.do(() => {
+            let entry = _.div({ dynamicAttributes: true, class: 'drawer--notifications__entry' + (notification.isExpired ? ' expired' : '') }, _.do(() => {
                 if (!notification.expiresOn) {
                     return;
                 }
@@ -2891,13 +2970,14 @@ class Notifications extends Game.Views.Drawers.Drawer {
                     return;
                 }
 
-                return _.button({ dynamicAttributes: true, class: 'drawer--notifications__entry__action widget widget--button ' + (notification.isExpired ? 'red' : notification.type || '') }, notification.action.label).click(e => {
+                return _.button({ dynamicAttributes: true, class: 'drawer--notifications__entry__action widget widget--button ' + notification.type || '' }, notification.action.label).click(e => {
                     if (typeof this[notification.action.onClick] !== 'function') {
                         return;
                     }
 
                     this[notification.action.onClick](notification).then(message => {
                         entry.classList.toggle('out', true);
+                        entry.dataset.crDynamicAttributes = false;
 
                         setTimeout(() => {
                             delete this.model[key];
@@ -3017,22 +3097,22 @@ class Controls extends Game.Views.Drawers.Drawer {
 
         return [
         // Unit price
-        _.div({ class: 'drawer--controls__heading' }, 'Unit price'), _.div({ class: 'widget-group' }, _.input({ class: 'widget widget--input', type: 'number', value: Game.Services.ConfigService.get('unitPrice', Game.DEFAULT_UNIT_PRICE) }).on('input', e => {
+        _.div({ class: 'drawer--controls__heading' }, 'Pricing'), _.div({ class: 'widget-group' }, _.div({ dynamicContent: true, class: 'widget widget--label' }, 'Unit price'), _.input({ class: 'widget widget--input small', type: 'number', value: Game.Services.ConfigService.get('unitPrice', Game.DEFAULT_UNIT_PRICE) }).on('input', e => {
             this.onChangeUnitPrice(e.currentTarget.value);
-        }), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, '+' + Game.Services.ConfigService.get('unitPrice', Game.DEFAULT_UNIT_PRICE) * 0.25 + ' DKK VAT')),
+        }), _.div({ class: 'widget widget--label small' }, _.span({ class: 'vat' }))), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Demand (sales per day):'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.SessionService.getSalesPerDay() + ' units')),
 
         // Machines
-        _.div({ dynamicContent: true, class: 'drawer--controls__heading' }, 'Machines: ' + Game.Services.ConfigService.get('machines', 0)), _.div({ class: 'widget-group' }, _.button({ dynamicAttributes: true, disabled: !Game.Services.SessionService.isQuestComplete('Machines'), class: 'widget widget--button' }, 'Buy machine').click(e => {
+        _.div({ dynamicContent: true, class: 'drawer--controls__heading' }, 'Machines: ' + Game.Services.ConfigService.get('machines', 0)), _.div({ class: 'widget-group' }, _.button({ dynamicAttributes: true, disabled: !Game.Services.SessionService.isQuestComplete('Machines'), class: 'widget widget--button drawer--controls__buy-machine' }, 'Buy machine').click(e => {
             this.onClickBuyMachine();
         }), _.div({ class: 'widget widget--label text-right vat' }, Game.MACHINE_PRICE + ' DKK')),
 
         // Inventory
-        _.div({ dynamicContent: true, class: 'drawer--controls__heading' }, 'Inventory: ' + Game.Services.ConfigService.get('inventory', 0)), _.div({ class: 'widget-group' }, _.button({ class: 'widget widget--button' }, 'Produce').click(e => {
+        _.div({ dynamicContent: true, class: 'drawer--controls__heading' }, 'Inventory: ' + Game.Services.ConfigService.get('inventory', 0)), _.div({ class: 'widget-group' }, _.button({ class: 'widget widget--button drawer--controls__produce' }, 'Produce').click(e => {
             this.onClickProduce();
         }), _.div({ class: 'widget widget--label text-right vat' }, Game.PRODUCTION_COST + ' DKK')),
 
         // Statistics
-        _.div({ class: 'drawer--controls__heading' }, 'Statistics for ' + year), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Est. sales:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.ConfigService.get('estimatedIncome', 0) + ' DKK')), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Actual sales:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.SessionService.getSales(year) + ' DKK')), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Cost:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.SessionService.getCost(year) + ' DKK')), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Sales per day:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.SessionService.getSalesPerDay()))];
+        _.div({ class: 'drawer--controls__heading' }, 'Statistics for ' + year), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Estimated profit:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.ConfigService.get('estimatedIncome', 0) + ' DKK')), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Sales:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.SessionService.getSales(year) + ' DKK')), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Cost:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, '(' + Game.Services.SessionService.getCost(year) + ' DKK)')), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Actual profit:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right drawer--controls__actual-profit' }, Game.Services.SessionService.getSales(year) - Game.Services.SessionService.getCost(year) + ' DKK'))];
     }
 }
 
@@ -3702,6 +3782,12 @@ class Session extends Crisp.View {
         setTimeout(() => {
             this.sellUnit();
         }, Game.Services.SessionService.getSalesDelay());
+
+        if (!Game.Services.ConfigService.get('tutorialTaken')) {
+            setTimeout(() => {
+                this.startTutorial();
+            }, 200);
+        }
     }
 
     /**
@@ -3712,7 +3798,7 @@ class Session extends Crisp.View {
             this.sellUnit();
         }, Game.Services.SessionService.getSalesDelay());
 
-        if (!document.hasFocus() || Game.Services.TimeService.isPaused) {
+        if (Game.Services.TimeService.isPaused) {
             return;
         }
 
@@ -3723,9 +3809,7 @@ class Session extends Crisp.View {
      * Heartbeat (once per second)
      */
     heartbeat() {
-        this.element.classList.toggle('paused', !document.hasFocus());
-
-        if (!document.hasFocus() || Game.Services.TimeService.isPaused) {
+        if (Game.Services.TimeService.isPaused) {
             return;
         }
 
@@ -3750,10 +3834,142 @@ class Session extends Crisp.View {
     }
 
     /**
+     * Starts the tutorial
+     */
+    startTutorial() {
+        Game.Services.ConfigService.set('tutorialTaken', true);
+
+        let currentStep = 0;
+
+        let onCancel = () => {
+            new Game.Views.Modals.Message({
+                title: 'Tutorial cancelled',
+                message: 'You can restart the tutorial at any time by pressing this button',
+                focus: {
+                    element: '.page--session__start-tutorial',
+                    side: 'bottom',
+                    align: 'right'
+                }
+            });
+        };
+
+        let step = () => {
+            currentStep++;
+
+            switch (currentStep) {
+                case 1:
+                    return new Game.Views.Modals.Message({
+                        title: 'Produce',
+                        message: 'Press this button to produce units for selling',
+                        focus: {
+                            element: '.drawer--controls__produce',
+                            side: 'right',
+                            align: 'top'
+                        }
+                    }).on('ok', () => {
+                        step();
+                    }).on('cancel', () => {
+                        onCancel();
+                    });
+
+                case 2:
+                    return new Game.Views.Modals.Message({
+                        title: 'Company account',
+                        message: 'This is the money you invested in the company as capital, you produce and buy upgrades and pay tax out of this account',
+                        focus: {
+                            element: '.drawer--stats__company-account',
+                            side: 'bottom',
+                            align: 'left'
+                        }
+                    }).on('ok', () => {
+                        step();
+                    }).on('cancel', () => {
+                        onCancel();
+                    });
+
+                case 3:
+                    return new Game.Views.Modals.Message({
+                        title: 'Personal account',
+                        message: 'This is the money you own privately, when you reach certain amount you can unlock upgrades. The more money you have here the more coins you will have!',
+                        focus: {
+                            element: '.drawer--stats__personal-account',
+                            side: 'bottom',
+                            align: 'right'
+                        }
+                    }).on('ok', () => {
+                        step();
+                    }).on('cancel', () => {
+                        onCancel();
+                    });
+
+                case 4:
+                    return new Game.Views.Modals.Message({
+                        title: 'Pay B tax',
+                        message: 'It\'s a monthly prepayment for b-tax based on you expected income, regardless of how much you actually earned',
+                        focus: {
+                            element: '.drawer--notifications__entries',
+                            side: 'left',
+                            align: 'top'
+                        }
+                    }).on('ok', () => {
+                        step();
+                    }).on('cancel', () => {
+                        onCancel();
+                    });
+
+                case 5:
+                    return new Game.Views.Modals.Message({
+                        title: 'Report VAT',
+                        message: 'Report to the tax bureau how much goods and service tax you should pay, based on how much you sold throughout the quarter and how much you paid in cost to produce the products.',
+                        focus: {
+                            element: '.drawer--notifications__entries',
+                            side: 'left',
+                            align: 'top'
+                        }
+                    }).on('ok', () => {
+                        step();
+                    }).on('cancel', () => {
+                        onCancel();
+                    });
+
+                case 6:
+                    return new Game.Views.Modals.Message({
+                        title: 'Quests',
+                        message: 'Save enough money in your personal account to unlock upgrades',
+                        focus: {
+                            element: '.drawer--quest-log',
+                            side: 'left',
+                            align: 'top'
+                        }
+                    }).on('ok', () => {
+                        step();
+                    }).on('cancel', () => {
+                        onCancel();
+                    });
+
+                case 7:
+                    return new Game.Views.Modals.Message({
+                        title: 'Time',
+                        message: 'The game will now run in normal speed. If you want to change the speed of the game at any time, you can use these buttons',
+                        focus: {
+                            element: '.drawer--timeline__controls',
+                            side: 'top',
+                            align: 'left'
+                        }
+                    });
+            }
+        };
+
+        step();
+    }
+
+    /**
      * Template
      */
     template() {
-        return _.div({ class: 'page page--session' }, _.div({ class: 'page--session__panel top' }, this.stats = new Game.Views.Drawers.Stats()), _.div({ class: 'page--session__panel middle' }, _.div({ class: 'page--session__panel left' }, this.controls = new Game.Views.Drawers.Controls()), _.div({ class: 'page--session__panel center' }, this.coinStack = new Game.Views.Charts.CoinStack({
+        return _.div({ class: 'page page--session' }, _.div({ class: 'page--session__panel top' }, this.stats = new Game.Views.Drawers.Stats(), _.button({ class: 'widget widget--button round page--session__start-tutorial', title: 'Start tutorial' }, '?').click(() => {
+            this.startTutorial();
+        })), _.div({ class: 'page--session__panel middle' }, _.div({ class: 'page--session__panel left' }, this.controls = new Game.Views.Drawers.Controls()), _.div({ class: 'page--session__panel center' }, this.coinStack = new Game.Views.Charts.CoinStack({
             amount: Math.round(Game.Services.ConfigService.get('personalAccount', 0) / 1000)
         })), _.div({ class: 'page--session__panel right' }, this.questLog = new Game.Views.Drawers.QuestLog(), this.notifications = new Game.Views.Drawers.Notifications())), _.div({ class: 'page--session__panel bottom' }, this.timeline = new Game.Views.Drawers.Timeline()));
     }

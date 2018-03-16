@@ -21,6 +21,8 @@ class QuestLog extends Game.Views.Drawers.Drawer {
             'Reach ' + Game.OVERDRAFT_PERSONAL_ACCOUNT_MINIMUM + ' DKK to get an overdraft allowance',
             () => { return this.personalAccount >= Game.OVERDRAFT_PERSONAL_ACCOUNT_MINIMUM; }
         );
+
+        this.fetch();
     }
 
     /**

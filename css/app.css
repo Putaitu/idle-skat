@@ -471,10 +471,12 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: 1rem; }
   .widget-group__separator {
     flex-grow: 1; }
-  .widget-group .widget {
+  .widget-group .widget:not(.small) {
     flex-basis: 0;
     flex-shrink: 0;
     flex-grow: 1; }
+  .widget-group .widget.small {
+    min-width: 0 !important; }
   .widget-group.stretch .widget {
     flex-grow: 0; }
 
@@ -484,16 +486,16 @@ h1, h2, h3, h4, h5, h6 {
   padding: 0 0.5rem;
   overflow: hidden;
   text-overflow: ellipsis; }
-  .widget--label.vat:after {
-    content: '+VAT';
+  .widget--label.vat:after, .widget--label .vat:after {
     vertical-align: super;
-    font-size: 0.5rem;
+    font-size: 0.6rem;
     font-weight: bold;
     padding: 0.1rem 0.2rem;
     border-radius: 0.25rem;
-    background-color: teal;
-    color: white;
-    margin-left: 0.25rem; }
+    background-color: gold;
+    color: sienna;
+    margin-left: 0.25rem;
+    content: '+VAT'; }
 
 .widget--player-info {
   position: fixed;
@@ -619,10 +621,17 @@ h1, h2, h3, h4, h5, h6 {
   background-image: linear-gradient(lightgrey, darkgrey);
   border: 1px solid darkgrey;
   color: dimgrey; }
+  .widget--button:hover {
+    color: white; }
   .widget--button[disabled] {
     opacity: 0.75;
     pointer-events: none; }
-  .widget--button.small {
+  .widget--button.round {
+    border-radius: 50%;
+    width: 2rem;
+    padding: 0;
+    height: 2rem; }
+  .widget--button.round, .widget--button.small {
     min-width: 0;
     max-width: 2rem; }
   .widget--button.active, .widget--button:active {
@@ -663,6 +672,8 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 2;
   padding: 0 0.5rem;
   border-radius: 0.2rem; }
+  .widget--input.small {
+    max-width: 4rem; }
 
 .widget--progress-bar {
   position: fixed;
@@ -789,17 +800,17 @@ h1, h2, h3, h4, h5, h6 {
             border-top-color: darkred; }
         .drawer--timeline__scroller__day__notification.yellow {
           background-color: gold;
-          color: black; }
+          color: sienna; }
           .drawer--timeline__scroller__day__notification.yellow:after {
             border-top-color: gold; }
         .drawer--timeline__scroller__day__notification.blue {
           background-color: dodgerblue;
-          color: black; }
+          color: powderblue; }
           .drawer--timeline__scroller__day__notification.blue:after {
             border-top-color: dodgerblue; }
 
 .drawer--notifications {
-  overflow-y: auto;
+  overflow: hidden;
   padding: 1rem;
   flex-grow: 1;
   width: 26rem; }
@@ -809,11 +820,21 @@ h1, h2, h3, h4, h5, h6 {
     position: relative;
     background-color: rgba(0, 0, 0, 0.3);
     color: lightgrey;
-    transition: transform 0.5s ease; }
+    transition: transform 0.5s ease;
+    border: 2px solid rgba(0, 0, 0, 0.3); }
     .drawer--notifications__entry:not(:last-of-type) {
       margin-bottom: 1rem; }
     .drawer--notifications__entry.out {
       transform: translateX(150%); }
+    .drawer--notifications__entry.expired {
+      border-color: red;
+      animation: drawer--notifications__entry-expired 1s linear infinite; }
+
+@keyframes drawer--notifications__entry-expired {
+  0% {
+    border-color: red; }
+  100% {
+    border-color: rgba(255, 0, 0, 0.3); } }
     .drawer--notifications__entry__progress {
       position: absolute;
       top: 0;
@@ -871,6 +892,11 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: bold; }
     .drawer--controls__heading:not(:first-child) {
       margin-top: 2rem; }
+  .drawer--controls__actual-profit {
+    font-weight: bold;
+    color: white;
+    text-decoration-line: underline;
+    text-decoration-style: double; }
   .drawer--controls .widget-group {
     margin-bottom: 0; }
     .drawer--controls .widget-group .widget {
@@ -884,6 +910,7 @@ h1, h2, h3, h4, h5, h6 {
     display: none; }
   .drawer--quest-log__quest {
     border-radius: 0.2rem;
+    border: 2px solid white;
     padding: 1rem;
     position: relative;
     background-color: rgba(0, 0, 0, 0.3);
@@ -953,6 +980,72 @@ h1, h2, h3, h4, h5, h6 {
   .modal.small .modal__dialog {
     max-width: 20rem;
     height: auto; }
+
+.modal--message__title {
+  font-size: 1.5rem;
+  font-weight: bold; }
+
+.modal--message .modal__dialog.focused {
+  left: auto;
+  right: auto;
+  top: auto;
+  bottom: auto; }
+  .modal--message .modal__dialog.focused:after {
+    border: solid transparent;
+    content: '';
+    height: 0;
+    width: 0;
+    position: absolute;
+    pointer-events: none;
+    border-color: transparent;
+    border-width: 0.5rem;
+    margin-top: -0.5rem; }
+  .modal--message .modal__dialog.focused.left {
+    margin-right: 1rem; }
+    .modal--message .modal__dialog.focused.left:after {
+      left: 100%;
+      top: 50%;
+      border-left-color: black; }
+  .modal--message .modal__dialog.focused.right {
+    margin-left: 1rem; }
+    .modal--message .modal__dialog.focused.right:after {
+      right: 100%;
+      top: 50%;
+      border-right-color: black; }
+  .modal--message .modal__dialog.focused.top {
+    margin-bottom: 1rem; }
+    .modal--message .modal__dialog.focused.top:after {
+      top: calc(100% + 0.5rem);
+      left: 50%;
+      border-top-color: black; }
+  .modal--message .modal__dialog.focused.bottom {
+    margin-top: 1rem; }
+    .modal--message .modal__dialog.focused.bottom:after {
+      bottom: 100%;
+      left: 50%;
+      border-bottom-color: black; }
+  .modal--message .modal__dialog.focused.align-center {
+    transform: translateX(-50%); }
+  .modal--message .modal__dialog.focused.align-left {
+    transform: translateX(-1rem); }
+    .modal--message .modal__dialog.focused.align-left:after {
+      left: 0.5rem; }
+  .modal--message .modal__dialog.focused.align-right {
+    transform: translateX(-100%); }
+    .modal--message .modal__dialog.focused.align-right:after {
+      left: auto;
+      right: 0.5rem; }
+  .modal--message .modal__dialog.focused.align-middle {
+    transform: translateY(-50%); }
+  .modal--message .modal__dialog.focused.align-top {
+    transform: translateY(-1rem); }
+    .modal--message .modal__dialog.focused.align-top:after {
+      top: 1rem; }
+  .modal--message .modal__dialog.focused.align-bottom {
+    transform: translateY(-100%); }
+    .modal--message .modal__dialog.focused.align-bottom:after {
+      top: auto;
+      bottom: 1rem; }
 
 .modal--vat-reporting-tool__result {
   border-left: 1px solid rgba(255, 255, 255, 0.5);
@@ -1483,6 +1576,11 @@ h1, h2, h3, h4, h5, h6 {
     height: 100%;
     z-index: 1000;
     pointer-events: none; }
+  .page--session__start-tutorial {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 20; }
   .page--session__panel {
     background-color: dimgrey;
     color: lightgrey; }

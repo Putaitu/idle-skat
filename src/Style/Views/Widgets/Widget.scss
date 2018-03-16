@@ -79,9 +79,15 @@
     }
 
     .widget {
-        flex-basis: 0;
-        flex-shrink: 0;
-        flex-grow: 1;
+        &:not(.small) {
+            flex-basis: 0;
+            flex-shrink: 0;
+            flex-grow: 1;
+        }
+
+        &.small {
+            min-width: 0 !important;
+        }
     }
 
     &.stretch {

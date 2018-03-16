@@ -5,17 +5,15 @@
     overflow: hidden;
     text-overflow: ellipsis;
 
-    &.vat {
-        &:after {
-            content: '+VAT';
-            vertical-align: super;
-            font-size: 0.5rem;
-            font-weight: bold;
-            padding: 0.1rem 0.2rem;
-            border-radius: 0.25rem;
-            background-color: teal;
-            color: white;
-            margin-left: 0.25rem;
-        }
+    &.vat:after, .vat:after {
+        vertical-align: super;
+        font-size: 0.6rem;
+        font-weight: bold;
+        padding: 0.1rem 0.2rem;
+        border-radius: 0.25rem;
+        background-color: gold;
+        color: sienna;
+        margin-left: 0.25rem;
+        content: '+VAT';
     }
 }

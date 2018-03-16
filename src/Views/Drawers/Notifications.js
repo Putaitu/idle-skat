@@ -70,7 +70,7 @@ class Notifications extends Game.Views.Drawers.Drawer {
 
         return _.div({dynamicChildren: true, class: 'drawer__preview drawer--notifications__entries'},
             _.each(this.model, (key, notification) => {
-                let entry = _.div({class: 'drawer--notifications__entry'},
+                let entry = _.div({dynamicAttributes: true, class: 'drawer--notifications__entry' + (notification.isExpired ? ' expired' : '')},
                     _.do(() => {
                         if(!notification.expiresOn) { return; }
 
@@ -92,13 +92,14 @@ class Notifications extends Game.Views.Drawers.Drawer {
                     _.do(() => {
                         if(!notification.action) { return; }
 
-                        return _.button({dynamicAttributes: true, class: 'drawer--notifications__entry__action widget widget--button ' + (notification.isExpired ? 'red' : notification.type || '')}, notification.action.label)
+                        return _.button({dynamicAttributes: true, class: 'drawer--notifications__entry__action widget widget--button ' + notification.type || ''}, notification.action.label)
                             .click((e) => { 
                                 if(typeof this[notification.action.onClick] !== 'function') { return; }
 
                                 this[notification.action.onClick](notification)
                                 .then((message) => {
                                     entry.classList.toggle('out', true);
+                                    entry.dataset.crDynamicAttributes = false;
                                    
                                     setTimeout(() => {
                                         delete this.model[key];

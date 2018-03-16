@@ -24,8 +24,6 @@ class Modal extends Crisp.View {
         .then(() => {
             this.element.classList.toggle('in');
         });
-
-        Game.Services.TimeService.isPaused = true;
     }
 
     /**
@@ -54,8 +52,7 @@ class Modal extends Crisp.View {
         wait(0.5)
         .then(() => {
             this.remove(); 
-            Game.Services.TimeService.isPaused = false;
-        
+            
             this.trigger('closed');
         });
     }
@@ -84,9 +81,9 @@ class Modal extends Crisp.View {
             _.div({class: 'modal__dialog'},
                 _.button({class: 'modal__close widget widget--button'})
                     .click(() => {
-                        this.close();
-
                         this.trigger('cancel');
+                        
+                        this.close();
                     }),
                 _.div({class: 'modal__header'},
                     this.renderHeader()

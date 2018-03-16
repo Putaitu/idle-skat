@@ -1,0 +1,105 @@
+.modal--message {
+    &__title {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    .modal__dialog {
+        &.focused {
+            left: auto;
+            right: auto;
+            top: auto;
+            bottom: auto;
+
+            &:after {
+                border: solid transparent;
+                content: '';
+                height: 0;
+                width: 0;
+                position: absolute;
+                pointer-events: none;
+                border-color: rgba(0, 0, 0, 0);
+                border-width: 0.5rem;
+                margin-top: -0.5rem;
+            }
+               
+            &.left {
+                margin-right: 1rem;
+
+                &:after {
+                    left: 100%;
+                    top: 50%;
+                    border-left-color: black;
+                }
+            }
+            
+            &.right {
+                margin-left: 1rem;
+
+                &:after {
+                    right: 100%;
+                    top: 50%;
+                    border-right-color: black;
+                }
+            }
+            
+            &.top {
+                margin-bottom: 1rem;
+
+                &:after {
+                    top: calc(100% + 0.5rem);
+                    left: 50%;
+                    border-top-color: black;
+                }
+            }
+            
+            &.bottom {
+                margin-top: 1rem;
+
+                &:after {
+                    bottom: 100%;
+                    left: 50%;
+                    border-bottom-color: black;
+                }
+            }
+           
+            &.align-center { transform: translateX(-50%); }
+            
+            &.align-left {
+                transform: translateX(-1rem);
+                
+                &:after {
+                    left: 0.5rem;
+                }
+            }
+            
+            &.align-right {
+                transform: translateX(-100%);
+                
+                &:after {
+                    left: auto;
+                    right: 0.5rem;
+                }
+            }
+            
+            &.align-middle { transform: translateY(-50%); }
+            
+            &.align-top {
+                transform: translateY(-1rem);
+                
+                &:after {
+                    top: 1rem;
+                }
+            }
+            
+            &.align-bottom {
+                transform: translateY(-100%);
+                
+                &:after {
+                    top: auto;
+                    bottom: 1rem;
+                }
+            }
+        }
+    }
+}
