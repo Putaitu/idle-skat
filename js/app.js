@@ -123,29 +123,30 @@ Game.Views.Modals.Modal = __webpack_require__(16);
 Game.Views.Modals.Message = __webpack_require__(17);
 Game.Views.Modals.Transfer = __webpack_require__(18);
 Game.Views.Modals.VATReportingTool = __webpack_require__(19);
+Game.Views.Modals.FinancialReportingTool = __webpack_require__(20);
 
 Game.Views.Drawers = {};
-Game.Views.Drawers.Drawer = __webpack_require__(20);
-Game.Views.Drawers.Timeline = __webpack_require__(21);
-Game.Views.Drawers.QuestLog = __webpack_require__(22);
-Game.Views.Drawers.Stats = __webpack_require__(23);
-Game.Views.Drawers.Notifications = __webpack_require__(24);
-Game.Views.Drawers.Controls = __webpack_require__(25);
+Game.Views.Drawers.Drawer = __webpack_require__(21);
+Game.Views.Drawers.Timeline = __webpack_require__(22);
+Game.Views.Drawers.QuestLog = __webpack_require__(23);
+Game.Views.Drawers.Stats = __webpack_require__(24);
+Game.Views.Drawers.Notifications = __webpack_require__(25);
+Game.Views.Drawers.Controls = __webpack_require__(26);
 
 Game.Views.Charts = {};
-Game.Views.Charts.PieChart = __webpack_require__(26);
-Game.Views.Charts.CoinStack = __webpack_require__(27);
+Game.Views.Charts.PieChart = __webpack_require__(27);
+Game.Views.Charts.CoinStack = __webpack_require__(28);
 
 Game.Views.Pages = {};
-Game.Views.Pages.Setup = __webpack_require__(28);
-Game.Views.Pages.BTaxEstimation = __webpack_require__(29);
-Game.Views.Pages.Session = __webpack_require__(30);
+Game.Views.Pages.Setup = __webpack_require__(29);
+Game.Views.Pages.BTaxEstimation = __webpack_require__(30);
+Game.Views.Pages.Session = __webpack_require__(31);
 
 // -------------------
 // Controllers
 // -------------------
 Game.Controllers = {};
-Game.Controllers.ViewController = __webpack_require__(31);
+Game.Controllers.ViewController = __webpack_require__(32);
 
 /***/ }),
 /* 1 */
@@ -702,6 +703,31 @@ class SessionService {
         let tool = new Game.Views.Modals.VATReportingTool({
             year: year,
             quarter: quarter
+        });
+
+        return new Promise((resolve, reject) => {
+            tool.on('submit', () => {
+                resolve();
+            });
+
+            tool.on('cancel', () => {
+                reject();
+            });
+        });
+    }
+
+    /**
+     * Financial report
+     *
+     * @param {Date} date
+     *
+     * @return {Promise}
+     */
+    static financialReport(date) {
+        let year = date.getFullYear() - 1;
+
+        let tool = new Game.Views.Modals.FinancialReportingTool({
+            year: year
         });
 
         return new Promise((resolve, reject) => {
@@ -2460,6 +2486,104 @@ module.exports = VATReportingTool;
 
 
 /**
+ * The financial reporting tool
+ */
+
+class FinancialReportingTool extends Game.Views.Modals.Modal {
+    /**
+     * Gets the class name
+     */
+    get className() {
+        return 'modal--financial-reporting-tool';
+    }
+
+    /**
+     * Renders the header
+     */
+    renderHeader() {
+        return _.h1('Financial report for ' + this.year);
+    }
+
+    /**
+     * Renders the footer
+     */
+    renderFooter() {
+        return _.button({ class: 'widget widget--button align-right' }, 'Submit').click(() => {
+            if (this.step < 5) {
+                return;
+            }
+
+            this.close();
+
+            Game.Services.SessionService.setVat(this.year, this.quarter, true);
+
+            this.trigger('submit');
+        });
+    }
+
+    /**
+     * Sets the step
+     *
+     * @param {Number} step
+     */
+    setStep(step) {
+        this.step = step;
+
+        this.fetch();
+    }
+
+    /**
+     * Gets the sales number
+     */
+    get sales() {
+        let sales = Game.Services.SessionService.getSales(this.year);
+
+        if (this.step > 2) {
+            return sales / 1.25 * 0.25;
+        } else if (this.step > 1) {
+            return sales / 1.25;
+        }
+
+        return 0;
+    }
+
+    /**
+     * Gets the cost number
+     */
+    get cost() {
+        let cost = Game.Services.SessionService.getCost(this.year);
+
+        if (this.step > 4) {
+            return cost / 1.25 * 0.25;
+        } else if (this.step > 3) {
+            return cost / 1.25;
+        }
+
+        return 0;
+    }
+
+    /**
+     * Renders the body
+     */
+    renderBody() {
+        if (!this.step) {
+            this.step = 1;
+        }
+
+        return _.div({ class: this.className + '__calculation' }, _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Profit and loss'), _.div({ class: 'widget widget--label' }, 'Sales - cost'), _.div({ class: 'widget widget--label' }, this.sales + ' - ' + this.cost), _.div({ class: 'widget widget--label text-right' }, this.sales - this.cost)));
+    }
+}
+
+module.exports = FinancialReportingTool;
+
+/***/ }),
+/* 21 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
  * A drawer for information that should be tucked away
  */
 
@@ -2502,7 +2626,7 @@ class Drawer extends Crisp.View {
 module.exports = Drawer;
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2596,6 +2720,15 @@ class Timeline extends Game.Views.Drawers.Drawer {
                     label: 'Report VAT',
                     onClick: 'onClickReportVAT'
                 }
+            };
+        }
+
+        // Able to do yearly financial report
+        if (date.getMonth() === 11 && date.getDate() === 31) {
+            return {
+                type: 'purple',
+                title: 'Financial report',
+                action: 'onReachFinancialReport'
             };
         }
 
@@ -2740,7 +2873,7 @@ class Timeline extends Game.Views.Drawers.Drawer {
 module.exports = Timeline;
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2843,7 +2976,7 @@ class QuestLog extends Game.Views.Drawers.Drawer {
 module.exports = QuestLog;
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2865,7 +2998,7 @@ class Stats extends Game.Views.Drawers.Drawer {
      * Renders the preview
      */
     renderContent() {
-        return _.div({ class: 'drawer__preview drawer--stats__preview' }, _.div({ class: 'drawer--stats__preview__company' }, _.div({ dynamicContent: true, class: 'widget widget--label text-center drawer--stats__company-account' }, '🏭 ' + Game.Services.ConfigService.get('companyAccount', 0) + ' DKK')), _.div({ class: 'drawer--stats__preview__transactions' }, _.button({ class: 'widget widget--button success align-center' }, 'Transfer ➜').click(() => {
+        return _.div({ class: 'drawer__preview drawer--stats__preview' }, _.div({ class: 'drawer--stats__preview__company' }, _.div({ dynamicContent: true, class: 'widget widget--label text-center drawer--stats__company-account' }, '🏭 ' + Game.Services.ConfigService.get('companyAccount', 0) + ' DKK')), _.div({ class: 'drawer--stats__preview__transactions' }, _.button({ class: 'widget widget--button green align-center' }, 'Transfer ➜').click(() => {
             new Game.Views.Modals.Transfer();
         })), _.div({ class: 'drawer--stats__preview__personal' }, _.div({ dynamicContent: true, class: 'widget widget--label text-center drawer--stats__personal-account' }, '💰 ' + Game.Services.ConfigService.get('personalAccount', 0) + ' DKK')));
     }
@@ -2874,7 +3007,7 @@ class Stats extends Game.Views.Drawers.Drawer {
 module.exports = Stats;
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2923,6 +3056,14 @@ class Notifications extends Game.Views.Drawers.Drawer {
         notification.createdOn = Game.Services.TimeService.currentTime.reset();
 
         let key = notification.createdOn.getTime().toString();
+
+        if (instance.model[key]) {
+            return;
+        }
+
+        if (typeof instance[notification.action] === 'function') {
+            return instance[notification.action](notification);
+        }
 
         instance.model[key] = notification;
 
@@ -3036,12 +3177,21 @@ class Notifications extends Game.Views.Drawers.Drawer {
     onClickReportVAT(notification) {
         return Game.Services.SessionService.reportVat(notification.createdOn);
     }
+
+    /**
+     * Event: Reached financial report
+     *
+     * @param {Object} notification
+     */
+    onReachFinancialReport(notification) {
+        return Game.Services.SessionService.financialReport(new Date());
+    }
 }
 
 module.exports = Notifications;
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3099,7 +3249,7 @@ class Controls extends Game.Views.Drawers.Drawer {
         // Unit price
         _.div({ class: 'drawer--controls__heading' }, 'Pricing'), _.div({ class: 'widget-group' }, _.div({ dynamicContent: true, class: 'widget widget--label' }, 'Unit price'), _.input({ class: 'widget widget--input small', type: 'number', value: Game.Services.ConfigService.get('unitPrice', Game.DEFAULT_UNIT_PRICE) }).on('input', e => {
             this.onChangeUnitPrice(e.currentTarget.value);
-        }), _.div({ class: 'widget widget--label small' }, _.span({ class: 'vat' }))), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Demand (sales per day):'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.SessionService.getSalesPerDay() + ' units')),
+        }), _.div({ class: 'widget widget--label small' }, _.span({ class: 'vat' }))), _.div({ dynamicContent: true }, 'Demand (sales per day): ' + Game.Services.SessionService.getSalesPerDay() + ' units'),
 
         // Machines
         _.div({ dynamicContent: true, class: 'drawer--controls__heading' }, 'Machines: ' + Game.Services.ConfigService.get('machines', 0)), _.div({ class: 'widget-group' }, _.button({ dynamicAttributes: true, disabled: !Game.Services.SessionService.isQuestComplete('Machines'), class: 'widget widget--button drawer--controls__buy-machine' }, 'Buy machine').click(e => {
@@ -3119,7 +3269,7 @@ class Controls extends Game.Views.Drawers.Drawer {
 module.exports = Controls;
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3317,7 +3467,7 @@ class PieChart extends Crisp.View {
 module.exports = PieChart;
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3482,7 +3632,7 @@ class CoinStack extends Crisp.View {
 module.exports = CoinStack;
 
 /***/ }),
-/* 28 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3593,7 +3743,7 @@ class Setup extends Crisp.View {
 module.exports = Setup;
 
 /***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3758,7 +3908,7 @@ class BTaxEstimation extends Crisp.View {
 module.exports = BTaxEstimation;
 
 /***/ }),
-/* 30 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3978,7 +4128,7 @@ class Session extends Crisp.View {
 module.exports = Session;
 
 /***/ }),
-/* 31 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";

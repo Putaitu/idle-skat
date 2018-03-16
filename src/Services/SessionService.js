@@ -103,6 +103,31 @@ class SessionService {
             });
         });
     }
+    
+    /**
+     * Financial report
+     *
+     * @param {Date} date
+     *
+     * @return {Promise}
+     */
+    static financialReport(date) {
+        let year = date.getFullYear() - 1;
+
+        let tool = new Game.Views.Modals.FinancialReportingTool({
+            year: year
+        });
+
+        return new Promise((resolve, reject) => {
+            tool.on('submit', () => {
+                resolve();
+            });
+
+            tool.on('cancel', () => {
+                reject();
+            });
+        });
+    }
 
     /**
      * Gets the B tax information

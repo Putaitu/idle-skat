@@ -16,7 +16,7 @@
     color: dimgrey;
 
     &:hover {
-        color: white;
+        color: white !important;
     }
 
     &[disabled] {
@@ -41,10 +41,16 @@
         color: lightgrey;
     }
 
-    &.success {
+    &.green {
         background-image: linear-gradient(chartreuse, darkgreen);
-        color: white;
+        color: greenyellow;
         border-color: forestgreen;
+    }
+                
+    &.purple {
+        background-image: linear-gradient(mediumorchid, darkmagenta);
+        color: magenta;
+        border-color: purple;
     }
 
     &.yellow {

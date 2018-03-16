@@ -41,6 +41,12 @@ class Notifications extends Game.Views.Drawers.Drawer {
 
         let key = notification.createdOn.getTime().toString();
 
+        if(instance.model[key]) { return; }
+
+        if(typeof instance[notification.action] === 'function') {
+            return instance[notification.action](notification);
+        }
+
         instance.model[key] = notification;
 
         instance.save();
@@ -158,6 +164,15 @@ class Notifications extends Game.Views.Drawers.Drawer {
      */
     onClickReportVAT(notification) {
         return Game.Services.SessionService.reportVat(notification.createdOn);
+    }
+
+    /**
+     * Event: Reached financial report
+     *
+     * @param {Object} notification
+     */
+    onReachFinancialReport(notification) {
+        return Game.Services.SessionService.financialReport(new Date());
     }
 }
 

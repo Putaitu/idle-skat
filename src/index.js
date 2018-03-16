@@ -53,6 +53,7 @@ Game.Views.Modals.Modal = require('./Views/Modals/Modal');
 Game.Views.Modals.Message = require('./Views/Modals/Message');
 Game.Views.Modals.Transfer = require('./Views/Modals/Transfer');
 Game.Views.Modals.VATReportingTool = require('./Views/Modals/VATReportingTool');
+Game.Views.Modals.FinancialReportingTool = require('./Views/Modals/FinancialReportingTool');
 
 Game.Views.Drawers = {};
 Game.Views.Drawers.Drawer = require('./Views/Drawers/Drawer');

@@ -56,10 +56,7 @@ class Controls extends Game.Views.Drawers.Drawer {
                     .on('input', (e) => { this.onChangeUnitPrice(e.currentTarget.value); }),
                 _.div({class: 'widget widget--label small'}, _.span({class: 'vat'}))
             ),
-            _.div({class: 'widget-group'},
-                _.div({class: 'widget widget--label'}, 'Demand (sales per day):'),
-                _.div({dynamicContent: true, class: 'widget widget--label text-right'}, Game.Services.SessionService.getSalesPerDay() + ' units')
-            ),
+            _.div({dynamicContent: true}, 'Demand (sales per day): ' + Game.Services.SessionService.getSalesPerDay() + ' units'),
 
             // Machines
             _.div({dynamicContent: true, class: 'drawer--controls__heading'}, 'Machines: ' + Game.Services.ConfigService.get('machines', 0)),

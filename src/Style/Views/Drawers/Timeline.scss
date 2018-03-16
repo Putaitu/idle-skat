@@ -105,6 +105,15 @@
                    border-width: 0.5rem;
                    margin-left: -0.5rem;
                 } 
+                
+                &.purple {
+                    background-color: darkmagenta;
+                    color: mediumorchid;
+
+                    &:after {
+                       border-top-color: darkmagenta;
+                    }
+                }
 
                 &.red {
                     background-color: darkred;

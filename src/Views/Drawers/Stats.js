@@ -20,7 +20,7 @@ class Stats extends Game.Views.Drawers.Drawer {
                 _.div({dynamicContent: true, class: 'widget widget--label text-center drawer--stats__company-account'}, '🏭 ' + Game.Services.ConfigService.get('companyAccount', 0) + ' DKK')
             ),
             _.div({class: 'drawer--stats__preview__transactions'},
-                _.button({class: 'widget widget--button success align-center'}, 'Transfer ➜')
+                _.button({class: 'widget widget--button green align-center'}, 'Transfer ➜')
                     .click(() => {
                         new Game.Views.Modals.Transfer();
                     })

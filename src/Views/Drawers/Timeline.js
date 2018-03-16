@@ -88,6 +88,15 @@ class Timeline extends Game.Views.Drawers.Drawer {
             };
         }
 
+        // Able to do yearly financial report
+        if(date.getMonth() === 11 && date.getDate() === 31) {
+            return {
+                type: 'purple',
+                title: 'Financial report',
+                action: 'onReachFinancialReport'
+            };
+        }
+
         // Able to pay B tax
         if(date.getDate() === 1) {
             let btax = Game.Services.SessionService.getBTax(date.getFullYear(), date.getMonth() + 1);

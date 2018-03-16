@@ -622,7 +622,7 @@ h1, h2, h3, h4, h5, h6 {
   border: 1px solid darkgrey;
   color: dimgrey; }
   .widget--button:hover {
-    color: white; }
+    color: white !important; }
   .widget--button[disabled] {
     opacity: 0.75;
     pointer-events: none; }
@@ -637,10 +637,14 @@ h1, h2, h3, h4, h5, h6 {
   .widget--button.active, .widget--button:active {
     background-image: linear-gradient(darkgrey, grey);
     color: lightgrey; }
-  .widget--button.success {
+  .widget--button.green {
     background-image: linear-gradient(chartreuse, darkgreen);
-    color: white;
+    color: greenyellow;
     border-color: forestgreen; }
+  .widget--button.purple {
+    background-image: linear-gradient(mediumorchid, darkmagenta);
+    color: magenta;
+    border-color: purple; }
   .widget--button.yellow {
     background-image: linear-gradient(yellow, gold);
     color: sienna;
@@ -793,6 +797,11 @@ h1, h2, h3, h4, h5, h6 {
           pointer-events: none;
           border-width: 0.5rem;
           margin-left: -0.5rem; }
+        .drawer--timeline__scroller__day__notification.purple {
+          background-color: darkmagenta;
+          color: mediumorchid; }
+          .drawer--timeline__scroller__day__notification.purple:after {
+            border-top-color: darkmagenta; }
         .drawer--timeline__scroller__day__notification.red {
           background-color: darkred;
           color: white; }
@@ -1031,7 +1040,7 @@ h1, h2, h3, h4, h5, h6 {
     .modal--message .modal__dialog.focused.align-left:after {
       left: 0.5rem; }
   .modal--message .modal__dialog.focused.align-right {
-    transform: translateX(-100%); }
+    transform: translateX(calc(-100% + 1rem)); }
     .modal--message .modal__dialog.focused.align-right:after {
       left: auto;
       right: 0.5rem; }
