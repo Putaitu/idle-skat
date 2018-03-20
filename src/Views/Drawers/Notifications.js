@@ -52,6 +52,7 @@ class Notifications extends Game.Views.Drawers.Drawer {
         instance.save();
 
         instance.fetch();
+
     }
 
     /**

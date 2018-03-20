@@ -80,11 +80,12 @@ window._ = Crisp.Elements;
 window.Game = {
     MACHINE_PRICE: 10000,
     MACHINE_CAPACITY: 1,
-    MACHINE_PERSONAL_ACCOUNT_MINIMUM: 5000,
+    MACHINE_PERSONAL_ACCOUNT_MINIMUM: 7500,
     PRODUCTION_COST: 10,
     DEFAULT_UNIT_PRICE: 20,
     OVERDRAFT_PERSONAL_ACCOUNT_MINIMUM: 10000,
-    OVERDRAFT_AMOUNT: 3000
+    OVERDRAFT_AMOUNT: 3000,
+    PRICING_PERSONAL_ACCOUNT_MINIMUM: 5000
 };
 
 // -------------------
@@ -372,7 +373,7 @@ class TimeService {
      * @returns {Boolean} Is paused
      */
     static get isPaused() {
-        return !document.hasFocus() || !!document.querySelector('.modal') || !!this._isPaused;
+        return !!document.querySelector('.modal') || !!this._isPaused;
     }
 
     /**
@@ -2168,11 +2169,11 @@ class Modal extends Crisp.View {
      * Template
      */
     template() {
-        return _.div({ class: 'modal ' + (this.isOpen ? 'in' : '') + ' modal--' + this.className + ' ' + (this.size || 'large') }, _.div({ class: 'modal__dialog' }, _.button({ class: 'modal__close widget widget--button' }).click(() => {
+        return _.div({ class: 'modal ' + (this.isOpen ? 'in' : '') + ' modal--' + this.className + ' ' + (this.size || 'large') }, _.div({ class: 'modal__dialog' }, _.if(this.canCancel !== false, _.button({ class: 'modal__close widget widget--button' }).click(() => {
             this.trigger('cancel');
 
             this.close();
-        }), _.div({ class: 'modal__header' }, this.renderHeader()), _.div({ class: 'modal__body' }, this.renderBody()), _.div({ class: 'modal__footer' }, this.renderFooter())));
+        })), _.div({ class: 'modal__header' }, this.renderHeader()), _.div({ class: 'modal__body' }, this.renderBody()), _.div({ class: 'modal__footer' }, this.renderFooter())));
     }
 }
 
@@ -2223,6 +2224,40 @@ class Message extends Game.Views.Modals.Modal {
      */
     postrender() {
         this.applyFocus();
+    }
+
+    /**
+     * Gets the focus element
+     *
+     * @returns {HTMLElement} Element
+     */
+    get focusElement() {
+        if (!this.focus || !this.focus.element) {
+            return null;
+        }
+
+        return document.querySelector(this.focus.element);
+    }
+
+    /**
+     * Toggles focused element's elevation
+     *
+     * @param {Boolean} isElevated
+     * @param {HTMLElement} element
+     */
+    elevateFocusElement(isElevated, element) {
+        if (!element) {
+            element = this.focusElement;
+        }
+        if (!element) {
+            return;
+        }
+        if (!isElevated) {
+            return element.removeAttribute('style');
+        }
+
+        element.style.position = 'relative';
+        element.style.zIndex = 99999;
     }
 
     /**
@@ -2282,6 +2317,10 @@ class Message extends Game.Views.Modals.Modal {
      * Renders the footer
      */
     renderFooter() {
+        if (this.canSubmit === false) {
+            return;
+        }
+
         return _.button({ class: 'widget widget--button align-right' }, 'OK').click(() => {
             this.trigger('ok');
 
@@ -2310,6 +2349,7 @@ class Transfer extends Game.Views.Modals.Modal {
     prerender() {
         this.size = this.size || 'small';
         this.amount = 0;
+        this.canCancel = false;
     }
 
     /**
@@ -2317,6 +2357,20 @@ class Transfer extends Game.Views.Modals.Modal {
      */
     renderHeader() {
         return 'Transfer funds';
+    }
+
+    /**
+     * Sets the max amount
+     *
+     * @param {Number} max
+     */
+    set max(max) {
+        this.element.querySelector('input').max = max;
+        this.element.querySelector('.text-center:last-child').innerHTML = max;
+        this.element.querySelector('input').value = max;
+        this.amount = max;
+
+        this.update();
     }
 
     /**
@@ -2733,7 +2787,7 @@ class Timeline extends Game.Views.Drawers.Drawer {
         }
 
         // Able to pay B tax
-        if (date.getDate() === 1) {
+        if (date.getDate() === 3) {
             let btax = Game.Services.SessionService.getBTax(date.getFullYear(), date.getMonth() + 1);
 
             if (btax.isPaid) {
@@ -2890,11 +2944,15 @@ class QuestLog extends Game.Views.Drawers.Drawer {
     constructor(params) {
         super(params);
 
-        this.setQuest('Machines', 'Reach ' + Game.MACHINE_PERSONAL_ACCOUNT_MINIMUM + ' DKK to get machines', () => {
+        this.setQuest('Pricing', 'Reach 💰 ' + Game.PRICING_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to set unit prices', () => {
+            return this.personalAccount >= Game.PRICING_PERSONAL_ACCOUNT_MINIMUM;
+        });
+
+        this.setQuest('Machines', 'Reach 💰 ' + Game.MACHINE_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to get machines', () => {
             return this.personalAccount >= Game.MACHINE_PERSONAL_ACCOUNT_MINIMUM;
         });
 
-        this.setQuest('Overdraft', 'Reach ' + Game.OVERDRAFT_PERSONAL_ACCOUNT_MINIMUM + ' DKK to get an overdraft allowance', () => {
+        this.setQuest('Overdraft', 'Reach 💰 ' + Game.OVERDRAFT_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to get an overdraft allowance', () => {
             return this.personalAccount >= Game.OVERDRAFT_PERSONAL_ACCOUNT_MINIMUM;
         });
 
@@ -3247,14 +3305,14 @@ class Controls extends Game.Views.Drawers.Drawer {
 
         return [
         // Unit price
-        _.div({ class: 'drawer--controls__heading' }, 'Pricing'), _.div({ class: 'widget-group' }, _.div({ dynamicContent: true, class: 'widget widget--label' }, 'Unit price'), _.input({ class: 'widget widget--input small', type: 'number', value: Game.Services.ConfigService.get('unitPrice', Game.DEFAULT_UNIT_PRICE) }).on('input', e => {
+        _.if(Game.Services.SessionService.isQuestComplete('Pricing'), _.div({ class: 'drawer--controls__heading' }, 'Pricing'), _.div({ class: 'widget-group' }, _.div({ dynamicContent: true, class: 'widget widget--label' }, 'Unit price'), _.input({ class: 'widget widget--input small drawer--controls__pricing__input', type: 'number', value: Game.Services.ConfigService.get('unitPrice', Game.DEFAULT_UNIT_PRICE) }).on('input', e => {
             this.onChangeUnitPrice(e.currentTarget.value);
-        }), _.div({ class: 'widget widget--label small' }, _.span({ class: 'vat' }))), _.div({ dynamicContent: true }, 'Demand (sales per day): ' + Game.Services.SessionService.getSalesPerDay() + ' units'),
+        }), _.div({ class: 'widget widget--label small' }, _.span({ class: 'vat' }))), _.div({ dynamicContent: true }, 'Demand (sales per day): ' + Game.Services.SessionService.getSalesPerDay() + ' units')),
 
         // Machines
-        _.div({ dynamicContent: true, class: 'drawer--controls__heading' }, 'Machines: ' + Game.Services.ConfigService.get('machines', 0)), _.div({ class: 'widget-group' }, _.button({ dynamicAttributes: true, disabled: !Game.Services.SessionService.isQuestComplete('Machines'), class: 'widget widget--button drawer--controls__buy-machine' }, 'Buy machine').click(e => {
+        _.if(Game.Services.SessionService.isQuestComplete('Machines'), _.div({ dynamicContent: true, class: 'drawer--controls__heading' }, 'Machines: ' + Game.Services.ConfigService.get('machines', 0)), _.div({ class: 'widget-group' }, _.button({ dynamicAttributes: true, class: 'widget widget--button drawer--controls__buy-machine' }, 'Buy machine').click(e => {
             this.onClickBuyMachine();
-        }), _.div({ class: 'widget widget--label text-right vat' }, Game.MACHINE_PRICE + ' DKK')),
+        }), _.div({ class: 'widget widget--label text-right vat' }, Game.MACHINE_PRICE + ' DKK'))),
 
         // Inventory
         _.div({ dynamicContent: true, class: 'drawer--controls__heading' }, 'Inventory: ' + Game.Services.ConfigService.get('inventory', 0)), _.div({ class: 'widget-group' }, _.button({ class: 'widget widget--button drawer--controls__produce' }, 'Produce').click(e => {
@@ -3690,12 +3748,12 @@ class Setup extends Crisp.View {
     onChangeCapital(e) {
         let value = parseInt(e.currentTarget.value);
 
-        if (value < 0) {
-            e.currentTarget.value = 0;
+        if (value < 5000) {
+            e.currentTarget.value = 5000;
         }
 
-        if (value > this.model.account) {
-            e.currentTarget.value = this.model.account;
+        if (value > this.model.total) {
+            e.currentTarget.value = this.model.total;
         }
 
         this.model.capital = e.currentTarget.value;
@@ -3932,12 +3990,6 @@ class Session extends Crisp.View {
         setTimeout(() => {
             this.sellUnit();
         }, Game.Services.SessionService.getSalesDelay());
-
-        if (!Game.Services.ConfigService.get('tutorialTaken')) {
-            setTimeout(() => {
-                this.startTutorial();
-            }, 200);
-        }
     }
 
     /**
@@ -3963,6 +4015,31 @@ class Session extends Crisp.View {
             return;
         }
 
+        // Init tutorial 
+        if (!Game.Services.ConfigService.get('initTutorialDone')) {
+            this.startInitTutorial();
+        }
+
+        // B tax tutorial
+        if (Game.Services.TimeService.currentDate === 3 && !Game.Services.ConfigService.get('bTaxTutorialDone')) {
+            this.startBTaxTutorial();
+        }
+
+        // Quest tutorial
+        if (Game.Services.TimeService.currentDate === 10 && !Game.Services.ConfigService.get('questTutorialDone')) {
+            this.startQuestTutorial();
+        }
+
+        // Unit price tutorial
+        if (Game.Services.SessionService.isQuestComplete('Pricing') && !Game.Services.ConfigService.get('pricingTutorialDone')) {
+            this.startPricingTutorial();
+        }
+
+        // Machines tutorial
+        if (Game.Services.SessionService.isQuestComplete('Machines') && !Game.Services.ConfigService.get('machinesTutorialDone')) {
+            this.startMachinesTutorial();
+        }
+
         // Tick time 
         Game.Services.TimeService.tick();
 
@@ -3984,133 +4061,240 @@ class Session extends Crisp.View {
     }
 
     /**
-     * Starts the tutorial
+     * Starts the unit price tutorial
      */
-    startTutorial() {
-        Game.Services.ConfigService.set('tutorialTaken', true);
+    startPricingTutorial() {
+        let modal = new Game.Views.Modals.Message({
+            title: 'Change unit prices',
+            canCancel: false,
+            canSubmit: false,
+            message: 'You can now change unit prices! Let\'s set the price to 30 DKK now.',
+            focus: {
+                element: '.drawer--controls__pricing__input',
+                side: 'right',
+                align: 'middle'
+            }
+        });
 
-        let currentStep = 0;
+        let input = modal.focusElement;
 
-        let onCancel = () => {
-            new Game.Views.Modals.Message({
-                title: 'Tutorial cancelled',
-                message: 'You can restart the tutorial at any time by pressing this button',
+        setTimeout(() => {
+            modal.elevateFocusElement(true);
+        }, 200);
+
+        let onInput = e => {
+            if (e.currentTarget.value != 30) {
+                return;
+            }
+
+            input.removeEventListener('input', onInput);
+
+            modal.elevateFocusElement(false);
+            modal.close();
+
+            Game.Services.ConfigService.set('pricingTutorialDone', true);
+        };
+
+        input.addEventListener('input', onInput);
+    }
+
+    /**
+     * Starts the machines tutorial
+     */
+    startMachinesTutorial() {
+        new Game.Views.Modals.Message({
+            title: 'Machines',
+            canCancel: false,
+            message: 'You can now buy machines! Click here to buy one and automate your unit production.',
+            focus: {
+                element: '.drawer--controls__buy-machine',
+                side: 'right',
+                align: 'middle'
+            }
+        });
+
+        Game.Services.ConfigService.set('machinesTutorialDone', true);
+    }
+
+    /**
+     * Starts the B tax tutorial
+     */
+    startBTaxTutorial() {
+        let modal = new Game.Views.Modals.Message({
+            title: 'Pay B tax',
+            canCancel: false,
+            canSubmit: false,
+            message: 'It\'s time to pay B tax! Just click the button to pay and move on with your life.',
+            focus: {
+                element: '.drawer--notifications__entry__action',
+                side: 'left',
+                align: 'middle'
+            }
+        });
+
+        let button = modal.focusElement;
+
+        setTimeout(() => {
+            modal.elevateFocusElement(true);
+        }, 200);
+
+        let onClick = e => {
+            button.removeEventListener('click', onClick);
+
+            modal.elevateFocusElement(false);
+            modal.close();
+
+            Game.Services.ConfigService.set('bTaxTutorialDone', true);
+        };
+
+        button.addEventListener('click', onClick);
+    }
+
+    /**
+     * Starts the quest tutorial
+     */
+    startQuestTutorial() {
+        let modal = new Game.Views.Modals.Message({
+            title: 'Quests',
+            canCancel: false,
+            message: 'Save enough money in your personal account to unlock upgrades.',
+            focus: {
+                element: '.drawer--quest-log',
+                side: 'left',
+                align: 'top'
+            }
+        });
+
+        Game.Services.ConfigService.set('questTutorialDone', true);
+    }
+
+    /**
+     * Starts the init tutorial
+     */
+    startInitTutorial() {
+        Game.Services.TimeService.isPaused = true;
+
+        let produce = () => {
+            let modal = new Game.Views.Modals.Message({
+                title: 'Produce',
+                canCancel: false,
+                canSubmit: false,
+                message: 'Press this button to produce units for selling. Let\'s produce 5 units now.',
                 focus: {
-                    element: '.page--session__start-tutorial',
-                    side: 'bottom',
-                    align: 'right'
+                    element: '.drawer--controls__produce',
+                    side: 'right',
+                    align: 'top'
                 }
+            });
+
+            let button = modal.focusElement;
+
+            modal.elevateFocusElement(true);
+
+            let count = 0;
+
+            let onClick = () => {
+                count++;
+
+                if (count >= 5) {
+                    button.removeEventListener('click', onClick);
+                    modal.elevateFocusElement(false);
+
+                    transfer();
+                }
+            };
+
+            button.addEventListener('click', onClick);
+        };
+
+        let time = () => {
+            let modal = new Game.Views.Modals.Message({
+                title: 'Time',
+                canSubmit: false,
+                canCancel: false,
+                message: 'Use these buttons to control time. You can speed up or pause the game entirely. Press play now to start time.',
+                focus: {
+                    element: '.drawer--timeline__controls',
+                    side: 'top',
+                    align: 'left'
+                }
+            });
+
+            let button = document.querySelector('button[title="Play"]');
+
+            modal.elevateFocusElement(true, button);
+
+            let onClick = () => {
+                modal.close();
+
+                Game.Services.ConfigService.set('initTutorialDone', true);
+
+                button.removeEventListener('click', onClick);
+            };
+
+            button.addEventListener('click', onClick);
+        };
+
+        let transfer = () => {
+            return new Game.Views.Modals.Message({
+                title: 'Company account',
+                canCancel: false,
+                message: 'This is the money you invested in the company as capital, you produce and buy upgrades and pay tax out of this account',
+                focus: {
+                    element: '.drawer--stats__company-account',
+                    side: 'bottom',
+                    align: 'left'
+                }
+            }).on('ok', () => {
+                new Game.Views.Modals.Message({
+                    title: 'Personal account',
+                    canCancel: false,
+                    message: 'This is the money you own privately, when you reach certain amount you can unlock upgrades. The more money you have here the more coins you will have!',
+                    focus: {
+                        element: '.drawer--stats__personal-account',
+                        side: 'bottom',
+                        align: 'right'
+                    }
+                }).on('ok', () => {
+                    let modal = new Game.Views.Modals.Message({
+                        title: 'Transfer',
+                        canCancel: false,
+                        canSubmit: false,
+                        message: 'You can transfer money from your company account to your personal account. Let\'s transfer 100 DKK now',
+                        focus: {
+                            element: '.drawer--stats__preview__transactions button',
+                            side: 'bottom',
+                            align: 'center'
+                        }
+                    });
+
+                    let button = modal.focusElement;
+
+                    modal.elevateFocusElement(true);
+
+                    let onClick = e => {
+                        button.removeEventListener('click', onClick);
+
+                        setTimeout(() => {
+                            let modal = Crisp.View.get('Transfer');
+
+                            modal.on('submit', () => {
+                                time();
+                            });
+
+                            modal.max = 100;
+                        });
+
+                        modal.elevateFocusElement(false);
+                        modal.close();
+                    };
+
+                    button.addEventListener('click', onClick);
+                });
             });
         };
 
-        let step = () => {
-            currentStep++;
-
-            switch (currentStep) {
-                case 1:
-                    return new Game.Views.Modals.Message({
-                        title: 'Produce',
-                        message: 'Press this button to produce units for selling',
-                        focus: {
-                            element: '.drawer--controls__produce',
-                            side: 'right',
-                            align: 'top'
-                        }
-                    }).on('ok', () => {
-                        step();
-                    }).on('cancel', () => {
-                        onCancel();
-                    });
-
-                case 2:
-                    return new Game.Views.Modals.Message({
-                        title: 'Company account',
-                        message: 'This is the money you invested in the company as capital, you produce and buy upgrades and pay tax out of this account',
-                        focus: {
-                            element: '.drawer--stats__company-account',
-                            side: 'bottom',
-                            align: 'left'
-                        }
-                    }).on('ok', () => {
-                        step();
-                    }).on('cancel', () => {
-                        onCancel();
-                    });
-
-                case 3:
-                    return new Game.Views.Modals.Message({
-                        title: 'Personal account',
-                        message: 'This is the money you own privately, when you reach certain amount you can unlock upgrades. The more money you have here the more coins you will have!',
-                        focus: {
-                            element: '.drawer--stats__personal-account',
-                            side: 'bottom',
-                            align: 'right'
-                        }
-                    }).on('ok', () => {
-                        step();
-                    }).on('cancel', () => {
-                        onCancel();
-                    });
-
-                case 4:
-                    return new Game.Views.Modals.Message({
-                        title: 'Pay B tax',
-                        message: 'It\'s a monthly prepayment for b-tax based on you expected income, regardless of how much you actually earned',
-                        focus: {
-                            element: '.drawer--notifications__entries',
-                            side: 'left',
-                            align: 'top'
-                        }
-                    }).on('ok', () => {
-                        step();
-                    }).on('cancel', () => {
-                        onCancel();
-                    });
-
-                case 5:
-                    return new Game.Views.Modals.Message({
-                        title: 'Report VAT',
-                        message: 'Report to the tax bureau how much goods and service tax you should pay, based on how much you sold throughout the quarter and how much you paid in cost to produce the products.',
-                        focus: {
-                            element: '.drawer--notifications__entries',
-                            side: 'left',
-                            align: 'top'
-                        }
-                    }).on('ok', () => {
-                        step();
-                    }).on('cancel', () => {
-                        onCancel();
-                    });
-
-                case 6:
-                    return new Game.Views.Modals.Message({
-                        title: 'Quests',
-                        message: 'Save enough money in your personal account to unlock upgrades',
-                        focus: {
-                            element: '.drawer--quest-log',
-                            side: 'left',
-                            align: 'top'
-                        }
-                    }).on('ok', () => {
-                        step();
-                    }).on('cancel', () => {
-                        onCancel();
-                    });
-
-                case 7:
-                    return new Game.Views.Modals.Message({
-                        title: 'Time',
-                        message: 'The game will now run in normal speed. If you want to change the speed of the game at any time, you can use these buttons',
-                        focus: {
-                            element: '.drawer--timeline__controls',
-                            side: 'top',
-                            align: 'left'
-                        }
-                    });
-            }
-        };
-
-        step();
+        produce();
     }
 
     /**

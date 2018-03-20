@@ -79,12 +79,14 @@ class Modal extends Crisp.View {
     template() {
         return _.div({class: 'modal ' + (this.isOpen ? 'in' : '') + ' modal--' + this.className + ' ' + (this.size || 'large')},
             _.div({class: 'modal__dialog'},
-                _.button({class: 'modal__close widget widget--button'})
-                    .click(() => {
-                        this.trigger('cancel');
-                        
-                        this.close();
-                    }),
+                _.if(this.canCancel !== false,
+                    _.button({class: 'modal__close widget widget--button'})
+                        .click(() => {
+                            this.trigger('cancel');
+                            
+                            this.close();
+                        })
+                ),
                 _.div({class: 'modal__header'},
                     this.renderHeader()
                 ),

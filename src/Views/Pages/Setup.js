@@ -50,12 +50,12 @@ class Setup extends Crisp.View {
     onChangeCapital(e) {
         let value = parseInt(e.currentTarget.value);
 
-        if(value < 0) {
-            e.currentTarget.value = 0;
+        if(value < 5000) {
+            e.currentTarget.value = 5000;
         }
 
-        if(value > this.model.account) {
-            e.currentTarget.value = this.model.account;
+        if(value > this.model.total) {
+            e.currentTarget.value = this.model.total;
         }
 
         this.model.capital = e.currentTarget.value;

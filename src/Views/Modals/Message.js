@@ -40,6 +40,32 @@ class Message extends Game.Views.Modals.Modal {
     }
 
     /**
+     * Gets the focus element
+     *
+     * @returns {HTMLElement} Element
+     */
+    get focusElement() {
+        if(!this.focus || !this.focus.element) { return null; }
+
+        return document.querySelector(this.focus.element);
+    }
+
+    /**
+     * Toggles focused element's elevation
+     *
+     * @param {Boolean} isElevated
+     * @param {HTMLElement} element
+     */
+    elevateFocusElement(isElevated, element) {
+        if(!element) { element = this.focusElement; }
+        if(!element) { return; }
+        if(!isElevated) { return element.removeAttribute('style'); }
+
+        element.style.position = 'relative';
+        element.style.zIndex = 99999;
+    }
+
+    /**
      * Focuses this modal, if a focus has been set
      */
     applyFocus() {
@@ -90,6 +116,8 @@ class Message extends Game.Views.Modals.Modal {
      * Renders the footer
      */
     renderFooter() {
+        if(this.canSubmit === false) { return; }
+
         return _.button({class: 'widget widget--button align-right'}, 'OK')
             .click(() => {
                 this.trigger('ok');

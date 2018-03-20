@@ -10,6 +10,7 @@ class Transfer extends Game.Views.Modals.Modal {
     prerender() {
         this.size = this.size || 'small';
         this.amount = 0;
+        this.canCancel = false;
     }   
 
     /**
@@ -17,6 +18,20 @@ class Transfer extends Game.Views.Modals.Modal {
      */
     renderHeader() {
         return 'Transfer funds';
+    }
+
+    /**
+     * Sets the max amount
+     *
+     * @param {Number} max
+     */
+    set max(max) {
+        this.element.querySelector('input').max = max;
+        this.element.querySelector('.text-center:last-child').innerHTML = max;
+        this.element.querySelector('input').value = max;
+        this.amount = max;
+
+        this.update();
     }
 
     /**

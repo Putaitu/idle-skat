@@ -49,21 +49,25 @@ class Controls extends Game.Views.Drawers.Drawer {
 
         return [
             // Unit price
-            _.div({class: 'drawer--controls__heading'}, 'Pricing'),
-            _.div({class: 'widget-group'},
-                _.div({dynamicContent: true, class: 'widget widget--label'}, 'Unit price'),
-                _.input({class: 'widget widget--input small', type: 'number', value: Game.Services.ConfigService.get('unitPrice', Game.DEFAULT_UNIT_PRICE)})
-                    .on('input', (e) => { this.onChangeUnitPrice(e.currentTarget.value); }),
-                _.div({class: 'widget widget--label small'}, _.span({class: 'vat'}))
+            _.if(Game.Services.SessionService.isQuestComplete('Pricing'),
+                _.div({class: 'drawer--controls__heading'}, 'Pricing'),
+                _.div({class: 'widget-group'},
+                    _.div({dynamicContent: true, class: 'widget widget--label'}, 'Unit price'),
+                    _.input({class: 'widget widget--input small drawer--controls__pricing__input', type: 'number', value: Game.Services.ConfigService.get('unitPrice', Game.DEFAULT_UNIT_PRICE)})
+                        .on('input', (e) => { this.onChangeUnitPrice(e.currentTarget.value); }),
+                    _.div({class: 'widget widget--label small'}, _.span({class: 'vat'}))
+                ),
+                _.div({dynamicContent: true}, 'Demand (sales per day): ' + Game.Services.SessionService.getSalesPerDay() + ' units')
             ),
-            _.div({dynamicContent: true}, 'Demand (sales per day): ' + Game.Services.SessionService.getSalesPerDay() + ' units'),
 
             // Machines
-            _.div({dynamicContent: true, class: 'drawer--controls__heading'}, 'Machines: ' + Game.Services.ConfigService.get('machines', 0)),
-            _.div({class: 'widget-group'},
-                _.button({dynamicAttributes: true, disabled: !Game.Services.SessionService.isQuestComplete('Machines'), class: 'widget widget--button drawer--controls__buy-machine'}, 'Buy machine')
-                    .click((e) => { this.onClickBuyMachine(); }),
-                _.div({class: 'widget widget--label text-right vat'}, Game.MACHINE_PRICE + ' DKK')
+            _.if(Game.Services.SessionService.isQuestComplete('Machines'),
+                _.div({dynamicContent: true, class: 'drawer--controls__heading'}, 'Machines: ' + Game.Services.ConfigService.get('machines', 0)),
+                _.div({class: 'widget-group'},
+                    _.button({dynamicAttributes: true, class: 'widget widget--button drawer--controls__buy-machine'}, 'Buy machine')
+                        .click((e) => { this.onClickBuyMachine(); }),
+                    _.div({class: 'widget widget--label text-right vat'}, Game.MACHINE_PRICE + ' DKK')
+                )
             ),
 
             // Inventory

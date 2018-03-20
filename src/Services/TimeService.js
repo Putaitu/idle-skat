@@ -138,7 +138,7 @@ class TimeService {
      * @returns {Boolean} Is paused
      */
     static get isPaused() {
-        return !document.hasFocus() || !!document.querySelector('.modal') || !!this._isPaused;
+        return !!document.querySelector('.modal') || !!this._isPaused;
     }
 
     /**

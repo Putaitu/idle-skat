@@ -98,7 +98,7 @@ class Timeline extends Game.Views.Drawers.Drawer {
         }
 
         // Able to pay B tax
-        if(date.getDate() === 1) {
+        if(date.getDate() === 3) {
             let btax = Game.Services.SessionService.getBTax(date.getFullYear(), date.getMonth() + 1);
 
             if(btax.isPaid) { return; }

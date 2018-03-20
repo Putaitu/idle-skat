@@ -9,16 +9,22 @@ class QuestLog extends Game.Views.Drawers.Drawer {
      */
     constructor(params) {
         super(params);
+        
+        this.setQuest(
+            'Pricing',
+            'Reach 💰 ' + Game.PRICING_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to set unit prices',
+            () => { return this.personalAccount >= Game.PRICING_PERSONAL_ACCOUNT_MINIMUM; }
+        );
 
         this.setQuest(
             'Machines',
-            'Reach ' + Game.MACHINE_PERSONAL_ACCOUNT_MINIMUM + ' DKK to get machines',
+            'Reach 💰 ' + Game.MACHINE_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to get machines',
             () => { return this.personalAccount >= Game.MACHINE_PERSONAL_ACCOUNT_MINIMUM; }
         );
         
         this.setQuest(
             'Overdraft',
-            'Reach ' + Game.OVERDRAFT_PERSONAL_ACCOUNT_MINIMUM + ' DKK to get an overdraft allowance',
+            'Reach 💰 ' + Game.OVERDRAFT_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to get an overdraft allowance',
             () => { return this.personalAccount >= Game.OVERDRAFT_PERSONAL_ACCOUNT_MINIMUM; }
         );
 
