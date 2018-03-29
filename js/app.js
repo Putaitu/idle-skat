@@ -2298,7 +2298,6 @@ class Message extends Game.Views.Modals.Modal {
             case 'left':
                 dialog.style.top = focus.top + focus.height / 2 + 'px';
                 dialog.style.right = window.innerWidth - focus.right + focus.width + 'px';
-                console.log(window.innerWidth, focus);
                 break;
 
             case 'top':
@@ -3543,6 +3542,8 @@ class CoinStack extends Crisp.View {
         this.color = this.color || '#000000';
         this.maxCoinsPerStack = this.maxCoinsPerStack || 10;
 
+        this.coins = _.div({ class: 'coin-stack__coins' });
+
         this.fetch();
     }
 
@@ -3581,38 +3582,29 @@ class CoinStack extends Crisp.View {
         if (this.amount > this.currentAmount) {
             this.currentAmount++;
 
-            let targetAmount = this.currentAmount;
-
-            let coin = _.div({ class: 'coin-stack__coin in', style: 'bottom: ' + (this.currentAmount - 1) * this.coinHeight + 'px' });
+            let coin = _.div({ class: 'coin-stack__coin in', style: 'bottom: ' + (this.getStackAmount(0) + 0.5) * this.coinHeight + 'px' });
 
             setTimeout(() => {
-                this.update();
-            }, 50);
-
-            setTimeout(() => {
-                this.stackElement.setAttribute('style', this.getAmountStyle(targetAmount));
                 coin.remove();
+                this.update();
             }, 400);
 
-            _.append(this.stackElement, coin);
+            _.append(this.coins, coin);
         } else if (this.amount < this.currentAmount) {
             this.currentAmount--;
 
-            let targetAmount = this.currentAmount;
-
-            this.stackElement.setAttribute('style', this.getAmountStyle(targetAmount));
-
-            let coin = _.div({ class: 'coin-stack__coin out', style: 'bottom: ' + this.currentAmount * this.coinHeight + 'px' });
-
-            setTimeout(() => {
-                this.update();
-            }, 50);
+            let coin = _.div({ class: 'coin-stack__coin out', style: 'bottom: ' + (this.getStackAmount(0) + 0.5) * this.coinHeight + 'px' });
 
             setTimeout(() => {
                 coin.remove();
+                this.update();
             }, 400);
 
-            _.append(this.stackElement, coin);
+            _.append(this.coins, coin);
+        }
+
+        if (this.element) {
+            this.fetch();
         }
     }
 
@@ -3645,12 +3637,43 @@ class CoinStack extends Crisp.View {
     /**
      * Gets the amount style
      *
-     * @param {Number} amount
+     * @param {Number} index
      *
      * @returns {String} Amount style
      */
-    getAmountStyle(amount) {
-        return 'height: calc(' + (amount || this.amount) + ' * ' + this.coinHeight + 'px);';
+    getAmountStyle(index) {
+        let amount = this.getStackAmount(index);
+
+        if (index === 0) {
+            amount -= this.coins.children.length;
+        }
+
+        return 'height: calc(' + amount + ' * ' + this.coinHeight + 'px); ';
+    }
+
+    /**
+     * Gets the position style
+     *
+     * @param {Number} index
+     *
+     * @return {String} Position style
+     */
+    getPositionStyle(index) {
+        let zIndex = this.stackCount - index;
+        let opacity = zIndex / this.stackCount;
+        let style = 'z-index: ' + zIndex + '; opacity: ' + opacity + '; ';
+
+        if (index > 0) {
+            let translateX = index * 10;
+
+            if (index % 2) {
+                translateX *= -1;
+            }
+
+            style += 'transform: translateX(' + translateX + 'px); ';
+        }
+
+        return style;
     }
 
     /**
@@ -3659,7 +3682,7 @@ class CoinStack extends Crisp.View {
      * @returns {Number} Stacks
      */
     get stackCount() {
-        return Math.ceil(this.amount / this.maxCoinsPerStack);
+        return Math.ceil(this.currentAmount / this.maxCoinsPerStack);
     }
 
     /**
@@ -3671,7 +3694,7 @@ class CoinStack extends Crisp.View {
      */
     getStackAmount(index) {
         if (index === 0) {
-            return this.amount % this.maxCoinsPerStack;
+            return this.currentAmount % this.maxCoinsPerStack;
         }
 
         return this.maxCoinsPerStack;
@@ -3682,8 +3705,15 @@ class CoinStack extends Crisp.View {
      */
     template() {
         return _.div({ class: 'coin-stack' }, _.loop(this.stackCount, i => {
-            return _.div({ class: 'coin-stack__stack', style: this.getAmountStyle(this.getStackAmount(i)) });
+            return _.div({ class: 'coin-stack__stack', 'data-index': i, 'data-amount': this.getStackAmount(i), style: this.getAmountStyle(i) + this.getPositionStyle(i) });
         }));
+    }
+
+    /**
+     * Post render
+     */
+    postrender() {
+        _.append(this.element, this.coins);
     }
 }
 

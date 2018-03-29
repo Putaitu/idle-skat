@@ -97,7 +97,6 @@ class Message extends Game.Views.Modals.Modal {
             case 'left':
                 dialog.style.top = (focus.top + focus.height / 2) + 'px';
                 dialog.style.right = (window.innerWidth - focus.right + focus.width) + 'px';
-                console.log(window.innerWidth, focus);
                 break;
             
             case 'top':
