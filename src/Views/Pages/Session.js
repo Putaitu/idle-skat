@@ -11,20 +11,25 @@ class Session extends Crisp.View {
             
         this.fetch();
 
-        setInterval(() => {
+        this.hearbeatInterval = setInterval(() => {
             this.heartbeat();
         }, 1000);
 
-        setTimeout(() => {
+        this.sellTimeout = setTimeout(() => {
             this.sellUnit();
         }, Game.Services.SessionService.getSalesDelay());
+
+        this.on('remove', () => {
+            clearInterval(this.hearbeatInterval);
+            clearTimeout(this.sellTimeout);
+        });
     }
 
     /**
      * Sells a unit
      */
     sellUnit() {
-        setTimeout(() => {
+        this.sellTimeout = setTimeout(() => {
             this.sellUnit();
         }, Game.Services.SessionService.getSalesDelay());
         

@@ -486,6 +486,10 @@ h1, h2, h3, h4, h5, h6 {
   padding: 0 0.5rem;
   overflow: hidden;
   text-overflow: ellipsis; }
+  .widget--label.result {
+    font-weight: bold;
+    text-decoration-line: underline;
+    text-decoration-style: double; }
   .widget--label.vat:after, .widget--label .vat:after {
     vertical-align: super;
     font-size: 0.6rem;
@@ -914,7 +918,8 @@ h1, h2, h3, h4, h5, h6 {
         padding: 0; }
 
 .drawer--quest-log {
-  padding: 1rem; }
+  padding: 1rem;
+  width: 26rem; }
   .drawer--quest-log:empty {
     display: none; }
   .drawer--quest-log__quest {
@@ -986,6 +991,9 @@ h1, h2, h3, h4, h5, h6 {
     margin-top: 1rem; }
   .modal__body {
     flex-grow: 1; }
+  .modal.medium .modal__dialog {
+    max-width: 40rem;
+    height: auto; }
   .modal.small .modal__dialog {
     max-width: 20rem;
     height: auto; }

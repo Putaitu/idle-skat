@@ -15,22 +15,38 @@ class FinancialReportingTool extends Game.Views.Modals.Modal {
      * Renders the header
      */
     renderHeader() {
-        return _.h1('Financial report for ' + this.year);
+        return [
+            _.h1({class: 'widget text-center'}, this.year + ' over'),
+            _.if(this.step === 1,
+                _.p({class: 'widget text-center'}, 'Report your financial performance to the tax bureau to evaluate the actual tax incurred in the previous year'),
+            )
+        ];
     }
 
     /**
      * Renders the footer
      */
     renderFooter() {
-        return _.button({class: 'widget widget--button align-right'}, 'Submit')
+        return _.button({class: 'widget widget--button align-right'}, this.step < 2 ? 'Next' : 'Settle')
             .click(() => {
-                if(this.step < 5) { return; }  
+                if(this.step < 2) { return this.setStep(this.step + 1); }  
 
                 this.close();
 
-                Game.Services.SessionService.setVat(this.year, this.quarter, true);
+                let account = Game.Services.ConfigService.get('companyAccount');
 
-                this.trigger('submit');
+                Game.Services.ConfigService.set('companyAccount', account + this.btaxDifference);
+
+                let message = new Game.Views.Modals.Message({
+                    title: 'Financial report complete',
+                    message: 'Based on your profit in ' + this.year + ', try to estimate your profit for ' + (this.year + 1)
+                });
+                
+                message.on('ok', () => {
+                    Game.Services.TimeService.goToNextYear();
+
+                    Crisp.Router.go('/b-tax-estimation');
+                });
             });
     }
 
@@ -49,44 +65,104 @@ class FinancialReportingTool extends Game.Views.Modals.Modal {
      * Gets the sales number
      */
     get sales() {
-        let sales = Game.Services.SessionService.getSales(this.year);
-
-        if(this.step > 2) {
-            return sales / 1.25 * 0.25;
-        } else if(this.step > 1) {
-            return sales / 1.25;
-        }
-
-        return 0;
+        return Game.Services.SessionService.getSales(this.year);
     }
     
     /**
      * Gets the cost number
      */
     get cost() {
-        let cost = Game.Services.SessionService.getCost(this.year);
+        return Game.Services.SessionService.getCost(this.year);
+    }
 
-        if(this.step > 4) {
-            return cost / 1.25 * 0.25;
-        } else if(this.step > 3) {
-            return cost / 1.25;
-        }
+    /**
+     * Gets the estimated income
+     *
+     * @returns {Number} Estimated income
+     */
+    get estimatedIncome() {
+        return Game.Services.ConfigService.get('estimatedIncome');
+    }
 
-        return 0;
+    /**
+     * Gets the B tax paid
+     *
+     * @returns {Number} B tax paid
+     */
+    get btaxPaid() {
+        return Game.Services.ConfigService.get('btaxAmount');
+    }
+    
+    /**
+     * Gets the B tax payable
+     *
+     * @returns {Number} B tax payable
+     */
+    get btaxPayable() {
+        return (this.sales - this.cost) * 0.38;
+    }
+
+    /**
+     * Gets the B tax difference
+     *
+     * @returns {Number} B tax difference
+     */
+    get btaxDifference() {
+        return Math.round((this.btaxPaid - this.btaxPayable) * 100) / 100;
+    }
+
+    /**
+     * Pre render
+     */
+    prerender() {
+        if(!this.step) { this.step = 1; }
+
+        this.size = 'medium';
     }
 
     /**
      * Renders the body
      */
     renderBody() {
-        if(!this.step) { this.step = 1; }
-
         return _.div({class: this.className + '__calculation'},
-            _.div({class: 'widget-group'},
-                _.div({class: 'widget widget--label'}, 'Profit and loss'),
-                _.div({class: 'widget widget--label'}, 'Sales - cost'),
-                _.div({class: 'widget widget--label'}, this.sales + ' - ' + this.cost),
-                _.div({class: 'widget widget--label text-right'}, this.sales - this.cost)
+            _.if(this.step === 1,
+                _.div({class: 'widget-group'},
+                    _.div({class: 'widget widget--label'}, 'Sales'),
+                    _.div({class: 'widget widget--label text-right'}, this.sales + ' DKK')
+                ),
+                _.div({class: 'widget-group'},
+                    _.div({class: 'widget widget--label'}, 'Cost'),
+                    _.div({class: 'widget widget--label text-right'}, '(' + this.cost + ' DKK)')
+                ),
+                _.div({class: 'widget-group'},
+                    _.div({class: 'widget widget--label'}, 'Profit'),
+                    _.div({class: 'widget widget--label text-right result'}, this.sales - this.cost + ' DKK')
+                )
+            ),
+            _.if(this.step === 2,
+                _.div({class: 'widget-group'},
+                    _.div({class: 'widget widget--label'}, 'Estimated profit'),
+                    _.div({class: 'widget widget--label text-right'}, this.estimatedIncome + ' DKK')
+                ),
+                _.div({class: 'widget-group'},
+                    _.div({class: 'widget widget--label'}, 'B tax paid'),
+                    _.div({class: 'widget widget--label text-right'}, this.btaxPaid + ' DKK')
+                ),
+                _.div({class: 'widget-group'},
+                    _.div({class: 'widget widget--label'}, 'Actual profit'),
+                    _.div({class: 'widget widget--label text-right'}, this.sales - this.cost + ' DKK')
+                ),
+                _.div({class: 'widget-group'},
+                    _.div({class: 'widget widget--label'}, 'Actual B tax'),
+                    _.div({class: 'widget widget--label text-right'}, this.btaxPayable + ' DKK')
+                ),
+                _.div({class: 'widget-group'},
+                    _.div({class: 'widget widget--label'},
+                        _.if(this.btaxDifference <= 0, 'B tax payable'),
+                        _.if(this.btaxDifference > 0, 'B tax refund')
+                    ),
+                    _.div({class: 'widget widget--label text-right result'}, Math.abs(this.btaxDifference) + ' DKK')
+                )
             )
         );
     }

@@ -36,6 +36,14 @@ Date.prototype.addMonths = function(m) {
 }
 
 /**
+ * Adds years to a date
+ */
+Date.prototype.addYears = function(y) {
+    this.setYear(this.getFullYear() + y); 
+    return this;   
+}
+
+/**
  * Gets the actual month
  */
 Date.prototype.getMonthName = function() {
@@ -197,6 +205,13 @@ class TimeService {
     }
     
     /**
+     * Sets the current time
+     */
+    static set currentTime(time) {
+        Game.Services.ConfigService.set('time', time.getTime());
+    }
+
+    /**
      * Gets the current year
      */
     static get currentYear() {
@@ -254,6 +269,19 @@ class TimeService {
      */
     static get currentQuarter() {
         return this.getQuarterFromMonth(this.currentTime.getMonth() + 1)
+    }
+
+    /**
+     * Goes to the next year
+     */
+    static goToNextYear() {
+        let time = this.currentTime;
+
+        time.setYear(time.getFullYear() + 1);
+        time.setMonth(0);
+        time.setDate(1);
+
+        this.currentTime = time;
     }
 }
 

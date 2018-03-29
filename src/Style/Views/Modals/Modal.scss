@@ -65,6 +65,11 @@
     &__body {
         flex-grow: 1;
     }
+    
+    &.medium &__dialog {
+        max-width: 40rem;
+        height: auto;
+    }
 
     &.small &__dialog {
         max-width: 20rem;

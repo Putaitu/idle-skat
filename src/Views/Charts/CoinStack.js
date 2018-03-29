@@ -127,7 +127,12 @@ class CoinStack extends Crisp.View {
      */
     getPositionStyle(index) {
         let zIndex = this.stackCount - index;
-        let opacity = zIndex / this.stackCount;
+        let opacity = 1 - (index * 0.1);
+
+        if(opacity < 0) {
+            opacity = 0;
+        }
+
         let style =  'z-index: ' + zIndex + '; opacity: ' + opacity + '; ';
 
         if(index > 0) {

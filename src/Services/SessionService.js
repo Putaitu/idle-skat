@@ -112,7 +112,7 @@ class SessionService {
      * @return {Promise}
      */
     static financialReport(date) {
-        let year = date.getFullYear() - 1;
+        let year = date.getFullYear();
 
         let tool = new Game.Views.Modals.FinancialReportingTool({
             year: year
@@ -356,7 +356,7 @@ class SessionService {
             result = parseFloat(sales[year][month]) || 0;
 
         // Specific year
-        } else if(month) {
+        } else if(year) {
             for(let m in sales[year]) {
                 result += parseFloat(sales[y][m]) || 0;
             }
@@ -445,7 +445,7 @@ class SessionService {
             result = parseFloat(cost[year][month]) || 0;
 
         // Specific year
-        } else if(month) {
+        } else if(year) {
             for(let m in cost[year]) {
                 result += parseFloat(cost[y][m]) || 0;
             }

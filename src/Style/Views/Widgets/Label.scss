@@ -5,6 +5,12 @@
     overflow: hidden;
     text-overflow: ellipsis;
 
+    &.result {
+        font-weight: bold;
+        text-decoration-line: underline;
+        text-decoration-style: double;
+    }
+
     &.vat:after, .vat:after {
         vertical-align: super;
         font-size: 0.6rem;
