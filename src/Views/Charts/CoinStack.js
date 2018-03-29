@@ -177,7 +177,7 @@ class CoinStack extends Crisp.View {
      */
     template() {
         return _.div({class: 'coin-stack'},
-            _.loop(this.stackCount, (i) => {
+            _.loop(this.stackCount - 1, (i) => {
                 return _.div({class: 'coin-stack__stack', 'data-index': i, 'data-amount': this.getStackAmount(i), style: this.getAmountStyle(i) + this.getPositionStyle(i)});
             })
         );
