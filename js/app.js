@@ -1051,7 +1051,7 @@ class SessionService {
             // Specific year
         } else if (year) {
             for (let m in sales[year]) {
-                result += parseFloat(sales[y][m]) || 0;
+                result += parseFloat(sales[year][m]) || 0;
             }
 
             // Result sales
@@ -1156,7 +1156,7 @@ class SessionService {
             // Specific year
         } else if (year) {
             for (let m in cost[year]) {
-                result += parseFloat(cost[y][m]) || 0;
+                result += parseFloat(cost[year][m]) || 0;
             }
 
             // Result cost
