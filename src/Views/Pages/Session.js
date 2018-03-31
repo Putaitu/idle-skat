@@ -330,9 +330,7 @@ class Session extends Crisp.View {
     template() {
         return _.div({class: 'page page--session'},
             _.div({class: 'page--session__panel top'},
-                this.stats = new Game.Views.Drawers.Stats(),
-                _.button({class: 'widget widget--button round page--session__start-tutorial', title: 'Start tutorial'}, '?')
-                    .click(() => { this.startTutorial(); })
+                this.stats = new Game.Views.Drawers.Stats()
             ),
             _.div({class: 'page--session__panel middle'},
                 _.div({class: 'page--session__panel left'},

@@ -4427,9 +4427,7 @@ class Session extends Crisp.View {
      * Template
      */
     template() {
-        return _.div({ class: 'page page--session' }, _.div({ class: 'page--session__panel top' }, this.stats = new Game.Views.Drawers.Stats(), _.button({ class: 'widget widget--button round page--session__start-tutorial', title: 'Start tutorial' }, '?').click(() => {
-            this.startTutorial();
-        })), _.div({ class: 'page--session__panel middle' }, _.div({ class: 'page--session__panel left' }, this.controls = new Game.Views.Drawers.Controls()), _.div({ class: 'page--session__panel center' }, this.coinStack = new Game.Views.Charts.CoinStack({
+        return _.div({ class: 'page page--session' }, _.div({ class: 'page--session__panel top' }, this.stats = new Game.Views.Drawers.Stats()), _.div({ class: 'page--session__panel middle' }, _.div({ class: 'page--session__panel left' }, this.controls = new Game.Views.Drawers.Controls()), _.div({ class: 'page--session__panel center' }, this.coinStack = new Game.Views.Charts.CoinStack({
             amount: Math.round(Game.Services.ConfigService.get('personalAccount', 0) / 1000)
         })), _.div({ class: 'page--session__panel right' }, this.questLog = new Game.Views.Drawers.QuestLog(), this.notifications = new Game.Views.Drawers.Notifications())), _.div({ class: 'page--session__panel bottom' }, this.timeline = new Game.Views.Drawers.Timeline()));
     }
