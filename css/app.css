@@ -920,8 +920,6 @@ h1, h2, h3, h4, h5, h6 {
 .drawer--quest-log {
   padding: 1rem;
   width: 26rem; }
-  .drawer--quest-log:empty {
-    display: none; }
   .drawer--quest-log__quest {
     border-radius: 0.2rem;
     border: 2px solid white;

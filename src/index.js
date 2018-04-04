@@ -8,7 +8,7 @@ window._ = Crisp.Elements;
 // Constants
 // -------------------
 window.Game = {
-    MACHINE_PRICE: 10000,
+    MACHINE_PRICE: 5000,
     MACHINE_CAPACITY: 1,
     MACHINE_PERSONAL_ACCOUNT_MINIMUM: 7500,
     PRODUCTION_COST: 10,

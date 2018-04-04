@@ -1,10 +1,6 @@
 .drawer--quest-log {
     padding: 1rem;
     width: 26rem;
-    
-    &:empty {
-        display: none;
-    }
 
     &__quest {
         border-radius: 0.2rem;

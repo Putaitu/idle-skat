@@ -37,6 +37,8 @@ class FinancialReportingTool extends Game.Views.Modals.Modal {
 
                 Game.Services.ConfigService.set('companyAccount', account + this.btaxDifference);
 
+                Crisp.View.get('Stats').update(); 
+
                 let message = new Game.Views.Modals.Message({
                     title: 'Financial report complete',
                     message: 'Based on your profit in ' + this.year + ', try to estimate your profit for ' + (this.year + 1)
@@ -99,7 +101,7 @@ class FinancialReportingTool extends Game.Views.Modals.Modal {
      * @returns {Number} B tax payable
      */
     get btaxPayable() {
-        return (this.sales - this.cost) * 0.38;
+        return Math.round((this.sales - this.cost) * 0.38 * 100) / 100;
     }
 
     /**

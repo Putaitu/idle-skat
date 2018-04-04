@@ -209,9 +209,9 @@ class Timeline extends Game.Views.Drawers.Drawer {
                         .click(() => { this.onClickPause(); }),
                     _.button({class: 'widget widget--button small' + (this.state === 'playing' ? ' active' : ''), title: 'Play'}, '▶️')
                         .click(() => { this.onClickPlay(); }),
-                    _.button({class: 'widget widget--button small' + (this.state === 'ffwdx2' ? ' active' : '')}, '⏩')
+                    _.button({class: 'widget widget--button small' + (this.state === 'ffwdx2' ? ' active' : ''), title: 'FFWDx2'}, '⏩')
                         .click(() => { this.onClickFastForward(2); }),
-                    _.button({class: 'widget widget--button small' + (this.state === 'ffwdx4' ? ' active' : '')}, '⏭')
+                    _.button({class: 'widget widget--button small' + (this.state === 'ffwdx4' ? ' active' : ''), title: 'FFWDx4'}, '⏭')
                         .click(() => { this.onClickFastForward(4); })
                 )
             ),

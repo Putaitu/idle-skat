@@ -66,7 +66,7 @@ class Controls extends Game.Views.Drawers.Drawer {
                 _.div({class: 'widget-group'},
                     _.button({dynamicAttributes: true, class: 'widget widget--button drawer--controls__buy-machine'}, 'Buy machine')
                         .click((e) => { this.onClickBuyMachine(); }),
-                    _.div({class: 'widget widget--label text-right vat'}, Game.MACHINE_PRICE + ' DKK')
+                    _.div({dynamicContent: true, class: 'widget widget--label text-right vat'}, Game.Services.SessionService.getCurrentMachinePrice() + ' DKK')
                 )
             ),
 

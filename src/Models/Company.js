@@ -1,7 +1,5 @@
 'use strict';
 
-const MACHINE_PRICE = 10000;
-
 /**
  * The main company model
  */
@@ -140,13 +138,13 @@ class Company extends Game.Models.Entity {
      * Purchases a machine
      */
     purchaseMachine() {
-        if(this.bankBalance < MACHINE_PRICE) {
+        if(this.bankBalance < Game.MACHINE_PRICE) {
             return alert('You do not have enough money to purchase more machines');
         }
 
         this.machines++;
 
-        this.bankBalance -= MACHINE_PRICE;
+        this.bankBalance -= Game.MACHINE_PRICE;
         Game.Models.Player.current.financialRecord.currentReport.productionCost += MACHINE_PRICE;
     }
 }

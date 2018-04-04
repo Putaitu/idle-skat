@@ -60,16 +60,34 @@ class SessionService {
     }
 
     /**
+     * Gets the current machine price
+     *
+     * @returns {Number} Current machine price
+     */
+    static getCurrentMachinePrice() {
+        let machines = Game.Services.ConfigService.get('machines', 0);
+        let price = Game.MACHINE_PRICE;
+
+        if(machines > 0) {
+            price += (Game.MACHINE_PRICE * 0.5) * machines;
+        }
+
+        return price;
+    }
+
+    /**
      * Buys a machine
      */
     static buyMachine() {
-        if(!this.canAfford(Game.MACHINE_PRICE)) { return; }
+        let machines = Game.Services.ConfigService.get('machines', 0);
+        let price = this.getCurrentMachinePrice();
+
+        if(!this.canAfford(price)) { return; }
 
         let companyAccount = Game.Services.ConfigService.get('companyAccount', 0);
-        let machines = Game.Services.ConfigService.get('machines', 0);
 
         Game.Services.ConfigService.set('machines', machines + 1);
-        Game.Services.ConfigService.set('companyAccount', companyAccount - Game.MACHINE_PRICE);
+        Game.Services.ConfigService.set('companyAccount', companyAccount - price);
     }
 
     /**
@@ -280,6 +298,8 @@ class SessionService {
         let year = date.getFullYear();
         let quarter = date.getQuarter() - 1;
 
+        let isFirstTime = !Game.Services.ConfigService.get('hasPaidVAT');
+
         if(quarter < 1) {
             quarter = 4;
             year--;
@@ -297,7 +317,45 @@ class SessionService {
 
         Game.Services.ConfigService.set('companyAccount', companyAccount - vat.amount);
 
-        return Promise.resolve('VAT for ' + year + ' Q' + quarter + ' has been paid');
+        Game.Services.ConfigService.set('hasPaidVAT', true);
+
+        return new Promise((resolve, reject) => {
+            if(!isFirstTime) { return resolve(); }
+
+            let modal = new Game.Views.Modals.Message({
+                title: 'Time',
+                canSubmit: false,
+                canCancel: false,
+                message: 'Try to speed time up a bit!',
+                focus: {
+                    element: '.drawer--timeline__controls',
+                    side: 'top',
+                    align: 'left'
+                }
+            });
+
+            let ffwdx2 = document.querySelector('button[title="FFWDx2"]');
+            let ffwdx4 = document.querySelector('button[title="FFWDx4"]');
+
+            modal.elevateFocusElement(true, ffwdx2); 
+            modal.elevateFocusElement(true, ffwdx4); 
+
+            let onClick = () => {
+                modal.close();
+            
+                resolve();
+        
+                ffwdx2.removeEventListener('click', onClick);
+                ffwdx4.removeEventListener('click', onClick);
+            };
+
+            ffwdx2.addEventListener('click', onClick);
+            ffwdx4.addEventListener('click', onClick);
+
+        })
+        .then(() => {
+            return Promise.resolve('VAT for ' + year + ' Q' + quarter + ' has been paid');
+        });
     }
 
     /**

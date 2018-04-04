@@ -78,7 +78,7 @@ window._ = Crisp.Elements;
 // Constants
 // -------------------
 window.Game = {
-    MACHINE_PRICE: 10000,
+    MACHINE_PRICE: 5000,
     MACHINE_CAPACITY: 1,
     MACHINE_PERSONAL_ACCOUNT_MINIMUM: 7500,
     PRODUCTION_COST: 10,
@@ -234,7 +234,6 @@ class ConfigService {
      */
     static applyTestYear() {
         this.set('btax', { "2018": { "1": { "isPaid": true, "amount": 950 }, "2": { "isPaid": true, "amount": 950 }, "3": { "isPaid": true, "amount": 950 }, "4": { "isPaid": true, "amount": 950 }, "5": { "isPaid": true, "amount": 950 }, "6": { "isPaid": true, "amount": 950 }, "7": { "isPaid": true, "amount": 950 }, "8": { "isPaid": true, "amount": 950 }, "9": { "isPaid": true, "amount": 950 }, "10": { "isPaid": true, "amount": 950 }, "11": { "isPaid": true, "amount": 950 }, "12": { "isPaid": true, "amount": 950 } }, "2019": { "1": { "isPaid": false, "amount": 950 }, "2": { "isPaid": false, "amount": 950 } } });
-        this.set('completedQuests', ["Pricing", "Machines", "Overdraft"]);
         this.set('cost', { "2018": { "1": 1273.5, "2": 1104.5, "3": 844.5, "4": 1013.5, "5": 1234.5, "6": 1182.5, "7": 805.5, "8": 779.5, "9": 740.5, "10": 779.5, "11": 610.5, "12": 701.5 } });
         this.set('sales', { "2018": { "1": 2462.5, "2": 3500, "3": 3687.5, "4": 2925, "5": 3562.5, "6": 3512.5, "7": 3875, "8": 3750, "9": 3562.5, "10": 3750, "11": 2937.5, "12": 3375 } });
         this.set('vat', { "2018": { "1": { "amount": 1285.2, "isPaid": false, "isReported": true }, "2": { "amount": 1313.6, "isPaid": false, "isReported": true }, "3": { "amount": 1772.1, "isPaid": false, "isReported": true } } });
@@ -719,18 +718,36 @@ class SessionService {
     }
 
     /**
+     * Gets the current machine price
+     *
+     * @returns {Number} Current machine price
+     */
+    static getCurrentMachinePrice() {
+        let machines = Game.Services.ConfigService.get('machines', 0);
+        let price = Game.MACHINE_PRICE;
+
+        if (machines > 0) {
+            price += Game.MACHINE_PRICE * 0.5 * machines;
+        }
+
+        return price;
+    }
+
+    /**
      * Buys a machine
      */
     static buyMachine() {
-        if (!this.canAfford(Game.MACHINE_PRICE)) {
+        let machines = Game.Services.ConfigService.get('machines', 0);
+        let price = this.getCurrentMachinePrice();
+
+        if (!this.canAfford(price)) {
             return;
         }
 
         let companyAccount = Game.Services.ConfigService.get('companyAccount', 0);
-        let machines = Game.Services.ConfigService.get('machines', 0);
 
         Game.Services.ConfigService.set('machines', machines + 1);
-        Game.Services.ConfigService.set('companyAccount', companyAccount - Game.MACHINE_PRICE);
+        Game.Services.ConfigService.set('companyAccount', companyAccount - price);
     }
 
     /**
@@ -965,6 +982,8 @@ class SessionService {
         let year = date.getFullYear();
         let quarter = date.getQuarter() - 1;
 
+        let isFirstTime = !Game.Services.ConfigService.get('hasPaidVAT');
+
         if (quarter < 1) {
             quarter = 4;
             year--;
@@ -984,7 +1003,45 @@ class SessionService {
 
         Game.Services.ConfigService.set('companyAccount', companyAccount - vat.amount);
 
-        return Promise.resolve('VAT for ' + year + ' Q' + quarter + ' has been paid');
+        Game.Services.ConfigService.set('hasPaidVAT', true);
+
+        return new Promise((resolve, reject) => {
+            if (!isFirstTime) {
+                return resolve();
+            }
+
+            let modal = new Game.Views.Modals.Message({
+                title: 'Time',
+                canSubmit: false,
+                canCancel: false,
+                message: 'Try to speed time up a bit!',
+                focus: {
+                    element: '.drawer--timeline__controls',
+                    side: 'top',
+                    align: 'left'
+                }
+            });
+
+            let ffwdx2 = document.querySelector('button[title="FFWDx2"]');
+            let ffwdx4 = document.querySelector('button[title="FFWDx4"]');
+
+            modal.elevateFocusElement(true, ffwdx2);
+            modal.elevateFocusElement(true, ffwdx4);
+
+            let onClick = () => {
+                modal.close();
+
+                resolve();
+
+                ffwdx2.removeEventListener('click', onClick);
+                ffwdx4.removeEventListener('click', onClick);
+            };
+
+            ffwdx2.addEventListener('click', onClick);
+            ffwdx4.addEventListener('click', onClick);
+        }).then(() => {
+            return Promise.resolve('VAT for ' + year + ' Q' + quarter + ' has been paid');
+        });
     }
 
     /**
@@ -1436,11 +1493,10 @@ module.exports = Player;
 "use strict";
 
 
-const MACHINE_PRICE = 10000;
-
 /**
  * The main company model
  */
+
 class Company extends Game.Models.Entity {
     /**
      * Constructor
@@ -1578,13 +1634,13 @@ class Company extends Game.Models.Entity {
      * Purchases a machine
      */
     purchaseMachine() {
-        if (this.bankBalance < MACHINE_PRICE) {
+        if (this.bankBalance < Game.MACHINE_PRICE) {
             return alert('You do not have enough money to purchase more machines');
         }
 
         this.machines++;
 
-        this.bankBalance -= MACHINE_PRICE;
+        this.bankBalance -= Game.MACHINE_PRICE;
         Game.Models.Player.current.financialRecord.currentReport.productionCost += MACHINE_PRICE;
     }
 }
@@ -2620,6 +2676,8 @@ class FinancialReportingTool extends Game.Views.Modals.Modal {
 
             Game.Services.ConfigService.set('companyAccount', account + this.btaxDifference);
 
+            Crisp.View.get('Stats').update();
+
             let message = new Game.Views.Modals.Message({
                 title: 'Financial report complete',
                 message: 'Based on your profit in ' + this.year + ', try to estimate your profit for ' + (this.year + 1)
@@ -2682,7 +2740,7 @@ class FinancialReportingTool extends Game.Views.Modals.Modal {
      * @returns {Number} B tax payable
      */
     get btaxPayable() {
-        return (this.sales - this.cost) * 0.38;
+        return Math.round((this.sales - this.cost) * 0.38 * 100) / 100;
     }
 
     /**
@@ -2982,9 +3040,9 @@ class Timeline extends Game.Views.Drawers.Drawer {
             this.onClickPause();
         }), _.button({ class: 'widget widget--button small' + (this.state === 'playing' ? ' active' : ''), title: 'Play' }, '▶️').click(() => {
             this.onClickPlay();
-        }), _.button({ class: 'widget widget--button small' + (this.state === 'ffwdx2' ? ' active' : '') }, '⏩').click(() => {
+        }), _.button({ class: 'widget widget--button small' + (this.state === 'ffwdx2' ? ' active' : ''), title: 'FFWDx2' }, '⏩').click(() => {
             this.onClickFastForward(2);
-        }), _.button({ class: 'widget widget--button small' + (this.state === 'ffwdx4' ? ' active' : '') }, '⏭').click(() => {
+        }), _.button({ class: 'widget widget--button small' + (this.state === 'ffwdx4' ? ' active' : ''), title: 'FFWDx4' }, '⏭').click(() => {
             this.onClickFastForward(4);
         }))), _.div({ dynamicContent: true, class: 'drawer--timeline__scroller' }, _.div({ class: 'drawer--timeline__scroller__year' }, date.getFullYear()), _.div({ class: 'drawer--timeline__scroller__month' }, date.getMonthName()), _.div({ class: 'drawer--timeline__scroller__days' }, _.loop(60, day => {
             let currentDate = new Date(date);
@@ -3397,7 +3455,7 @@ class Controls extends Game.Views.Drawers.Drawer {
         // Machines
         _.if(Game.Services.SessionService.isQuestComplete('Machines'), _.div({ dynamicContent: true, class: 'drawer--controls__heading' }, 'Machines: ' + Game.Services.ConfigService.get('machines', 0)), _.div({ class: 'widget-group' }, _.button({ dynamicAttributes: true, class: 'widget widget--button drawer--controls__buy-machine' }, 'Buy machine').click(e => {
             this.onClickBuyMachine();
-        }), _.div({ class: 'widget widget--label text-right vat' }, Game.MACHINE_PRICE + ' DKK'))),
+        }), _.div({ dynamicContent: true, class: 'widget widget--label text-right vat' }, Game.Services.SessionService.getCurrentMachinePrice() + ' DKK'))),
 
         // Inventory
         _.div({ dynamicContent: true, class: 'drawer--controls__heading' }, 'Inventory: ' + Game.Services.ConfigService.get('inventory', 0)), _.div({ class: 'widget-group' }, _.button({ class: 'widget widget--button drawer--controls__produce' }, 'Produce').click(e => {
@@ -4055,7 +4113,7 @@ class BTaxEstimation extends Crisp.View {
         Game.Services.ConfigService.set('btaxAmount', this.model.btax);
 
         // Check if setup is complete
-        if (!Game.Services.ConfigService.set('completedSetup')) {
+        if (!Game.Services.ConfigService.get('completedSetup')) {
             Game.Services.ConfigService.set('completedSetup', true);
             Game.Services.TimeService.startClock();
         }
@@ -4078,7 +4136,7 @@ class BTaxEstimation extends Crisp.View {
                 btax: { showPercentage: true, percent: this.model.btax / this.model.income, label: 'B tax', value: this.model.btax, color: 'blue' },
                 income: { percent: 1 - this.model.btax / this.model.income, label: 'Target profit', color: 'green', value: this.model.income }
             }
-        }), this.finalBTax = _.div({ class: 'page--b-tax-estimation__final' }), _.div({ class: 'widget-group align-right stretch' }, _.if(!Game.Services.ConfigService.set('completedSetup'), _.a({ href: '#/', class: 'widget widget--button' }, 'Back'), _.div({ class: 'widget-group__separator' })), _.button({ class: 'widget widget--button' }, 'Done').click(e => {
+        }), this.finalBTax = _.div({ class: 'page--b-tax-estimation__final' }), _.div({ class: 'widget-group align-right stretch' }, _.if(!Game.Services.ConfigService.get('completedSetup'), _.a({ href: '#/', class: 'widget widget--button' }, 'Back'), _.div({ class: 'widget-group__separator' })), _.button({ class: 'widget widget--button' }, 'Done').click(e => {
             this.onClickDone(e);
         }))));
     }

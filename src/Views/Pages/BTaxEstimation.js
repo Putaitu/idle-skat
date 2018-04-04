@@ -130,7 +130,7 @@ class BTaxEstimation extends Crisp.View {
         Game.Services.ConfigService.set('btaxAmount', this.model.btax);
 
         // Check if setup is complete
-        if(!Game.Services.ConfigService.set('completedSetup')) {
+        if(!Game.Services.ConfigService.get('completedSetup')) {
             Game.Services.ConfigService.set('completedSetup', true);
             Game.Services.TimeService.startClock();
         }
@@ -165,7 +165,7 @@ class BTaxEstimation extends Crisp.View {
                 }),
                 this.finalBTax = _.div({class: 'page--b-tax-estimation__final'}),
                 _.div({class: 'widget-group align-right stretch'},
-                    _.if(!Game.Services.ConfigService.set('completedSetup'),
+                    _.if(!Game.Services.ConfigService.get('completedSetup'),
                         _.a({href: '#/', class: 'widget widget--button'}, 'Back'),
                         _.div({class: 'widget-group__separator'})
                     ),
