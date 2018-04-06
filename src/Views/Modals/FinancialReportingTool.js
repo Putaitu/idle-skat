@@ -41,7 +41,7 @@ class FinancialReportingTool extends Game.Views.Modals.Modal {
 
                 let message = new Game.Views.Modals.Message({
                     title: 'Financial report complete',
-                    message: 'Based on your profit in ' + this.year + ', try to estimate your profit for ' + (this.year + 1)
+                    message: 'Based on your profit in this year, try to estimate your profit for next year'
                 });
                 
                 message.on('ok', () => {

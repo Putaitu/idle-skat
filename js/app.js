@@ -411,6 +411,10 @@ class TimeService {
 
         time.addHours(this.hoursPerSecond);
 
+        this.isNewDay = this.lastDate !== time.getDate();
+
+        this.lastDate = time.getDate();
+
         Game.Services.ConfigService.set('time', time.getTime());
     }
 
@@ -2680,7 +2684,7 @@ class FinancialReportingTool extends Game.Views.Modals.Modal {
 
             let message = new Game.Views.Modals.Message({
                 title: 'Financial report complete',
-                message: 'Based on your profit in ' + this.year + ', try to estimate your profit for ' + (this.year + 1)
+                message: 'Based on your profit in this year, try to estimate your profit for next year'
             });
 
             message.on('ok', () => {
@@ -4241,7 +4245,9 @@ class Session extends Crisp.View {
         }
 
         // Automatically produce units, if applicable
-        Game.Services.SessionService.autoProduceUnits();
+        if (Game.Services.TimeService.isNewDay) {
+            Game.Services.SessionService.autoProduceUnits();
+        }
     }
 
     /**

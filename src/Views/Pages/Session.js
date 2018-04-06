@@ -86,7 +86,9 @@ class Session extends Crisp.View {
         }
 
         // Automatically produce units, if applicable
-        Game.Services.SessionService.autoProduceUnits();
+        if(Game.Services.TimeService.isNewDay) {
+            Game.Services.SessionService.autoProduceUnits();
+        }
     }
 
     /**

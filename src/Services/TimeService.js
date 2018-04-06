@@ -157,6 +157,10 @@ class TimeService {
 
         time.addHours(this.hoursPerSecond);
 
+        this.isNewDay = this.lastDate !== time.getDate();
+
+        this.lastDate = time.getDate();
+
         Game.Services.ConfigService.set('time', time.getTime());
     }
 
