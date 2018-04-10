@@ -2428,7 +2428,7 @@ class Message extends Game.Views.Modals.Modal {
             return;
         }
 
-        return _.button({ class: 'widget widget--button align-right' }, 'OK').click(() => {
+        return _.button({ class: 'widget widget--button blue align-right' }, 'OK').click(() => {
             this.trigger('ok');
 
             this.close();
@@ -2525,7 +2525,7 @@ class Transfer extends Game.Views.Modals.Modal {
      * Render footer
      */
     renderFooter() {
-        return _.button({ dynamicContent: true, class: 'widget widget--button success align-right' }, 'Transfer ' + this.amount + ' DKK').click(() => {
+        return _.button({ dynamicContent: true, class: 'widget widget--button blue align-right' }, 'Transfer ' + this.amount + ' DKK').click(() => {
             this.onClickTransfer();
         });
     }
@@ -2563,7 +2563,7 @@ class VATReportingTool extends Game.Views.Modals.Modal {
      * Renders the footer
      */
     renderFooter() {
-        return _.button({ class: 'widget widget--button align-right' }, 'Submit').click(() => {
+        return _.button({ class: 'widget widget--button blue align-right' }, 'Submit').click(() => {
             if (this.step < 5) {
                 return;
             }
@@ -2625,13 +2625,13 @@ class VATReportingTool extends Game.Views.Modals.Modal {
             this.step = 1;
         }
 
-        return _.div({ class: this.className + '__calculation' }, _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Sales'), _.div({ class: 'widget widget--label' }, Game.Services.SessionService.getSalesQuarter(this.year, this.quarter) + ' DKK'), _.if(this.step === 1, _.button({ class: 'widget widget--button' }, '/ 1.25', _.div({ class: 'widget__tooltip' }, 'Get the sales without VAT')).click(() => {
+        return _.div({ class: this.className + '__calculation' }, _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Sales'), _.div({ class: 'widget widget--label' }, Game.Services.SessionService.getSalesQuarter(this.year, this.quarter) + ' DKK'), _.if(this.step === 1, _.button({ class: 'widget widget--button blue' }, '/ 1.25', _.div({ class: 'widget__tooltip' }, 'Get the sales without VAT')).click(() => {
             this.setStep(2);
-        })), _.if(this.step !== 1, _.div({ class: 'widget widget--label text-center disabled' }, '/ 1.25')), _.if(this.step === 2, _.button({ class: 'widget widget--button' }, '* 0.25', _.div({ class: 'widget__tooltip' }, 'Get the sales VAT amount')).click(() => {
+        })), _.if(this.step !== 1, _.div({ class: 'widget widget--label text-center disabled' }, '/ 1.25')), _.if(this.step === 2, _.button({ class: 'widget widget--button blue' }, '* 0.25', _.div({ class: 'widget__tooltip' }, 'Get the sales VAT amount')).click(() => {
             this.setStep(3);
-        })), _.if(this.step !== 2, _.div({ class: 'widget widget--label text-center' }, '* 0.25')), _.div({ class: 'widget widget--label ' + this.className + '__result' }, this.sales + ' DKK')), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Cost'), _.div({ class: 'widget widget--label' }, Game.Services.SessionService.getCostQuarter(this.year, this.quarter) + ' DKK'), _.if(this.step === 3, _.button({ class: 'widget widget--button' }, '/ 1.25', _.div({ class: 'widget__tooltip' }, 'Get the cost without VAT')).click(() => {
+        })), _.if(this.step !== 2, _.div({ class: 'widget widget--label text-center' }, '* 0.25')), _.div({ class: 'widget widget--label ' + this.className + '__result' }, this.sales + ' DKK')), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Cost'), _.div({ class: 'widget widget--label' }, Game.Services.SessionService.getCostQuarter(this.year, this.quarter) + ' DKK'), _.if(this.step === 3, _.button({ class: 'widget widget--button blue' }, '/ 1.25', _.div({ class: 'widget__tooltip' }, 'Get the cost without VAT')).click(() => {
             this.setStep(4);
-        })), _.if(this.step !== 3, _.div({ class: 'widget widget--label text-center' }, '/ 1.25')), _.if(this.step === 4, _.button({ class: 'widget widget--button' }, '* 0.25', _.div({ class: 'widget__tooltip' }, 'Get the cost VAT amount')).click(() => {
+        })), _.if(this.step !== 3, _.div({ class: 'widget widget--label text-center' }, '/ 1.25')), _.if(this.step === 4, _.button({ class: 'widget widget--button blue' }, '* 0.25', _.div({ class: 'widget__tooltip' }, 'Get the cost VAT amount')).click(() => {
             this.setStep(5);
         })), _.if(this.step !== 4, _.div({ class: 'widget widget--label text-center disabled' }, '* 0.25')), _.div({ class: 'widget widget--label ' + this.className + '__result' }, this.cost + ' DKK')), _.if(this.step > 4, _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Total'), _.div({ class: 'widget widget--label' }, 'sales VAT - cost VAT'), _.div({ class: 'widget widget--label' }, '(' + this.sales + ' DKK - ' + this.cost + ' DKK)'), _.div({ class: 'widget widget--label' }), _.div({ class: 'widget widget--label ' + this.className + '__result' }, Math.round((this.sales - this.cost) * 100) / 100 + ' DKK'))));
     }
@@ -2669,7 +2669,7 @@ class FinancialReportingTool extends Game.Views.Modals.Modal {
      * Renders the footer
      */
     renderFooter() {
-        return _.button({ class: 'widget widget--button align-right' }, this.step < 2 ? 'Next' : 'Settle').click(() => {
+        return _.button({ class: 'widget widget--button blue align-right' }, this.step < 2 ? 'Next' : 'Settle').click(() => {
             if (this.step < 2) {
                 return this.setStep(this.step + 1);
             }
@@ -3203,7 +3203,7 @@ class Stats extends Game.Views.Drawers.Drawer {
      * Renders the preview
      */
     renderContent() {
-        return _.div({ class: 'drawer__preview drawer--stats__preview' }, _.div({ class: 'drawer--stats__preview__company' }, _.div({ dynamicContent: true, class: 'widget widget--label text-center drawer--stats__company-account' }, '🏭 ' + Game.Services.ConfigService.get('companyAccount', 0) + ' DKK')), _.div({ class: 'drawer--stats__preview__transactions' }, _.button({ class: 'widget widget--button green align-center' }, 'Transfer ➜').click(() => {
+        return _.div({ class: 'drawer__preview drawer--stats__preview' }, _.div({ class: 'drawer--stats__preview__company' }, _.div({ dynamicContent: true, class: 'widget widget--label text-center drawer--stats__company-account' }, '🏭 ' + Game.Services.ConfigService.get('companyAccount', 0) + ' DKK')), _.div({ class: 'drawer--stats__preview__transactions' }, _.button({ class: 'widget widget--button blue align-center' }, 'Transfer ➜').click(() => {
             let expired = Crisp.View.get('Notifications').getExpiredNotification();
 
             if (expired) {
@@ -3485,12 +3485,12 @@ class Controls extends Game.Views.Drawers.Drawer {
         }), _.div({ class: 'widget widget--label small' }, _.span({ class: 'vat' }))), _.div({ dynamicContent: true }, 'Demand (sales per day): ' + Game.Services.SessionService.getSalesPerDay() + ' units')),
 
         // Machines
-        _.if(Game.Services.SessionService.isQuestComplete('Machines'), _.div({ dynamicContent: true, class: 'drawer--controls__heading' }, 'Machines: ' + Game.Services.ConfigService.get('machines', 0)), _.div({ class: 'widget-group' }, _.button({ dynamicAttributes: true, class: 'widget widget--button drawer--controls__buy-machine' }, 'Buy machine').click(e => {
+        _.if(Game.Services.SessionService.isQuestComplete('Machines'), _.div({ dynamicContent: true, class: 'drawer--controls__heading' }, 'Machines: ' + Game.Services.ConfigService.get('machines', 0)), _.div({ class: 'widget-group' }, _.button({ dynamicAttributes: true, class: 'widget widget--button blue drawer--controls__buy-machine' }, 'Buy machine').click(e => {
             this.onClickBuyMachine();
         }), _.div({ dynamicContent: true, class: 'widget widget--label text-right vat' }, Game.Services.SessionService.getCurrentMachinePrice() + ' DKK'))),
 
         // Inventory
-        _.div({ dynamicContent: true, class: 'drawer--controls__heading' }, 'Inventory: ' + Game.Services.ConfigService.get('inventory', 0)), _.div({ class: 'widget-group' }, _.button({ class: 'widget widget--button drawer--controls__produce' }, 'Produce').click(e => {
+        _.div({ dynamicContent: true, class: 'drawer--controls__heading' }, 'Inventory: ' + Game.Services.ConfigService.get('inventory', 0)), _.div({ class: 'widget-group' }, _.button({ class: 'widget widget--button blue drawer--controls__produce' }, 'Produce').click(e => {
             this.onClickProduce();
         }), _.div({ class: 'widget widget--label text-right vat' }, Game.PRODUCTION_COST + ' DKK')),
 
@@ -3716,7 +3716,6 @@ class CoinStack extends Crisp.View {
         this.currentAmount = this.amount;
         this.coinHeight = this.coinHeight || 10;
         this.color = this.color || '#000000';
-        this.maxCoinsPerStack = this.maxCoinsPerStack || 10;
 
         this.coins = _.div({ class: 'coin-stack__coins' });
 
@@ -3758,7 +3757,7 @@ class CoinStack extends Crisp.View {
         if (this.amount > this.currentAmount) {
             this.currentAmount++;
 
-            let coin = _.div({ class: 'coin-stack__coin in', style: 'bottom: ' + (this.getStackAmount(0) + 0.5) * this.coinHeight + 'px' });
+            let coin = _.div({ class: 'coin-stack__coin in', style: 'bottom: ' + (this.getStackAmount(1) + 0.5) * this.coinHeight + 'px' });
 
             setTimeout(() => {
                 coin.remove();
@@ -3769,7 +3768,7 @@ class CoinStack extends Crisp.View {
         } else if (this.amount < this.currentAmount) {
             this.currentAmount--;
 
-            let coin = _.div({ class: 'coin-stack__coin out', style: 'bottom: ' + (this.getStackAmount(0) + 0.5) * this.coinHeight + 'px' });
+            let coin = _.div({ class: 'coin-stack__coin out', style: 'bottom: ' + (this.getStackAmount(1) + 0.5) * this.coinHeight + 'px' });
 
             setTimeout(() => {
                 coin.remove();
@@ -3777,9 +3776,7 @@ class CoinStack extends Crisp.View {
             }, 400);
 
             _.append(this.coins, coin);
-        }
-
-        if (this.element) {
+        } else if (this.element) {
             this.fetch();
         }
     }
@@ -3820,7 +3817,7 @@ class CoinStack extends Crisp.View {
     getAmountStyle(index) {
         let amount = this.getStackAmount(index);
 
-        if (index === 0) {
+        if (index === 1) {
             amount -= this.coins.children.length;
         }
 
@@ -3835,7 +3832,7 @@ class CoinStack extends Crisp.View {
      * @return {String} Position style
      */
     getPositionStyle(index) {
-        let zIndex = this.stackCount - index;
+        let zIndex = 100 - index;
         let opacity = 1 - index * 0.1;
 
         if (opacity < 0) {
@@ -3844,7 +3841,7 @@ class CoinStack extends Crisp.View {
 
         let style = 'z-index: ' + zIndex + '; opacity: ' + opacity + '; ';
 
-        if (index > 0) {
+        if (index > 1) {
             let translateX = index * 10;
 
             if (index % 2) {
@@ -3858,15 +3855,6 @@ class CoinStack extends Crisp.View {
     }
 
     /**
-     * Gets the amount of stacks
-     *
-     * @returns {Number} Stacks
-     */
-    get stackCount() {
-        return Math.ceil(this.currentAmount / this.maxCoinsPerStack);
-    }
-
-    /**
      * Gets the amount of coins in a stack
      *
      * @param {Number} index
@@ -3874,19 +3862,45 @@ class CoinStack extends Crisp.View {
      * @returns {Number} Amount
      */
     getStackAmount(index) {
-        if (index === 0) {
-            return this.currentAmount % this.maxCoinsPerStack;
+        let maxCoinsPerStack = 10;
+
+        if (index === 1) {
+            return this.currentAmount % maxCoinsPerStack;
         }
 
-        return this.maxCoinsPerStack;
+        return maxCoinsPerStack;
+    }
+
+    /**
+     * Gets total amount of coin stacks
+     *
+     * @returns {Number} Stacks
+     */
+    getTotalStacks() {
+        let stacks = 0;
+        let totalAmount = this.currentAmount;
+
+        while (totalAmount > 0) {
+            let i = stacks + 1;
+            let thisAmount = this.getStackAmount(i);
+
+            totalAmount -= thisAmount;
+            stacks++;
+        }
+
+        return stacks;
     }
 
     /**
      * Template
      */
     template() {
-        return _.div({ class: 'coin-stack' }, _.loop(this.stackCount - 1, i => {
-            return _.div({ class: 'coin-stack__stack', 'data-index': i, 'data-amount': this.getStackAmount(i), style: this.getAmountStyle(i) + this.getPositionStyle(i) });
+        return _.div({ class: 'coin-stack', 'data-amount': this.currentAmount }, _.for(0, this.getTotalStacks(), i => {
+            i++;
+
+            let thisAmount = this.getStackAmount(i);
+
+            return _.div({ class: 'coin-stack__stack', 'data-index': i, 'data-amount': thisAmount, style: this.getAmountStyle(i) + this.getPositionStyle(i) });
         }));
     }
 
@@ -4003,7 +4017,7 @@ class Setup extends Crisp.View {
                 capital: { percent: this.model.capital / this.model.total, label: 'Capital', value: this.model.capital, color: 'blue' },
                 total: { percent: 1, label: 'Total funds', color: 'transparent', value: this.model.total }
             }
-        }), _.button({ class: 'widget widget--button align-right' }, 'Next').click(e => {
+        }), _.button({ class: 'widget widget--button blue align-right' }, 'Next').click(e => {
             this.onClickNext(e);
         })));
     }
@@ -4159,7 +4173,7 @@ class BTaxEstimation extends Crisp.View {
     template() {
         return _.div({ class: 'page page--b-tax-estimation' }, _.div({ class: 'page__container' }, _.h1({ class: 'page__title' }, 'B tax estimation for ' + Game.Services.TimeService.currentYear), _.p({ class: 'widget widget--label text-center' }, 'Estimate how much profit you will make in the coming year, you will pay your b-tax based on this amount'), _.div({ class: 'page--b-tax-estimation__input' }, _.div({ class: 'widget-group align-center' }, _.label({ class: 'widget widget--label' }, 'Target profit for ' + Game.Services.TimeService.currentYear), _.input({ class: 'widget widget--input', type: 'number', step: 1000, min: 0, value: this.model.income }).on('input', e => {
             this.onChangeIncome(e);
-        })), _.button({ class: 'widget widget--button align-center' }, 'Calculate B tax').click(e => {
+        })), _.button({ class: 'widget widget--button blue align-center' }, 'Calculate B tax').click(e => {
             this.onClickCalculate(e);
         })), this.pieChart = new Game.Views.Charts.PieChart({
             className: 'page--b-tax-estimation__pie-chart',
@@ -4168,7 +4182,7 @@ class BTaxEstimation extends Crisp.View {
                 btax: { showPercentage: true, percent: this.model.btax / this.model.income, label: 'B tax', value: this.model.btax, color: 'blue' },
                 income: { percent: 1 - this.model.btax / this.model.income, label: 'Target profit', color: 'green', value: this.model.income }
             }
-        }), this.finalBTax = _.div({ class: 'page--b-tax-estimation__final' }), _.div({ class: 'widget-group align-right stretch' }, _.if(!Game.Services.ConfigService.get('completedSetup'), _.a({ href: '#/', class: 'widget widget--button' }, 'Back'), _.div({ class: 'widget-group__separator' })), _.button({ class: 'widget widget--button' }, 'Done').click(e => {
+        }), this.finalBTax = _.div({ class: 'page--b-tax-estimation__final' }), _.div({ class: 'widget-group align-right stretch' }, _.if(!Game.Services.ConfigService.get('completedSetup'), _.a({ href: '#/', class: 'widget widget--button' }, 'Back'), _.div({ class: 'widget-group__separator' })), _.button({ class: 'widget widget--button blue' }, 'Done').click(e => {
             this.onClickDone(e);
         }))));
     }

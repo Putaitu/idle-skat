@@ -23,19 +23,20 @@
         left: 0;
         padding: 0.5rem 1rem;
         max-width: 100%;
-        background-color: white;
-        color: black;
+        background-color: grey;
+        color: white;
+        line-height: 1.5;
         font-size: 0.8rem;
         text-align: left;
         white-space: normal;
-        font-weight: normal;
+        font-weight: bold;
         border-radius: 0.2rem;
         text-transform: none;
 
         &:after {
             border: solid transparent;
             border-color: rgba(0, 0, 0, 0);
-            border-bottom-color: white;
+            border-bottom-color: grey;
             bottom: 100%;
             left: 1rem;
             content: '';

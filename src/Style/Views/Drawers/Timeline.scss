@@ -25,7 +25,6 @@
         &__year {
             font-size: 1rem;
             padding-left: 1rem;
-            color: white;
             font-weight: bold;
             position: absolute;
             z-index: 20;
@@ -40,8 +39,7 @@
             position: absolute;
             left: 0;
             padding-left: 1rem;
-            background-color: dimgrey;
-            color: white;
+            background-color: white;
             opacity: 0.8;
         }
 
@@ -54,18 +52,17 @@
             font-size: 0.8rem;
             flex-basis: 2rem;
             width: 2rem;
-            color: white;
             font-weight: bold;
             min-width: 2rem;
             position: relative;
-            border-left: 1px solid rgba(255, 255, 255, 0.2);
+            border-left: 1px solid darkgrey;
 
             &__month {
                 &:after {
                     content: '';
                     display: block;
                     height: 6.5rem;
-                    border-left: 1px solid rgba(255, 255, 255, 0.2);
+                    border-left: 1px solid darkgrey;
                     position: absolute;
                     left: -1px;
                     top: 0;
@@ -81,6 +78,7 @@
             &__notification {
                 position: absolute;
                 bottom: calc(100% + 0.5rem);
+                color: white;
                 left: 0.25rem;
                 transform-origin: 0% 100%;
                 display: inline-block;
@@ -108,7 +106,6 @@
                 
                 &.purple {
                     background-color: darkmagenta;
-                    color: mediumorchid;
 
                     &:after {
                        border-top-color: darkmagenta;
@@ -117,7 +114,6 @@
 
                 &.red {
                     background-color: darkred;
-                    color: white;
 
                     &:after {
                        border-top-color: darkred;
@@ -126,7 +122,6 @@
                 
                 &.yellow {
                     background-color: gold;
-                    color: sienna;
 
                     &:after {
                        border-top-color: gold;
@@ -135,7 +130,6 @@
                 
                 &.blue {
                     background-color: dodgerblue;
-                    color: powderblue;
 
                     &:after {
                        border-top-color: dodgerblue;

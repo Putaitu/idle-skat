@@ -10,14 +10,10 @@
     min-width: 8rem;
     text-align: center;
     white-space: nowrap;
+    border: 0;
 
-    background-image: linear-gradient(lightgrey, darkgrey);
-    border: 1px solid darkgrey;
-    color: dimgrey;
-
-    &:hover {
-        color: white !important;
-    }
+    background-color: darkgrey;
+    color: white;
 
     &[disabled] {
         opacity: 0.75;
@@ -37,38 +33,27 @@
     }
 
     &.active, &:active {
-        background-image: linear-gradient(darkgrey, grey);
-        color: lightgrey;
+        background: lightgrey;
     }
 
     &.green {
-        background-image: linear-gradient(chartreuse, darkgreen);
-        color: greenyellow;
-        border-color: forestgreen;
+        background: forestgreen;
     }
                 
     &.purple {
-        background-image: linear-gradient(mediumorchid, darkmagenta);
-        color: magenta;
-        border-color: purple;
+        background: darkmagenta;
     }
 
     &.yellow {
-        background-image: linear-gradient(yellow, gold);
-        color: sienna;
-        border-color: goldenrod;
+        background: gold;
     }
     
     &.blue {
-        background-image: linear-gradient(deepskyblue, dodgerblue);
-        color: powderblue;
-        border-color: dodgerblue;
+        background: dodgerblue;
     }
 
     &.red {
-        background-image: linear-gradient(red, darkred);
-        color: white;
-        border-color: darkred;
+        background: darkred;
     }
 }
 

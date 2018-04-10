@@ -431,18 +431,19 @@ h1, h2, h3, h4, h5, h6 {
     left: 0;
     padding: 0.5rem 1rem;
     max-width: 100%;
-    background-color: white;
-    color: black;
+    background-color: grey;
+    color: white;
+    line-height: 1.5;
     font-size: 0.8rem;
     text-align: left;
     white-space: normal;
-    font-weight: normal;
+    font-weight: bold;
     border-radius: 0.2rem;
     text-transform: none; }
     .widget__tooltip:after {
       border: solid transparent;
       border-color: transparent;
-      border-bottom-color: white;
+      border-bottom-color: grey;
       bottom: 100%;
       left: 1rem;
       content: '';
@@ -622,11 +623,9 @@ h1, h2, h3, h4, h5, h6 {
   min-width: 8rem;
   text-align: center;
   white-space: nowrap;
-  background-image: linear-gradient(lightgrey, darkgrey);
-  border: 1px solid darkgrey;
-  color: dimgrey; }
-  .widget--button:hover {
-    color: white !important; }
+  border: 0;
+  background-color: darkgrey;
+  color: white; }
   .widget--button[disabled] {
     opacity: 0.75;
     pointer-events: none; }
@@ -639,28 +638,17 @@ h1, h2, h3, h4, h5, h6 {
     min-width: 0;
     max-width: 2rem; }
   .widget--button.active, .widget--button:active {
-    background-image: linear-gradient(darkgrey, grey);
-    color: lightgrey; }
+    background: lightgrey; }
   .widget--button.green {
-    background-image: linear-gradient(chartreuse, darkgreen);
-    color: greenyellow;
-    border-color: forestgreen; }
+    background: forestgreen; }
   .widget--button.purple {
-    background-image: linear-gradient(mediumorchid, darkmagenta);
-    color: magenta;
-    border-color: purple; }
+    background: darkmagenta; }
   .widget--button.yellow {
-    background-image: linear-gradient(yellow, gold);
-    color: sienna;
-    border-color: goldenrod; }
+    background: gold; }
   .widget--button.blue {
-    background-image: linear-gradient(deepskyblue, dodgerblue);
-    color: powderblue;
-    border-color: dodgerblue; }
+    background: dodgerblue; }
   .widget--button.red {
-    background-image: linear-gradient(red, darkred);
-    color: white;
-    border-color: darkred; }
+    background: darkred; }
 
 .widget-group .widget--button:first-child:not(:last-child) {
   border-bottom-right-radius: 0;
@@ -736,7 +724,6 @@ h1, h2, h3, h4, h5, h6 {
     .drawer--timeline__scroller__year {
       font-size: 1rem;
       padding-left: 1rem;
-      color: white;
       font-weight: bold;
       position: absolute;
       z-index: 20;
@@ -749,8 +736,7 @@ h1, h2, h3, h4, h5, h6 {
       position: absolute;
       left: 0;
       padding-left: 1rem;
-      background-color: dimgrey;
-      color: white;
+      background-color: white;
       opacity: 0.8; }
     .drawer--timeline__scroller__days {
       display: flex;
@@ -759,16 +745,15 @@ h1, h2, h3, h4, h5, h6 {
       font-size: 0.8rem;
       flex-basis: 2rem;
       width: 2rem;
-      color: white;
       font-weight: bold;
       min-width: 2rem;
       position: relative;
-      border-left: 1px solid rgba(255, 255, 255, 0.2); }
+      border-left: 1px solid darkgrey; }
       .drawer--timeline__scroller__day__month:after {
         content: '';
         display: block;
         height: 6.5rem;
-        border-left: 1px solid rgba(255, 255, 255, 0.2);
+        border-left: 1px solid darkgrey;
         position: absolute;
         left: -1px;
         top: 0; }
@@ -779,6 +764,7 @@ h1, h2, h3, h4, h5, h6 {
       .drawer--timeline__scroller__day__notification {
         position: absolute;
         bottom: calc(100% + 0.5rem);
+        color: white;
         left: 0.25rem;
         transform-origin: 0% 100%;
         display: inline-block;
@@ -802,23 +788,19 @@ h1, h2, h3, h4, h5, h6 {
           border-width: 0.5rem;
           margin-left: -0.5rem; }
         .drawer--timeline__scroller__day__notification.purple {
-          background-color: darkmagenta;
-          color: mediumorchid; }
+          background-color: darkmagenta; }
           .drawer--timeline__scroller__day__notification.purple:after {
             border-top-color: darkmagenta; }
         .drawer--timeline__scroller__day__notification.red {
-          background-color: darkred;
-          color: white; }
+          background-color: darkred; }
           .drawer--timeline__scroller__day__notification.red:after {
             border-top-color: darkred; }
         .drawer--timeline__scroller__day__notification.yellow {
-          background-color: gold;
-          color: sienna; }
+          background-color: gold; }
           .drawer--timeline__scroller__day__notification.yellow:after {
             border-top-color: gold; }
         .drawer--timeline__scroller__day__notification.blue {
-          background-color: dodgerblue;
-          color: powderblue; }
+          background-color: dodgerblue; }
           .drawer--timeline__scroller__day__notification.blue:after {
             border-top-color: dodgerblue; }
 
@@ -831,10 +813,9 @@ h1, h2, h3, h4, h5, h6 {
     border-radius: 0.2rem;
     padding: 1rem;
     position: relative;
-    background-color: rgba(0, 0, 0, 0.3);
-    color: lightgrey;
+    background-color: whitesmoke;
     transition: transform 0.5s ease;
-    border: 2px solid rgba(0, 0, 0, 0.3); }
+    border: 2px solid transparent; }
     .drawer--notifications__entry:not(:last-of-type) {
       margin-bottom: 1rem; }
     .drawer--notifications__entry.out {
@@ -853,13 +834,11 @@ h1, h2, h3, h4, h5, h6 {
       top: 0;
       left: 0;
       height: 100%;
-      background-color: rgba(255, 255, 255, 0.1);
-      border-right: 1px solid rgba(255, 255, 255, 0.2);
+      background-color: rgba(0, 0, 0, 0.1);
       pointer-events: none; }
     .drawer--notifications__entry__title {
       font-weight: bold;
       position: relative;
-      color: white;
       z-index: 1;
       margin-bottom: 0.25rem; }
     .drawer--notifications__entry__message {
@@ -885,8 +864,7 @@ h1, h2, h3, h4, h5, h6 {
     display: flex;
     justify-content: center; }
     .drawer--stats__preview .widget--label:last-child {
-      font-size: 2rem;
-      color: white; }
+      font-size: 2rem; }
     .drawer--stats__preview__company, .drawer--stats__preview__personal {
       max-width: 20rem; }
     .drawer--stats__preview__transactions {
@@ -901,13 +879,11 @@ h1, h2, h3, h4, h5, h6 {
   padding: 1rem;
   width: 26rem; }
   .drawer--controls__heading {
-    color: white;
     font-weight: bold; }
     .drawer--controls__heading:not(:first-child) {
       margin-top: 2rem; }
   .drawer--controls__actual-profit {
     font-weight: bold;
-    color: white;
     text-decoration-line: underline;
     text-decoration-style: double; }
   .drawer--controls .widget-group {
@@ -925,12 +901,10 @@ h1, h2, h3, h4, h5, h6 {
     border: 2px solid white;
     padding: 1rem;
     position: relative;
-    background-color: rgba(0, 0, 0, 0.3);
-    color: lightgrey; }
+    background-color: whitesmoke; }
     .drawer--quest-log__quest__title {
       font-weight: bold;
       position: relative;
-      color: white;
       z-index: 1;
       margin-bottom: 0.25rem; }
     .drawer--quest-log__quest__message {
@@ -958,6 +932,7 @@ h1, h2, h3, h4, h5, h6 {
     top: 0.5rem;
     right: 0.5rem;
     color: dimgrey;
+    background-color: transparent;
     width: 1rem;
     min-width: 0;
     height: 1rem;
@@ -976,10 +951,9 @@ h1, h2, h3, h4, h5, h6 {
     width: calc(100% - 2rem);
     max-width: 60rem;
     border-radius: 0.2rem;
-    border: 1px solid black;
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.5);
-    background-color: dimgrey;
-    color: lightgrey;
+    background-color: white;
+    color: dimgrey;
     display: flex;
     flex-direction: column;
     padding: 1rem; }
@@ -1020,25 +994,25 @@ h1, h2, h3, h4, h5, h6 {
     .modal--message .modal__dialog.focused.left:after {
       left: 100%;
       top: 50%;
-      border-left-color: black; }
+      border-left-color: white; }
   .modal--message .modal__dialog.focused.right {
     margin-left: 1rem; }
     .modal--message .modal__dialog.focused.right:after {
       right: 100%;
       top: 50%;
-      border-right-color: black; }
+      border-right-color: white; }
   .modal--message .modal__dialog.focused.top {
     margin-bottom: 1rem; }
     .modal--message .modal__dialog.focused.top:after {
       top: calc(100% + 0.5rem);
       left: 50%;
-      border-top-color: black; }
+      border-top-color: white; }
   .modal--message .modal__dialog.focused.bottom {
     margin-top: 1rem; }
     .modal--message .modal__dialog.focused.bottom:after {
       bottom: 100%;
       left: 50%;
-      border-bottom-color: black; }
+      border-bottom-color: white; }
   .modal--message .modal__dialog.focused.align-center {
     transform: translateX(-50%); }
   .modal--message .modal__dialog.focused.align-left {
@@ -1067,8 +1041,7 @@ h1, h2, h3, h4, h5, h6 {
   text-align: right;
   font-weight: bold;
   text-decoration: underline;
-  text-decoration-style: double;
-  color: white; }
+  text-decoration-style: double; }
 
 .pie-chart {
   max-width: 20rem; }
@@ -1136,8 +1109,7 @@ h1, h2, h3, h4, h5, h6 {
       animation: coin-stack__coin-drop 0.4s ease reverse; }
 
 .page {
-  background-color: dimgrey;
-  color: lightgrey;
+  color: dimgrey;
   height: 100%; }
   .page__title {
     text-align: center;
@@ -1201,26 +1173,26 @@ h1, h2, h3, h4, h5, h6 {
     right: 1rem;
     z-index: 20; }
   .page--session__panel {
-    background-color: dimgrey;
-    color: lightgrey; }
+    background-color: white;
+    color: dimgrey; }
     .page--session__panel.middle {
       flex-grow: 1;
       display: flex; }
     .page--session__panel.center {
       flex-grow: 1;
-      background-color: rgba(0, 0, 0, 0.3);
+      background-image: linear-gradient(to top, whitesmoke, white);
       position: relative;
       overflow: hidden; }
     .page--session__panel.bottom {
-      border-top: 1px solid black; }
+      border-top: 1px solid grey; }
     .page--session__panel.right {
-      border-left: 1px solid black;
+      border-left: 1px solid grey;
       display: flex;
       flex-direction: column; }
     .page--session__panel.top {
-      border-bottom: 1px solid black; }
+      border-bottom: 1px solid grey; }
     .page--session__panel.left {
-      border-right: 1px solid black; }
+      border-right: 1px solid grey; }
     .page--session__panel.top, .page--session__panel.left, .page--session__panel.right, .page--session__panel.bottom {
       flex-shrink: 0; }
 

@@ -27,7 +27,7 @@ class FinancialReportingTool extends Game.Views.Modals.Modal {
      * Renders the footer
      */
     renderFooter() {
-        return _.button({class: 'widget widget--button align-right'}, this.step < 2 ? 'Next' : 'Settle')
+        return _.button({class: 'widget widget--button blue align-right'}, this.step < 2 ? 'Next' : 'Settle')
             .click(() => {
                 if(this.step < 2) { return this.setStep(this.step + 1); }  
 

@@ -80,7 +80,7 @@ class Transfer extends Game.Views.Modals.Modal {
      * Render footer
      */
     renderFooter() {
-        return _.button({dynamicContent: true, class: 'widget widget--button success align-right'}, 'Transfer ' + this.amount + ' DKK')
+        return _.button({dynamicContent: true, class: 'widget widget--button blue align-right'}, 'Transfer ' + this.amount + ' DKK')
             .click(() => { this.onClickTransfer(); });
     }
 }

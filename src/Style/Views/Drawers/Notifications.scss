@@ -8,10 +8,9 @@
         border-radius: 0.2rem;
         padding: 1rem;
         position: relative;
-        background-color: rgba(0, 0, 0, 0.3);
-        color: lightgrey;
+        background-color: whitesmoke;
         transition: transform 0.5s ease;
-        border: 2px solid rgba(0, 0, 0, 0.3);
+        border: 2px solid rgba(0, 0, 0, 0);
 
         &:not(:last-of-type) {
             margin-bottom: 1rem;
@@ -36,15 +35,13 @@
             top: 0;
             left: 0;
             height: 100%;
-            background-color: rgba(255, 255, 255, 0.1);
-            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            background-color: rgba(0, 0, 0, 0.1);
             pointer-events: none;
         }
 
         &__title {
             font-weight: bold;
             position: relative;
-            color: white;
             z-index: 1;
             margin-bottom: 0.25rem;
         }

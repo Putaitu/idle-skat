@@ -30,8 +30,8 @@
     }
 
     &__panel {
-        background-color: dimgrey;
-        color: lightgrey;
+        background-color: white;
+        color: dimgrey;
         
         &.middle {
             flex-grow: 1;
@@ -40,27 +40,27 @@
 
         &.center {
             flex-grow: 1;
-            background-color: rgba(0, 0, 0, 0.3);
+            background-image: linear-gradient(to top, whitesmoke, white);
             position: relative;
             overflow: hidden;
         }
 
         &.bottom {
-            border-top: 1px solid black;
+            border-top: 1px solid grey;
         }
 
         &.right {
-            border-left: 1px solid black;
+            border-left: 1px solid grey;
             display: flex;
             flex-direction: column;
         }
 
         &.top {
-            border-bottom: 1px solid black;
+            border-bottom: 1px solid grey;
         }
 
         &.left {
-            border-right: 1px solid black;
+            border-right: 1px solid grey;
         }
 
         &.top,

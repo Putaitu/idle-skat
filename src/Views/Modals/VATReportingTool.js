@@ -22,7 +22,7 @@ class VATReportingTool extends Game.Views.Modals.Modal {
      * Renders the footer
      */
     renderFooter() {
-        return _.button({class: 'widget widget--button align-right'}, 'Submit')
+        return _.button({class: 'widget widget--button blue align-right'}, 'Submit')
             .click(() => {
                 if(this.step < 5) { return; }  
 
@@ -86,7 +86,7 @@ class VATReportingTool extends Game.Views.Modals.Modal {
                 _.div({class: 'widget widget--label'}, 'Sales'),
                 _.div({class: 'widget widget--label'}, Game.Services.SessionService.getSalesQuarter(this.year, this.quarter) + ' DKK'),
                 _.if(this.step === 1,
-                    _.button({class: 'widget widget--button'},
+                    _.button({class: 'widget widget--button blue'},
                         '/ 1.25',
                         _.div({class: 'widget__tooltip'}, 'Get the sales without VAT')
                     ).click(() => { this.setStep(2); })
@@ -95,7 +95,7 @@ class VATReportingTool extends Game.Views.Modals.Modal {
                     _.div({class: 'widget widget--label text-center disabled'}, '/ 1.25')
                 ),
                 _.if(this.step === 2,
-                    _.button({class: 'widget widget--button'},
+                    _.button({class: 'widget widget--button blue'},
                         '* 0.25',
                         _.div({class: 'widget__tooltip'}, 'Get the sales VAT amount')
                     ).click(() => { this.setStep(3); })
@@ -109,7 +109,7 @@ class VATReportingTool extends Game.Views.Modals.Modal {
                 _.div({class: 'widget widget--label'}, 'Cost'),
                 _.div({class: 'widget widget--label'}, Game.Services.SessionService.getCostQuarter(this.year, this.quarter) + ' DKK'),
                 _.if(this.step === 3,
-                    _.button({class: 'widget widget--button'},
+                    _.button({class: 'widget widget--button blue'},
                         '/ 1.25',
                         _.div({class: 'widget__tooltip'}, 'Get the cost without VAT')
                     ).click(() => { this.setStep(4); })
@@ -118,7 +118,7 @@ class VATReportingTool extends Game.Views.Modals.Modal {
                     _.div({class: 'widget widget--label text-center'}, '/ 1.25')
                 ),
                 _.if(this.step === 4,
-                    _.button({class: 'widget widget--button'},
+                    _.button({class: 'widget widget--button blue'},
                         '* 0.25',
                         _.div({class: 'widget__tooltip'}, 'Get the cost VAT amount')
                     ).click(() => { this.setStep(5); })

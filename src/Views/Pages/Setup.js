@@ -106,7 +106,7 @@ class Setup extends Crisp.View {
                         total: { percent: 1, label: 'Total funds', color: 'transparent', value: this.model.total }
                     }
                 }),
-                _.button({class: 'widget widget--button align-right'}, 'Next')
+                _.button({class: 'widget widget--button blue align-right'}, 'Next')
                     .click((e) => { this.onClickNext(e); })
             )
         );

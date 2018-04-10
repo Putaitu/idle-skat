@@ -152,7 +152,7 @@ class BTaxEstimation extends Crisp.View {
                         _.input({class: 'widget widget--input', type: 'number', step: 1000, min: 0, value: this.model.income})
                             .on('input', (e) => { this.onChangeIncome(e); })
                     ),
-                    _.button({class: 'widget widget--button align-center'}, 'Calculate B tax')
+                    _.button({class: 'widget widget--button blue align-center'}, 'Calculate B tax')
                         .click((e) => { this.onClickCalculate(e); })
                 ),
                 this.pieChart = new Game.Views.Charts.PieChart({
@@ -169,7 +169,7 @@ class BTaxEstimation extends Crisp.View {
                         _.a({href: '#/', class: 'widget widget--button'}, 'Back'),
                         _.div({class: 'widget-group__separator'})
                     ),
-                    _.button({class: 'widget widget--button'}, 'Done')
+                    _.button({class: 'widget widget--button blue'}, 'Done')
                         .click((e) => { this.onClickDone(e); })
                 )
             )

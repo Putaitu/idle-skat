@@ -64,7 +64,7 @@ class Controls extends Game.Views.Drawers.Drawer {
             _.if(Game.Services.SessionService.isQuestComplete('Machines'),
                 _.div({dynamicContent: true, class: 'drawer--controls__heading'}, 'Machines: ' + Game.Services.ConfigService.get('machines', 0)),
                 _.div({class: 'widget-group'},
-                    _.button({dynamicAttributes: true, class: 'widget widget--button drawer--controls__buy-machine'}, 'Buy machine')
+                    _.button({dynamicAttributes: true, class: 'widget widget--button blue drawer--controls__buy-machine'}, 'Buy machine')
                         .click((e) => { this.onClickBuyMachine(); }),
                     _.div({dynamicContent: true, class: 'widget widget--label text-right vat'}, Game.Services.SessionService.getCurrentMachinePrice() + ' DKK')
                 )
@@ -73,7 +73,7 @@ class Controls extends Game.Views.Drawers.Drawer {
             // Inventory
             _.div({dynamicContent: true, class: 'drawer--controls__heading'}, 'Inventory: ' + Game.Services.ConfigService.get('inventory', 0)),
             _.div({class: 'widget-group'},
-                _.button({class: 'widget widget--button drawer--controls__produce'}, 'Produce')
+                _.button({class: 'widget widget--button blue drawer--controls__produce'}, 'Produce')
                     .click((e) => { this.onClickProduce(); }),
                 _.div({class: 'widget widget--label text-right vat'}, Game.PRODUCTION_COST + ' DKK')
             ),

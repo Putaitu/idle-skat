@@ -117,7 +117,7 @@ class Message extends Game.Views.Modals.Modal {
     renderFooter() {
         if(this.canSubmit === false) { return; }
 
-        return _.button({class: 'widget widget--button align-right'}, 'OK')
+        return _.button({class: 'widget widget--button blue align-right'}, 'OK')
             .click(() => {
                 this.trigger('ok');
 
