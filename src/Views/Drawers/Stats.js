@@ -22,6 +22,19 @@ class Stats extends Game.Views.Drawers.Drawer {
             _.div({class: 'drawer--stats__preview__transactions'},
                 _.button({class: 'widget widget--button green align-center'}, 'Transfer ➜')
                     .click(() => {
+                        let expired = Crisp.View.get('Notifications').getExpiredNotification();
+
+                        if(expired) {
+                            let title = expired.title;
+
+                            title = title.charAt(0).toLowerCase() + title.slice(1);
+
+                            return new Game.Views.Modals.Message({
+                                title: 'You need to ' + title,
+                                message: 'You need to ' + title + ' before you can transfer money',
+                            });
+                        }
+
                         new Game.Views.Modals.Transfer();
                     })
             ),

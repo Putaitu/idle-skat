@@ -56,6 +56,21 @@ class Notifications extends Game.Views.Drawers.Drawer {
     }
 
     /**
+     * Gets expired notification
+     *
+     * @returns {Object} Notification
+     */
+    getExpiredNotification() {
+        for(let key in this.model) {
+            if(this.model[key].isExpired) {
+                return this.model[key];
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Save changes
      */
     save() {

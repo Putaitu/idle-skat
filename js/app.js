@@ -3204,6 +3204,19 @@ class Stats extends Game.Views.Drawers.Drawer {
      */
     renderContent() {
         return _.div({ class: 'drawer__preview drawer--stats__preview' }, _.div({ class: 'drawer--stats__preview__company' }, _.div({ dynamicContent: true, class: 'widget widget--label text-center drawer--stats__company-account' }, '🏭 ' + Game.Services.ConfigService.get('companyAccount', 0) + ' DKK')), _.div({ class: 'drawer--stats__preview__transactions' }, _.button({ class: 'widget widget--button green align-center' }, 'Transfer ➜').click(() => {
+            let expired = Crisp.View.get('Notifications').getExpiredNotification();
+
+            if (expired) {
+                let title = expired.title;
+
+                title = title.charAt(0).toLowerCase() + title.slice(1);
+
+                return new Game.Views.Modals.Message({
+                    title: 'You need to ' + title,
+                    message: 'You need to ' + title + ' before you can transfer money'
+                });
+            }
+
             new Game.Views.Modals.Transfer();
         })), _.div({ class: 'drawer--stats__preview__personal' }, _.div({ dynamicContent: true, class: 'widget widget--label text-center drawer--stats__personal-account' }, '💰 ' + Game.Services.ConfigService.get('personalAccount', 0) + ' DKK')));
     }
@@ -3275,6 +3288,21 @@ class Notifications extends Game.Views.Drawers.Drawer {
         instance.save();
 
         instance.fetch();
+    }
+
+    /**
+     * Gets expired notification
+     *
+     * @returns {Object} Notification
+     */
+    getExpiredNotification() {
+        for (let key in this.model) {
+            if (this.model[key].isExpired) {
+                return this.model[key];
+            }
+        }
+
+        return null;
     }
 
     /**
