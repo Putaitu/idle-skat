@@ -85,7 +85,8 @@ window.Game = {
     DEFAULT_UNIT_PRICE: 20,
     OVERDRAFT_PERSONAL_ACCOUNT_MINIMUM: 10000,
     OVERDRAFT_AMOUNT: 3000,
-    PRICING_PERSONAL_ACCOUNT_MINIMUM: 5000
+    PRICING_PERSONAL_ACCOUNT_MINIMUM: 5000,
+    INCREASED_DEMAND_PERSONAL_ACCOUNT_MINIMUM: 15000
 };
 
 // -------------------
@@ -1309,6 +1310,10 @@ class SessionService {
             return 0;
         }
 
+        if (this.isQuestComplete('Demand')) {
+            return unitPrice / 100 / 2;
+        }
+
         return unitPrice / 100;
     }
 
@@ -2379,7 +2384,7 @@ class Message extends Game.Views.Modals.Modal {
         let focus = document.querySelector(this.focus.element);
 
         if (!focus) {
-            throw new Error('Modal couldn\'t find element "' + this.focus.element + '"');
+            return;
         }
 
         focus = focus.getBoundingClientRect();
@@ -3040,13 +3045,13 @@ class Timeline extends Game.Views.Drawers.Drawer {
     renderContent() {
         let date = Game.Services.TimeService.currentTime;
 
-        return _.div({ class: 'drawer__preview' }, _.div({ dynamicContent: true, class: 'drawer--timeline__controls' }, _.div({ class: 'widget-group' }, _.button({ class: 'widget widget--button small' + (this.state === 'paused' ? ' active' : ''), title: 'Pause' }, '⏸').click(() => {
+        return _.div({ class: 'drawer__preview' }, _.div({ dynamicContent: true, class: 'drawer--timeline__controls' }, _.div({ class: 'widget-group' }, _.button({ class: 'widget widget--button blue small' + (this.state === 'paused' ? ' active' : ''), title: 'Pause' }, '⏸').click(() => {
             this.onClickPause();
-        }), _.button({ class: 'widget widget--button small' + (this.state === 'playing' ? ' active' : ''), title: 'Play' }, '▶️').click(() => {
+        }), _.button({ class: 'widget widget--button blue small' + (this.state === 'playing' ? ' active' : ''), title: 'Play' }, '▶️').click(() => {
             this.onClickPlay();
-        }), _.button({ class: 'widget widget--button small' + (this.state === 'ffwdx2' ? ' active' : ''), title: 'FFWDx2' }, '⏩').click(() => {
+        }), _.button({ class: 'widget widget--button blue small' + (this.state === 'ffwdx2' ? ' active' : ''), title: 'FFWDx2' }, '⏩').click(() => {
             this.onClickFastForward(2);
-        }), _.button({ class: 'widget widget--button small' + (this.state === 'ffwdx4' ? ' active' : ''), title: 'FFWDx4' }, '⏭').click(() => {
+        }), _.button({ class: 'widget widget--button blue small' + (this.state === 'ffwdx4' ? ' active' : ''), title: 'FFWDx4' }, '⏭').click(() => {
             this.onClickFastForward(4);
         }))), _.div({ dynamicContent: true, class: 'drawer--timeline__scroller' }, _.div({ class: 'drawer--timeline__scroller__year' }, date.getFullYear()), _.div({ class: 'drawer--timeline__scroller__month' }, date.getMonthName()), _.div({ class: 'drawer--timeline__scroller__days' }, _.loop(60, day => {
             let currentDate = new Date(date);
@@ -3101,6 +3106,10 @@ class QuestLog extends Game.Views.Drawers.Drawer {
 
         this.setQuest('Overdraft', 'Reach 💰 ' + Game.OVERDRAFT_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to get an overdraft allowance', () => {
             return this.personalAccount >= Game.OVERDRAFT_PERSONAL_ACCOUNT_MINIMUM;
+        });
+
+        this.setQuest('Demand', 'Reach 💰 ' + Game.INCREASED_DEMAND_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to double the demand', () => {
+            return this.personalAccount >= Game.INCREASED_DEMAND_PERSONAL_ACCOUNT_MINIMUM;
         });
 
         this.fetch();

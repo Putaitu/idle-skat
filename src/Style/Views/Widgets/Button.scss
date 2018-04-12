@@ -38,22 +38,42 @@
 
     &.green {
         background: forestgreen;
+
+        &.active, &:active {
+            background: darken(green, 15%);
+        }
     }
                 
     &.purple {
         background: darkmagenta;
+
+        &.active, &:active {
+            background: darken(darkmagenta, 15%);
+        }
     }
 
     &.yellow {
         background: gold;
+
+        &.active, &:active {
+            background: darken(gold, 15%);
+        }
     }
     
     &.blue {
         background: dodgerblue;
+
+        &.active, &:active {
+            background: darken(dodgerblue, 15%);
+        }
     }
 
     &.red {
         background: darkred;
+
+        &.active, &:active {
+            background: darken(darkred, 15%);
+        }
     }
 }
 

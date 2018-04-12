@@ -73,9 +73,7 @@ class Message extends Game.Views.Modals.Modal {
 
         let focus = document.querySelector(this.focus.element);
 
-        if(!focus) {
-            throw new Error('Modal couldn\'t find element "' + this.focus.element + '"');
-        }
+        if(!focus) { return; }
 
         focus = focus.getBoundingClientRect();
 

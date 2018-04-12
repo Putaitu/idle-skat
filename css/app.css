@@ -641,14 +641,24 @@ h1, h2, h3, h4, h5, h6 {
     background: lightgrey; }
   .widget--button.green {
     background: forestgreen; }
+    .widget--button.green.active, .widget--button.green:active {
+      background: #003400; }
   .widget--button.purple {
     background: darkmagenta; }
+    .widget--button.purple.active, .widget--button.purple:active {
+      background: #3f003f; }
   .widget--button.yellow {
     background: gold; }
+    .widget--button.yellow.active, .widget--button.yellow:active {
+      background: #b39700; }
   .widget--button.blue {
     background: dodgerblue; }
+    .widget--button.blue.active, .widget--button.blue:active {
+      background: #006ad1; }
   .widget--button.red {
     background: darkred; }
+    .widget--button.red.active, .widget--button.red:active {
+      background: #3f0000; }
 
 .widget-group .widget--button:first-child:not(:last-child) {
   border-bottom-right-radius: 0;

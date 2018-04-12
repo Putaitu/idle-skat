@@ -585,6 +585,10 @@ class SessionService {
             return 0;
         }
 
+        if(this.isQuestComplete('Demand')) {
+            return (unitPrice/100) / 2;
+        }
+
         return unitPrice/100;
     }
 
