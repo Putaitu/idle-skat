@@ -911,7 +911,8 @@ h1, h2, h3, h4, h5, h6 {
     border: 2px solid white;
     padding: 1rem;
     position: relative;
-    background-color: whitesmoke; }
+    background-color: forestgreen;
+    color: white; }
     .drawer--quest-log__quest__title {
       font-weight: bold;
       position: relative;
