@@ -125,7 +125,7 @@ class Company extends Game.Models.Entity {
      */
     produceUnit() {
         if(this.bankBalance < this.unitProductionCost) {
-            return alert('You do not have enough money to produce more units');
+            return alert('You do not have enough money to produce more ' + Game.Services.ConfigService.get('productName'));
         }
 
         this.inventory++;

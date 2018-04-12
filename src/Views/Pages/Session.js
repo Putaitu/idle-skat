@@ -79,7 +79,7 @@ class Session extends Crisp.View {
         this.stats.heartbeat();
 
         // Update coin stack
-        let stackAmount = Math.round(Game.Services.ConfigService.get('personalAccount', 0) / 1000);
+        let stackAmount = Math.round(Game.Services.ConfigService.get('personalAccount', 0) / 100);
         
         if(stackAmount !== this.coinStack.amount) {
             this.coinStack.amount = stackAmount;
@@ -99,7 +99,7 @@ class Session extends Crisp.View {
             title: 'Change unit prices',
             canCancel: false,
             canSubmit: false,
-            message: 'You can now change unit prices! Let\'s set the price to 30 DKK now.',
+            message: 'You can now change unit prices, which will affect the demand for your ' + Game.Services.ConfigService.get('productName') + '! Let\'s set the price to 30 DKK now.',
             focus: {
                 element: '.drawer--controls__pricing__input',
                 side: 'right',
@@ -134,7 +134,7 @@ class Session extends Crisp.View {
         new Game.Views.Modals.Message({
             title: 'Machines',
             canCancel: false,
-            message: 'You can now buy machines! Click here to buy one and automate your unit production.',
+            message: 'You can now buy machines! Click here to buy one and automatically produce ' + Game.Services.ConfigService.get('productName') + '! Each machine produces ' + Game.Services.SessionService.getCurrentMachineProductivity() + ' ' + Game.Services.ConfigService.get('productName') + ' per day',
             focus: {
                 element: '.drawer--controls__buy-machine',
                 side: 'right',
@@ -208,7 +208,7 @@ class Session extends Crisp.View {
                 title: 'Produce',
                 canCancel: false,
                 canSubmit: false,
-                message: 'Press this button to produce units for selling. Let\'s produce 5 units now.',
+                message: 'Press this button to produce ' + Game.Services.ConfigService.get('productName') + ' for selling. Let\'s produce 5 ' + Game.Services.ConfigService.get('productName') + ' now.',
                 focus: {
                     element: '.drawer--controls__produce',
                     side: 'right',
@@ -278,47 +278,58 @@ class Session extends Crisp.View {
                 new Game.Views.Modals.Message({
                     title: 'Personal account',
                     canCancel: false,
-                    message: 'This is the money you own privately, when you reach certain amount you can unlock upgrades. The more money you have here the more coins you will have!',
+                    message: 'This is the money you own privately, when you reach certain amount you can unlock upgrades!',
                     focus: {
                         element: '.drawer--stats__personal-account',
                         side: 'bottom',
                         align: 'right'
                     }
                 }).on('ok', () => {
-                    let modal = new Game.Views.Modals.Message({
-                        title: 'Transfer',
+                    new Game.Views.Modals.Message({
+                        title: 'Coins',
                         canCancel: false,
-                        canSubmit: false,
-                        message: 'You can transfer money from your company account to your personal account. Let\'s transfer 100 DKK now',
+                        message: 'This stack of coins represents the money in your personal account',
                         focus: {
-                            element: '.drawer--stats__preview__transactions button',
-                            side: 'bottom',
+                            element: '.coin-stack__stack',
+                            side: 'top',
                             align: 'center'
                         }
-                    });
-
-                    let button = modal.focusElement;
-
-                    modal.elevateFocusElement(true);
-
-                    let onClick = (e) => {
-                        button.removeEventListener('click', onClick);
-                       
-                        setTimeout(() => {
-                            let modal = Crisp.View.get('Transfer');
-
-                            modal.on('submit', () => {
-                                time();
-                            });
-
-                            modal.max = 100;
+                    }).on('ok', () => {
+                        let modal = new Game.Views.Modals.Message({
+                            title: 'Transfer',
+                            canCancel: false,
+                            canSubmit: false,
+                            message: 'You can transfer money from your company account to your personal account. Let\'s transfer 100 DKK now',
+                            focus: {
+                                element: '.drawer--stats__preview__transactions button',
+                                side: 'bottom',
+                                align: 'center'
+                            }
                         });
-                        
-                        modal.elevateFocusElement(false);
-                        modal.close();
-                    };
 
-                    button.addEventListener('click', onClick);
+                        let button = modal.focusElement;
+
+                        modal.elevateFocusElement(true);
+
+                        let onClick = (e) => {
+                            button.removeEventListener('click', onClick);
+                           
+                            setTimeout(() => {
+                                let modal = Crisp.View.get('Transfer');
+
+                                modal.on('submit', () => {
+                                    time();
+                                });
+
+                                modal.max = 100;
+                            });
+                            
+                            modal.elevateFocusElement(false);
+                            modal.close();
+                        };
+
+                        button.addEventListener('click', onClick);
+                    });
                 });
             });
         };
@@ -340,7 +351,7 @@ class Session extends Crisp.View {
                 ),
                 _.div({class: 'page--session__panel center'},
                     this.coinStack = new Game.Views.Charts.CoinStack({
-                        amount: Math.round(Game.Services.ConfigService.get('personalAccount', 0) / 1000)
+                        amount: Math.round(Game.Services.ConfigService.get('personalAccount', 0) / 100)
                     })
                 ),
                 _.div({class: 'page--session__panel right'},

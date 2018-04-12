@@ -143,7 +143,7 @@ class Notifications extends Game.Views.Drawers.Drawer {
 
                                     new Game.Views.Modals.Message({
                                         title: 'Error',
-                                        message: e.message
+                                        message: e.message || e
                                     });
                                 });
                             })
@@ -188,7 +188,7 @@ class Notifications extends Game.Views.Drawers.Drawer {
      * @param {Object} notification
      */
     onReachFinancialReport(notification) {
-        return Game.Services.SessionService.financialReport(new Date());
+        return Game.Services.SessionService.financialReport(Game.Services.TimeService.currentTime);
     }
 }
 

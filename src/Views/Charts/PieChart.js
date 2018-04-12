@@ -91,9 +91,9 @@ class PieChart extends Crisp.View {
             };
         }
 
-        let startPercent = this.model[name].percent;
+        let startPercent = this.model[name].percent || 0;
         let startColor = this.model[name].color || slice.color;
-        let startValue = this.model[name].value || slice.value;
+        let startValue = this.model[name].value || slice.value || 0;
 
         this.model[name].percent = startPercent;
         this.model[name].color = startColor;
@@ -105,9 +105,9 @@ class PieChart extends Crisp.View {
         let time = Date.now();    
 
         if(duration <= 0) {
-            this.model[name].percent = slice.percent;
+            this.model[name].percent = slice.percent || 0;
             this.model[name].color = slice.color;
-            this.model[name].value = slice.value;
+            this.model[name].value = slice.value || 0;
             
             _.replace(this.svg, this.renderSlices());
             return;
@@ -119,8 +119,8 @@ class PieChart extends Crisp.View {
 
             time = Date.now();
 
-            this.model[name].percent = PieChart.lerp(startPercent, slice.percent, amount);
-            this.model[name].value = PieChart.lerp(startValue, slice.value, amount);
+            this.model[name].percent = PieChart.lerp(startPercent, slice.percent, amount) || 0;
+            this.model[name].value = PieChart.lerp(startValue, slice.value, amount) || 0;
 
             _.replace(this.svg, this.renderSlices());
             _.replace(this.labels, this.renderLabels());

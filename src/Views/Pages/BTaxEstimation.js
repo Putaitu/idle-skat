@@ -145,7 +145,7 @@ class BTaxEstimation extends Crisp.View {
         return _.div({class: 'page page--b-tax-estimation'},
             _.div({class: 'page__container'},
                 _.h1({class: 'page__title'}, 'B tax estimation for ' + Game.Services.TimeService.currentYear),
-                _.p({class: 'widget widget--label text-center'}, 'Estimate how much profit you will make in the coming year, you will pay your b-tax based on this amount'),
+                _.p({class: 'widget widget--label text-center'}, 'Estimate how much profit you will make selling ' + Game.Services.ConfigService.get('productName') + ' in the coming year.<br>You will pay your B tax based on this amount.'),
                 _.div({class: 'page--b-tax-estimation__input'},
                     _.div({class: 'widget-group align-center'},
                         _.label({class: 'widget widget--label'}, 'Target profit for ' + Game.Services.TimeService.currentYear),

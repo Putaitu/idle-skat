@@ -22,6 +22,15 @@ class Stats extends Game.Views.Drawers.Drawer {
             _.div({class: 'drawer--stats__preview__transactions'},
                 _.button({class: 'widget widget--button blue align-center'}, 'Transfer ➜')
                     .click(() => {
+                        let companyAccount = Game.Services.ConfigService.get('companyAccount', 0);
+
+                        if(companyAccount <= 0) {
+                            return new Game.Views.Modals.Message({
+                                title: 'Not enough cash!',
+                                message: 'You don\'t have any money in your company account',
+                            });
+                        }
+
                         let expired = Crisp.View.get('Notifications').getExpiredNotification();
 
                         if(expired) {

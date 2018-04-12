@@ -78,15 +78,20 @@ window._ = Crisp.Elements;
 // Constants
 // -------------------
 window.Game = {
-    MACHINE_PRICE: 5000,
-    MACHINE_CAPACITY: 1,
-    MACHINE_PERSONAL_ACCOUNT_MINIMUM: 7500,
+    // Standard constants
+    MACHINE_PRICE: 1000,
+    MACHINE_PRODUCTIVITY: 1,
     PRODUCTION_COST: 10,
-    DEFAULT_UNIT_PRICE: 20,
-    OVERDRAFT_PERSONAL_ACCOUNT_MINIMUM: 10000,
-    OVERDRAFT_AMOUNT: 3000,
-    PRICING_PERSONAL_ACCOUNT_MINIMUM: 5000,
-    INCREASED_DEMAND_PERSONAL_ACCOUNT_MINIMUM: 15000
+    DEFAULT_UNIT_PRICE: 40,
+
+    // Quest goal constants
+    MACHINE_PERSONAL_ACCOUNT_MINIMUM: 5000,
+    PRICING_PERSONAL_ACCOUNT_MINIMUM: 7500,
+    INCREASED_DEMAND_1_PERSONAL_ACCOUNT_MINIMUM: 10000,
+    INCREASED_EFFICIENCY_PERSONAL_ACCOUNT_MINIMUM: 12500,
+    INCREASED_PRODUCTIVITY_PERSONAL_ACCOUNT_MINIMUM: 15000,
+    INCREASED_DEMAND_2_PERSONAL_ACCOUNT_MINIMUM: 17500,
+    REDUCED_PRODUCTION_COST_PERSONAL_ACCOUNT_MINIMUM: 20000
 };
 
 // -------------------
@@ -669,8 +674,10 @@ class SessionService {
             return;
         }
 
-        for (let i = 0; i < machines; i++) {
-            this.produceUnit();
+        for (let m = 0; m < machines; m++) {
+            for (let p = 0; p < this.getCurrentMachineProductivity(); p++) {
+                this.produceUnit();
+            }
         }
     }
 
@@ -697,21 +704,14 @@ class SessionService {
     static canAfford(amount) {
         let companyAccount = Game.Services.ConfigService.get('companyAccount', 0);
 
-        if (!this.isQuestComplete('Overdraft') && companyAccount < amount) {
-            return false;
-        }
-        if (this.isQuestComplete('Overdraft') && companyAccount + Game.OVERDRAFT_AMOUNT < amount) {
-            return false;
-        }
-
-        return true;
+        return companyAccount >= amount;
     }
 
     /**
      * Produces a unit
      */
     static produceUnit() {
-        if (!this.canAfford(Game.PRODUCTION_COST)) {
+        if (!this.canAfford(this.getCurrentProductionCost())) {
             return;
         }
 
@@ -719,7 +719,37 @@ class SessionService {
         let inventory = Game.Services.ConfigService.get('inventory', 0);
 
         Game.Services.ConfigService.set('inventory', inventory + 1);
-        Game.Services.ConfigService.set('companyAccount', companyAccount - Game.PRODUCTION_COST);
+        Game.Services.ConfigService.set('companyAccount', companyAccount - this.getCurrentProductionCost());
+    }
+
+    /**
+     * Gets the current machine productivity
+     *
+     * @returns {Number} Machine productivity
+     */
+    static getCurrentMachineProductivity() {
+        let productivity = Game.MACHINE_PRODUCTIVITY;
+
+        if (this.isQuestComplete('Productivity')) {
+            productivity++;
+        }
+
+        return productivity;
+    }
+
+    /**
+     * Gets the current production cost
+     *
+     * @returns {Number} Current production cost
+     */
+    static getCurrentProductionCost() {
+        let cost = Game.PRODUCTION_COST;
+
+        if (this.isQuestComplete('Cost')) {
+            cost -= cost * 0.1;
+        }
+
+        return cost;
     }
 
     /**
@@ -732,7 +762,7 @@ class SessionService {
         let price = Game.MACHINE_PRICE;
 
         if (machines > 0) {
-            price += Game.MACHINE_PRICE * 0.5 * machines;
+            price = price * Math.pow(1.5, machines);
         }
 
         return price;
@@ -826,8 +856,16 @@ class SessionService {
         if (!btax[year]) {
             btax[year] = {};
         }
+
         if (!btax[year][month]) {
-            btax[year][month] = { isPaid: false, amount: Math.round(Game.Services.ConfigService.get('btaxAmount', 0) / 12) };
+            btax[year][month] = {
+                isPaid: false,
+                amount: 0
+            };
+        }
+
+        if (!btax[year][month].isPaid) {
+            btax[year][month].amount = Math.round(Game.Services.ConfigService.get('btaxAmount', 0) / 12);
         }
 
         return btax[year][month];
@@ -987,8 +1025,6 @@ class SessionService {
         let year = date.getFullYear();
         let quarter = date.getQuarter() - 1;
 
-        let isFirstTime = !Game.Services.ConfigService.get('hasPaidVAT');
-
         if (quarter < 1) {
             quarter = 4;
             year--;
@@ -1008,45 +1044,7 @@ class SessionService {
 
         Game.Services.ConfigService.set('companyAccount', companyAccount - vat.amount);
 
-        Game.Services.ConfigService.set('hasPaidVAT', true);
-
-        return new Promise((resolve, reject) => {
-            if (!isFirstTime) {
-                return resolve();
-            }
-
-            let modal = new Game.Views.Modals.Message({
-                title: 'Time',
-                canSubmit: false,
-                canCancel: false,
-                message: 'Try to speed time up a bit!',
-                focus: {
-                    element: '.drawer--timeline__controls',
-                    side: 'top',
-                    align: 'left'
-                }
-            });
-
-            let ffwdx2 = document.querySelector('button[title="FFWDx2"]');
-            let ffwdx4 = document.querySelector('button[title="FFWDx4"]');
-
-            modal.elevateFocusElement(true, ffwdx2);
-            modal.elevateFocusElement(true, ffwdx4);
-
-            let onClick = () => {
-                modal.close();
-
-                resolve();
-
-                ffwdx2.removeEventListener('click', onClick);
-                ffwdx4.removeEventListener('click', onClick);
-            };
-
-            ffwdx2.addEventListener('click', onClick);
-            ffwdx4.addEventListener('click', onClick);
-        }).then(() => {
-            return Promise.resolve('VAT for ' + year + ' Q' + quarter + ' has been paid');
-        });
+        return Promise.resolve('VAT for ' + year + ' Q' + quarter + ' has been paid');
     }
 
     /**
@@ -1077,7 +1075,7 @@ class SessionService {
         let unitPrice = Game.Services.ConfigService.get('unitPrice', Game.DEFAULT_UNIT_PRICE);
 
         sales += unitPrice * 1.25;
-        cost += Game.PRODUCTION_COST * 1.25;
+        cost += this.getCurrentProductionCost() * 1.25;
 
         this.setSales(year, month, sales);
         this.setCost(year, month, cost);
@@ -1305,13 +1303,17 @@ class SessionService {
     static getDemandFactor() {
         let unitPrice = Game.Services.ConfigService.get('unitPrice', 0);
 
-        // Nobody wants units above 1000 DKK 
-        if (unitPrice > 1000) {
+        // Nobody wants units above 500 DKK 
+        if (unitPrice > 500) {
             return 0;
         }
 
-        if (this.isQuestComplete('Demand')) {
-            return unitPrice / 100 / 2;
+        if (this.isQuestComplete('Demand 2')) {
+            return unitPrice / 100 * 0.8;
+        }
+
+        if (this.isQuestComplete('Demand 1')) {
+            return unitPrice / 100 * 0.9;
         }
 
         return unitPrice / 100;
@@ -1630,7 +1632,7 @@ class Company extends Game.Models.Entity {
      */
     produceUnit() {
         if (this.bankBalance < this.unitProductionCost) {
-            return alert('You do not have enough money to produce more units');
+            return alert('You do not have enough money to produce more ' + Game.Services.ConfigService.get('productName'));
         }
 
         this.inventory++;
@@ -2478,7 +2480,6 @@ class Transfer extends Game.Views.Modals.Modal {
      */
     set max(max) {
         this.element.querySelector('input').max = max;
-        this.element.querySelector('.text-center:last-child').innerHTML = max;
         this.element.querySelector('input').value = max;
         this.amount = max;
 
@@ -2491,9 +2492,9 @@ class Transfer extends Game.Views.Modals.Modal {
     renderBody() {
         let companyAccount = Game.Services.ConfigService.get('companyAccount', 0);
 
-        return _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label text-center' }, 0), _.input({ class: 'widget widget--range', type: 'range', min: 0, max: companyAccount }).on('input', e => {
+        return _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Transfer'), _.input({ class: 'widget widget--input', value: 0, type: 'number', min: 0, max: companyAccount }).on('input', e => {
             this.onChangeAmount(e.currentTarget.value);
-        }), _.div({ class: 'widget widget--label text-center' }, companyAccount));
+        }), _.div({ class: 'widget widget--label' }, 'DKK'));
     }
 
     /**
@@ -2503,6 +2504,15 @@ class Transfer extends Game.Views.Modals.Modal {
      */
     onChangeAmount(amount) {
         this.amount = parseFloat(amount);
+
+        let companyAccount = Game.Services.ConfigService.get('companyAccount', 0);
+
+        if (this.amount < 0) {
+            this.amount = 0;
+        }
+        if (this.amount > companyAccount) {
+            this.amount = companyAccount;
+        }
 
         this.update();
     }
@@ -3053,7 +3063,7 @@ class Timeline extends Game.Views.Drawers.Drawer {
             this.onClickFastForward(2);
         }), _.button({ class: 'widget widget--button blue small' + (this.state === 'ffwdx4' ? ' active' : ''), title: 'FFWDx4' }, '⏭').click(() => {
             this.onClickFastForward(4);
-        }))), _.div({ dynamicContent: true, class: 'drawer--timeline__scroller' }, _.div({ class: 'drawer--timeline__scroller__year' }, date.getFullYear()), _.div({ class: 'drawer--timeline__scroller__month' }, date.getMonthName()), _.div({ class: 'drawer--timeline__scroller__days' }, _.loop(60, day => {
+        }))), _.div({ class: 'drawer--timeline__indicator' }, 'Present day'), _.div({ dynamicContent: true, class: 'drawer--timeline__scroller' }, _.div({ class: 'drawer--timeline__scroller__year' }, date.getFullYear()), _.div({ class: 'drawer--timeline__scroller__month' }, date.getMonthName()), _.div({ class: 'drawer--timeline__scroller__days' }, _.loop(60, day => {
             let currentDate = new Date(date);
 
             currentDate.addDays(day);
@@ -3096,20 +3106,32 @@ class QuestLog extends Game.Views.Drawers.Drawer {
     constructor(params) {
         super(params);
 
-        this.setQuest('Pricing', 'Reach 💰 ' + Game.PRICING_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to set unit prices', () => {
-            return this.personalAccount >= Game.PRICING_PERSONAL_ACCOUNT_MINIMUM;
-        });
-
-        this.setQuest('Machines', 'Reach 💰 ' + Game.MACHINE_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to get machines', () => {
+        this.setQuest('Machines', 'Reach 💰 ' + Game.MACHINE_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to get machines that automate production!', () => {
             return this.personalAccount >= Game.MACHINE_PERSONAL_ACCOUNT_MINIMUM;
         });
 
-        this.setQuest('Overdraft', 'Reach 💰 ' + Game.OVERDRAFT_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to get an overdraft allowance', () => {
-            return this.personalAccount >= Game.OVERDRAFT_PERSONAL_ACCOUNT_MINIMUM;
+        this.setQuest('Pricing', 'Reach 💰 ' + Game.PRICING_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to set the price of your ' + Game.Services.ConfigService.get('productName') + '!', () => {
+            return this.personalAccount >= Game.PRICING_PERSONAL_ACCOUNT_MINIMUM;
         });
 
-        this.setQuest('Demand', 'Reach 💰 ' + Game.INCREASED_DEMAND_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to double the demand', () => {
-            return this.personalAccount >= Game.INCREASED_DEMAND_PERSONAL_ACCOUNT_MINIMUM;
+        this.setQuest('Demand 1', 'Reach 💰 ' + Game.INCREASED_DEMAND_1_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to increase the demand for ' + Game.Services.ConfigService.get('productName') + '!', () => {
+            return this.personalAccount >= Game.INCREASED_DEMAND_1_PERSONAL_ACCOUNT_MINIMUM;
+        });
+
+        this.setQuest('Efficiency', 'Reach 💰 ' + Game.INCREASED_EFFICIENCY_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to produce 2 ' + Game.Services.ConfigService.get('productName') + ' per click!', () => {
+            return this.personalAccount >= Game.INCREASED_EFFICIENCY_PERSONAL_ACCOUNT_MINIMUM;
+        });
+
+        this.setQuest('Productivity', 'Reach 💰 ' + Game.INCREASED_PRODUCTIVITY_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to increase machine productivity!', () => {
+            return this.personalAccount >= Game.INCREASED_PRODUCTIVITY_PERSONAL_ACCOUNT_MINIMUM;
+        });
+
+        this.setQuest('Demand 2', 'Reach 💰 ' + Game.INCREASED_DEMAND_2_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to increase the demand for ' + Game.Services.ConfigService.get('productName') + '!', () => {
+            return this.personalAccount >= Game.INCREASED_DEMAND_2_PERSONAL_ACCOUNT_MINIMUM;
+        });
+
+        this.setQuest('Cost', 'Reach 💰 ' + Game.REDUCED_PRODUCTION_COST_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to lower the production cost of your ' + Game.Services.ConfigService.get('productName') + '!', () => {
+            return this.personalAccount >= Game.REDUCED_PRODUCTION_COST_PERSONAL_ACCOUNT_MINIMUM;
         });
 
         this.fetch();
@@ -3213,6 +3235,15 @@ class Stats extends Game.Views.Drawers.Drawer {
      */
     renderContent() {
         return _.div({ class: 'drawer__preview drawer--stats__preview' }, _.div({ class: 'drawer--stats__preview__company' }, _.div({ dynamicContent: true, class: 'widget widget--label text-center drawer--stats__company-account' }, '🏭 ' + Game.Services.ConfigService.get('companyAccount', 0) + ' DKK')), _.div({ class: 'drawer--stats__preview__transactions' }, _.button({ class: 'widget widget--button blue align-center' }, 'Transfer ➜').click(() => {
+            let companyAccount = Game.Services.ConfigService.get('companyAccount', 0);
+
+            if (companyAccount <= 0) {
+                return new Game.Views.Modals.Message({
+                    title: 'Not enough cash!',
+                    message: 'You don\'t have any money in your company account'
+                });
+            }
+
             let expired = Crisp.View.get('Notifications').getExpiredNotification();
 
             if (expired) {
@@ -3383,7 +3414,7 @@ class Notifications extends Game.Views.Drawers.Drawer {
 
                         new Game.Views.Modals.Message({
                             title: 'Error',
-                            message: e.message
+                            message: e.message || e
                         });
                     });
                 });
@@ -3426,7 +3457,7 @@ class Notifications extends Game.Views.Drawers.Drawer {
      * @param {Object} notification
      */
     onReachFinancialReport(notification) {
-        return Game.Services.SessionService.financialReport(new Date());
+        return Game.Services.SessionService.financialReport(Game.Services.TimeService.currentTime);
     }
 }
 
@@ -3477,6 +3508,10 @@ class Controls extends Game.Views.Drawers.Drawer {
     onClickProduce() {
         Game.Services.SessionService.produceUnit();
 
+        if (Game.Services.SessionService.isQuestComplete('Efficiency')) {
+            Game.Services.SessionService.produceUnit();
+        }
+
         this.heartbeat();
     }
 
@@ -3489,19 +3524,19 @@ class Controls extends Game.Views.Drawers.Drawer {
 
         return [
         // Unit price
-        _.if(Game.Services.SessionService.isQuestComplete('Pricing'), _.div({ class: 'drawer--controls__heading' }, 'Pricing'), _.div({ class: 'widget-group' }, _.div({ dynamicContent: true, class: 'widget widget--label' }, 'Unit price'), _.input({ class: 'widget widget--input small drawer--controls__pricing__input', type: 'number', value: Game.Services.ConfigService.get('unitPrice', Game.DEFAULT_UNIT_PRICE) }).on('input', e => {
+        _.div({ class: 'drawer--controls__heading' }, 'Pricing'), _.div({ class: 'widget-group' }, _.div({ dynamicContent: true, class: 'widget widget--label' }, 'Unit price:'), _.input({ disabled: !Game.Services.SessionService.isQuestComplete('Pricing'), class: 'widget widget--input small drawer--controls__pricing__input', type: 'number', value: Game.Services.ConfigService.get('unitPrice', Game.DEFAULT_UNIT_PRICE) }).on('input', e => {
             this.onChangeUnitPrice(e.currentTarget.value);
-        }), _.div({ class: 'widget widget--label small' }, _.span({ class: 'vat' }))), _.div({ dynamicContent: true }, 'Demand (sales per day): ' + Game.Services.SessionService.getSalesPerDay() + ' units')),
+        }), _.div({ class: 'widget widget--label small' }, _.span({ class: 'vat' }))), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Demand:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.SessionService.getSalesPerDay() + ' ' + Game.Services.ConfigService.get('productName') + ' sold per day')),
 
         // Machines
         _.if(Game.Services.SessionService.isQuestComplete('Machines'), _.div({ dynamicContent: true, class: 'drawer--controls__heading' }, 'Machines: ' + Game.Services.ConfigService.get('machines', 0)), _.div({ class: 'widget-group' }, _.button({ dynamicAttributes: true, class: 'widget widget--button blue drawer--controls__buy-machine' }, 'Buy machine').click(e => {
             this.onClickBuyMachine();
-        }), _.div({ dynamicContent: true, class: 'widget widget--label text-right vat' }, Game.Services.SessionService.getCurrentMachinePrice() + ' DKK'))),
+        }), _.div({ dynamicContent: true, class: 'widget widget--label text-right vat' }, Game.Services.SessionService.getCurrentMachinePrice() + ' DKK')), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Productivity:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.ConfigService.get('machines', 0) * Game.Services.SessionService.getCurrentMachineProductivity() + ' ' + Game.Services.ConfigService.get('productName') + ' per day'))),
 
         // Inventory
         _.div({ dynamicContent: true, class: 'drawer--controls__heading' }, 'Inventory: ' + Game.Services.ConfigService.get('inventory', 0)), _.div({ class: 'widget-group' }, _.button({ class: 'widget widget--button blue drawer--controls__produce' }, 'Produce').click(e => {
             this.onClickProduce();
-        }), _.div({ class: 'widget widget--label text-right vat' }, Game.PRODUCTION_COST + ' DKK')),
+        }), _.div({ dynamicContent: true, class: 'widget widget--label text-right vat' }, Game.Services.SessionService.getCurrentProductionCost() + ' DKK')),
 
         // Statistics
         _.div({ class: 'drawer--controls__heading' }, 'Statistics for ' + year), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Estimated profit:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.ConfigService.get('estimatedIncome', 0) + ' DKK')), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Sales:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, Game.Services.SessionService.getSales(year) + ' DKK')), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Cost:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right' }, '(' + Game.Services.SessionService.getCost(year) + ' DKK)')), _.div({ class: 'widget-group' }, _.div({ class: 'widget widget--label' }, 'Actual profit:'), _.div({ dynamicContent: true, class: 'widget widget--label text-right drawer--controls__actual-profit' }, Game.Services.SessionService.getSales(year) - Game.Services.SessionService.getCost(year) + ' DKK'))];
@@ -3609,9 +3644,9 @@ class PieChart extends Crisp.View {
             };
         }
 
-        let startPercent = this.model[name].percent;
+        let startPercent = this.model[name].percent || 0;
         let startColor = this.model[name].color || slice.color;
-        let startValue = this.model[name].value || slice.value;
+        let startValue = this.model[name].value || slice.value || 0;
 
         this.model[name].percent = startPercent;
         this.model[name].color = startColor;
@@ -3623,9 +3658,9 @@ class PieChart extends Crisp.View {
         let time = Date.now();
 
         if (duration <= 0) {
-            this.model[name].percent = slice.percent;
+            this.model[name].percent = slice.percent || 0;
             this.model[name].color = slice.color;
-            this.model[name].value = slice.value;
+            this.model[name].value = slice.value || 0;
 
             _.replace(this.svg, this.renderSlices());
             return;
@@ -3637,8 +3672,8 @@ class PieChart extends Crisp.View {
 
             time = Date.now();
 
-            this.model[name].percent = PieChart.lerp(startPercent, slice.percent, amount);
-            this.model[name].value = PieChart.lerp(startValue, slice.value, amount);
+            this.model[name].percent = PieChart.lerp(startPercent, slice.percent, amount) || 0;
+            this.model[name].value = PieChart.lerp(startValue, slice.value, amount) || 0;
 
             _.replace(this.svg, this.renderSlices());
             _.replace(this.labels, this.renderLabels());
@@ -3996,6 +4031,15 @@ class Setup extends Crisp.View {
     }
 
     /**
+     * Event: Change product
+     *
+     * @param {InputEvent} e
+     */
+    onChangeProduct(e) {
+        this.model.productName = e.currentTarget.value || 'units';
+    }
+
+    /**
      * Event: Click next
      *
      * @param {InputEvent} e
@@ -4007,6 +4051,7 @@ class Setup extends Crisp.View {
         Game.Services.ConfigService.set('personalAccount', this.model.total - this.model.capital);
         Game.Services.ConfigService.set('companyAccount', this.model.capital);
         Game.Services.ConfigService.set('companyName', this.model.name);
+        Game.Services.ConfigService.set('productName', this.model.productName || 'units');
 
         Crisp.Router.go('/b-tax-estimation');
     }
@@ -4019,6 +4064,8 @@ class Setup extends Crisp.View {
             this.onChangeName(e);
         })), _.div({ class: 'widget-group align-center' }, _.label({ class: 'widget widget--label' }, 'Capital'), _.input({ class: 'widget widget--input', type: 'number', min: 0, max: this.model.account, step: 1000, name: 'capital', placeholder: 'E.g. 3000', value: this.model.capital }).on('input', e => {
             this.onChangeCapital(e);
+        })), _.div({ class: 'widget-group align-center' }, _.label({ class: 'widget widget--label' }, 'Product'), _.input({ class: 'widget widget--input', type: 'text', name: 'productName', placeholder: 'E.g. kittens or lasers' }).on('input', e => {
+            this.onChangeProduct(e);
         }))), this.pieChart = new Game.Views.Charts.PieChart({
             className: 'page--setup__pie-chart',
             model: {
@@ -4180,7 +4227,7 @@ class BTaxEstimation extends Crisp.View {
      * Template
      */
     template() {
-        return _.div({ class: 'page page--b-tax-estimation' }, _.div({ class: 'page__container' }, _.h1({ class: 'page__title' }, 'B tax estimation for ' + Game.Services.TimeService.currentYear), _.p({ class: 'widget widget--label text-center' }, 'Estimate how much profit you will make in the coming year, you will pay your b-tax based on this amount'), _.div({ class: 'page--b-tax-estimation__input' }, _.div({ class: 'widget-group align-center' }, _.label({ class: 'widget widget--label' }, 'Target profit for ' + Game.Services.TimeService.currentYear), _.input({ class: 'widget widget--input', type: 'number', step: 1000, min: 0, value: this.model.income }).on('input', e => {
+        return _.div({ class: 'page page--b-tax-estimation' }, _.div({ class: 'page__container' }, _.h1({ class: 'page__title' }, 'B tax estimation for ' + Game.Services.TimeService.currentYear), _.p({ class: 'widget widget--label text-center' }, 'Estimate how much profit you will make selling ' + Game.Services.ConfigService.get('productName') + ' in the coming year.<br>You will pay your B tax based on this amount.'), _.div({ class: 'page--b-tax-estimation__input' }, _.div({ class: 'widget-group align-center' }, _.label({ class: 'widget widget--label' }, 'Target profit for ' + Game.Services.TimeService.currentYear), _.input({ class: 'widget widget--input', type: 'number', step: 1000, min: 0, value: this.model.income }).on('input', e => {
             this.onChangeIncome(e);
         })), _.button({ class: 'widget widget--button blue align-center' }, 'Calculate B tax').click(e => {
             this.onClickCalculate(e);
@@ -4289,7 +4336,7 @@ class Session extends Crisp.View {
         this.stats.heartbeat();
 
         // Update coin stack
-        let stackAmount = Math.round(Game.Services.ConfigService.get('personalAccount', 0) / 1000);
+        let stackAmount = Math.round(Game.Services.ConfigService.get('personalAccount', 0) / 100);
 
         if (stackAmount !== this.coinStack.amount) {
             this.coinStack.amount = stackAmount;
@@ -4309,7 +4356,7 @@ class Session extends Crisp.View {
             title: 'Change unit prices',
             canCancel: false,
             canSubmit: false,
-            message: 'You can now change unit prices! Let\'s set the price to 30 DKK now.',
+            message: 'You can now change unit prices, which will affect the demand for your ' + Game.Services.ConfigService.get('productName') + '! Let\'s set the price to 30 DKK now.',
             focus: {
                 element: '.drawer--controls__pricing__input',
                 side: 'right',
@@ -4346,7 +4393,7 @@ class Session extends Crisp.View {
         new Game.Views.Modals.Message({
             title: 'Machines',
             canCancel: false,
-            message: 'You can now buy machines! Click here to buy one and automate your unit production.',
+            message: 'You can now buy machines! Click here to buy one and automatically produce ' + Game.Services.ConfigService.get('productName') + '! Each machine produces ' + Game.Services.SessionService.getCurrentMachineProductivity() + ' ' + Game.Services.ConfigService.get('productName') + ' per day',
             focus: {
                 element: '.drawer--controls__buy-machine',
                 side: 'right',
@@ -4420,7 +4467,7 @@ class Session extends Crisp.View {
                 title: 'Produce',
                 canCancel: false,
                 canSubmit: false,
-                message: 'Press this button to produce units for selling. Let\'s produce 5 units now.',
+                message: 'Press this button to produce ' + Game.Services.ConfigService.get('productName') + ' for selling. Let\'s produce 5 ' + Game.Services.ConfigService.get('productName') + ' now.',
                 focus: {
                     element: '.drawer--controls__produce',
                     side: 'right',
@@ -4490,47 +4537,58 @@ class Session extends Crisp.View {
                 new Game.Views.Modals.Message({
                     title: 'Personal account',
                     canCancel: false,
-                    message: 'This is the money you own privately, when you reach certain amount you can unlock upgrades. The more money you have here the more coins you will have!',
+                    message: 'This is the money you own privately, when you reach certain amount you can unlock upgrades!',
                     focus: {
                         element: '.drawer--stats__personal-account',
                         side: 'bottom',
                         align: 'right'
                     }
                 }).on('ok', () => {
-                    let modal = new Game.Views.Modals.Message({
-                        title: 'Transfer',
+                    new Game.Views.Modals.Message({
+                        title: 'Coins',
                         canCancel: false,
-                        canSubmit: false,
-                        message: 'You can transfer money from your company account to your personal account. Let\'s transfer 100 DKK now',
+                        message: 'This stack of coins represents the money in your personal account',
                         focus: {
-                            element: '.drawer--stats__preview__transactions button',
-                            side: 'bottom',
+                            element: '.coin-stack__stack',
+                            side: 'top',
                             align: 'center'
                         }
-                    });
-
-                    let button = modal.focusElement;
-
-                    modal.elevateFocusElement(true);
-
-                    let onClick = e => {
-                        button.removeEventListener('click', onClick);
-
-                        setTimeout(() => {
-                            let modal = Crisp.View.get('Transfer');
-
-                            modal.on('submit', () => {
-                                time();
-                            });
-
-                            modal.max = 100;
+                    }).on('ok', () => {
+                        let modal = new Game.Views.Modals.Message({
+                            title: 'Transfer',
+                            canCancel: false,
+                            canSubmit: false,
+                            message: 'You can transfer money from your company account to your personal account. Let\'s transfer 100 DKK now',
+                            focus: {
+                                element: '.drawer--stats__preview__transactions button',
+                                side: 'bottom',
+                                align: 'center'
+                            }
                         });
 
-                        modal.elevateFocusElement(false);
-                        modal.close();
-                    };
+                        let button = modal.focusElement;
 
-                    button.addEventListener('click', onClick);
+                        modal.elevateFocusElement(true);
+
+                        let onClick = e => {
+                            button.removeEventListener('click', onClick);
+
+                            setTimeout(() => {
+                                let modal = Crisp.View.get('Transfer');
+
+                                modal.on('submit', () => {
+                                    time();
+                                });
+
+                                modal.max = 100;
+                            });
+
+                            modal.elevateFocusElement(false);
+                            modal.close();
+                        };
+
+                        button.addEventListener('click', onClick);
+                    });
                 });
             });
         };
@@ -4543,7 +4601,7 @@ class Session extends Crisp.View {
      */
     template() {
         return _.div({ class: 'page page--session' }, _.div({ class: 'page--session__panel top' }, this.stats = new Game.Views.Drawers.Stats()), _.div({ class: 'page--session__panel middle' }, _.div({ class: 'page--session__panel left' }, this.controls = new Game.Views.Drawers.Controls()), _.div({ class: 'page--session__panel center' }, this.coinStack = new Game.Views.Charts.CoinStack({
-            amount: Math.round(Game.Services.ConfigService.get('personalAccount', 0) / 1000)
+            amount: Math.round(Game.Services.ConfigService.get('personalAccount', 0) / 100)
         })), _.div({ class: 'page--session__panel right' }, this.questLog = new Game.Views.Drawers.QuestLog(), this.notifications = new Game.Views.Drawers.Notifications())), _.div({ class: 'page--session__panel bottom' }, this.timeline = new Game.Views.Drawers.Timeline()));
     }
 }

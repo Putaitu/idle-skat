@@ -215,6 +215,7 @@ class Timeline extends Game.Views.Drawers.Drawer {
                         .click(() => { this.onClickFastForward(4); })
                 )
             ),
+            _.div({class: 'drawer--timeline__indicator'}, 'Present day'),
             _.div({dynamicContent: true, class: 'drawer--timeline__scroller'},
                 _.div({class: 'drawer--timeline__scroller__year'},
                     date.getFullYear()

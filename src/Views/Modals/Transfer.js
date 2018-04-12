@@ -27,7 +27,6 @@ class Transfer extends Game.Views.Modals.Modal {
      */
     set max(max) {
         this.element.querySelector('input').max = max;
-        this.element.querySelector('.text-center:last-child').innerHTML = max;
         this.element.querySelector('input').value = max;
         this.amount = max;
 
@@ -41,10 +40,10 @@ class Transfer extends Game.Views.Modals.Modal {
         let companyAccount = Game.Services.ConfigService.get('companyAccount', 0);
 
         return _.div({class: 'widget-group'},
-            _.div({class: 'widget widget--label text-center'}, 0),
-            _.input({class: 'widget widget--range', type: 'range', min: 0, max: companyAccount})
+            _.div({class: 'widget widget--label'}, 'Transfer'),
+            _.input({class: 'widget widget--input', value: 0, type: 'number', min: 0, max: companyAccount})
                 .on('input', (e) => { this.onChangeAmount(e.currentTarget.value); }),
-            _.div({class: 'widget widget--label text-center'}, companyAccount)
+            _.div({class: 'widget widget--label'}, 'DKK')
         );
     }
 
@@ -55,6 +54,11 @@ class Transfer extends Game.Views.Modals.Modal {
      */
     onChangeAmount(amount) {
         this.amount = parseFloat(amount);
+
+        let companyAccount = Game.Services.ConfigService.get('companyAccount', 0);
+
+        if(this.amount < 0) { this.amount = 0; }
+        if(this.amount > companyAccount) { this.amount = companyAccount; }
 
         this.update();
     }

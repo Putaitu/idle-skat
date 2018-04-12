@@ -16,6 +16,37 @@
             margin: 0;
         }
     }
+    
+    &__indicator {
+        position: absolute;
+        bottom: calc(100% + 1rem);
+        left: 8rem;
+        color: white;
+        background-color: dimgrey;
+        transform-origin: 0% 100%;
+        display: block;
+        padding: 0.25rem 0.5rem;
+        line-height: 1;
+        white-space: nowrap;
+        font-weight: bold;
+        font-size: 0.7rem;
+        border-radius: 0.2rem;
+        z-index: 30;
+
+        &:after {
+           top: 100%;
+           left: 0.75rem;
+           border: solid transparent;
+           content: '';
+           height: 0;
+           width: 0;
+           position: absolute;
+           pointer-events: none;
+           border-width: 0.5rem;
+           margin-left: -0.5rem;
+           border-top-color: dimgrey;
+        } 
+    }
 
     &__scroller {
         overflow: hidden;

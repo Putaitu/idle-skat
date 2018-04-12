@@ -37,6 +37,10 @@ class Controls extends Game.Views.Drawers.Drawer {
     onClickProduce() {
         Game.Services.SessionService.produceUnit();
 
+        if(Game.Services.SessionService.isQuestComplete('Efficiency')) {
+            Game.Services.SessionService.produceUnit();
+        }
+
         this.heartbeat();
     }
 
@@ -49,15 +53,16 @@ class Controls extends Game.Views.Drawers.Drawer {
 
         return [
             // Unit price
-            _.if(Game.Services.SessionService.isQuestComplete('Pricing'),
-                _.div({class: 'drawer--controls__heading'}, 'Pricing'),
-                _.div({class: 'widget-group'},
-                    _.div({dynamicContent: true, class: 'widget widget--label'}, 'Unit price'),
-                    _.input({class: 'widget widget--input small drawer--controls__pricing__input', type: 'number', value: Game.Services.ConfigService.get('unitPrice', Game.DEFAULT_UNIT_PRICE)})
-                        .on('input', (e) => { this.onChangeUnitPrice(e.currentTarget.value); }),
-                    _.div({class: 'widget widget--label small'}, _.span({class: 'vat'}))
-                ),
-                _.div({dynamicContent: true}, 'Demand (sales per day): ' + Game.Services.SessionService.getSalesPerDay() + ' units')
+            _.div({class: 'drawer--controls__heading'}, 'Pricing'),
+            _.div({class: 'widget-group'},
+                _.div({dynamicContent: true, class: 'widget widget--label'}, 'Unit price:'),
+                _.input({disabled: !Game.Services.SessionService.isQuestComplete('Pricing'), class: 'widget widget--input small drawer--controls__pricing__input', type: 'number', value: Game.Services.ConfigService.get('unitPrice', Game.DEFAULT_UNIT_PRICE)})
+                    .on('input', (e) => { this.onChangeUnitPrice(e.currentTarget.value); }),
+                _.div({class: 'widget widget--label small'}, _.span({class: 'vat'}))
+            ),
+            _.div({class: 'widget-group'},
+                _.div({class: 'widget widget--label'}, 'Demand:'),
+                _.div({dynamicContent: true, class: 'widget widget--label text-right'}, Game.Services.SessionService.getSalesPerDay() + ' ' + Game.Services.ConfigService.get('productName') + ' sold per day')
             ),
 
             // Machines
@@ -67,6 +72,10 @@ class Controls extends Game.Views.Drawers.Drawer {
                     _.button({dynamicAttributes: true, class: 'widget widget--button blue drawer--controls__buy-machine'}, 'Buy machine')
                         .click((e) => { this.onClickBuyMachine(); }),
                     _.div({dynamicContent: true, class: 'widget widget--label text-right vat'}, Game.Services.SessionService.getCurrentMachinePrice() + ' DKK')
+                ),
+                _.div({class: 'widget-group'},
+                    _.div({class: 'widget widget--label'}, 'Productivity:'),
+                    _.div({dynamicContent: true, class: 'widget widget--label text-right'}, (Game.Services.ConfigService.get('machines', 0) * Game.Services.SessionService.getCurrentMachineProductivity()) + ' ' + Game.Services.ConfigService.get('productName') + ' per day'),
                 )
             ),
 
@@ -75,7 +84,7 @@ class Controls extends Game.Views.Drawers.Drawer {
             _.div({class: 'widget-group'},
                 _.button({class: 'widget widget--button blue drawer--controls__produce'}, 'Produce')
                     .click((e) => { this.onClickProduce(); }),
-                _.div({class: 'widget widget--label text-right vat'}, Game.PRODUCTION_COST + ' DKK')
+                _.div({dynamicContent: true, class: 'widget widget--label text-right vat'}, Game.Services.SessionService.getCurrentProductionCost() + ' DKK')
             ),
 
             // Statistics

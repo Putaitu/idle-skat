@@ -11,27 +11,45 @@ class QuestLog extends Game.Views.Drawers.Drawer {
         super(params);
         
         this.setQuest(
-            'Pricing',
-            'Reach 💰 ' + Game.PRICING_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to set unit prices',
-            () => { return this.personalAccount >= Game.PRICING_PERSONAL_ACCOUNT_MINIMUM; }
-        );
-
-        this.setQuest(
             'Machines',
-            'Reach 💰 ' + Game.MACHINE_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to get machines',
+            'Reach 💰 ' + Game.MACHINE_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to get machines that automate production!',
             () => { return this.personalAccount >= Game.MACHINE_PERSONAL_ACCOUNT_MINIMUM; }
         );
         
         this.setQuest(
-            'Overdraft',
-            'Reach 💰 ' + Game.OVERDRAFT_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to get an overdraft allowance',
-            () => { return this.personalAccount >= Game.OVERDRAFT_PERSONAL_ACCOUNT_MINIMUM; }
+            'Pricing',
+            'Reach 💰 ' + Game.PRICING_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to set the price of your ' + Game.Services.ConfigService.get('productName') + '!',
+            () => { return this.personalAccount >= Game.PRICING_PERSONAL_ACCOUNT_MINIMUM; }
+        );
+
+        this.setQuest(
+            'Demand 1',
+            'Reach 💰 ' + Game.INCREASED_DEMAND_1_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to increase the demand for ' + Game.Services.ConfigService.get('productName') + '!',
+            () => { return this.personalAccount >= Game.INCREASED_DEMAND_1_PERSONAL_ACCOUNT_MINIMUM; }
         );
         
         this.setQuest(
-            'Demand',
-            'Reach 💰 ' + Game.INCREASED_DEMAND_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to double the demand',
-            () => { return this.personalAccount >= Game.INCREASED_DEMAND_PERSONAL_ACCOUNT_MINIMUM; }
+            'Efficiency',
+            'Reach 💰 ' + Game.INCREASED_EFFICIENCY_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to produce 2 ' + Game.Services.ConfigService.get('productName') + ' per click!',
+            () => { return this.personalAccount >= Game.INCREASED_EFFICIENCY_PERSONAL_ACCOUNT_MINIMUM; }
+        );
+        
+        this.setQuest(
+            'Productivity',
+            'Reach 💰 ' + Game.INCREASED_PRODUCTIVITY_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to increase machine productivity!',
+            () => { return this.personalAccount >= Game.INCREASED_PRODUCTIVITY_PERSONAL_ACCOUNT_MINIMUM; }
+        );
+        
+        this.setQuest(
+            'Demand 2',
+            'Reach 💰 ' + Game.INCREASED_DEMAND_2_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to increase the demand for ' + Game.Services.ConfigService.get('productName') + '!',
+            () => { return this.personalAccount >= Game.INCREASED_DEMAND_2_PERSONAL_ACCOUNT_MINIMUM; }
+        );
+        
+        this.setQuest(
+            'Cost',
+            'Reach 💰 ' + Game.REDUCED_PRODUCTION_COST_PERSONAL_ACCOUNT_MINIMUM + ' DKK in your personal account to lower the production cost of your ' + Game.Services.ConfigService.get('productName') + '!',
+            () => { return this.personalAccount >= Game.REDUCED_PRODUCTION_COST_PERSONAL_ACCOUNT_MINIMUM; }
         );
 
         this.fetch();

@@ -12,8 +12,10 @@ class SessionService {
 
         if(machines < 1) { return; }
         
-        for(let i = 0; i < machines; i++) {
-            this.produceUnit();
+        for(let m = 0; m < machines; m++) {
+            for(let p = 0; p < this.getCurrentMachineProductivity(); p++) {
+                this.produceUnit();
+            }
         }
     }
 
@@ -40,23 +42,50 @@ class SessionService {
     static canAfford(amount) {
         let companyAccount = Game.Services.ConfigService.get('companyAccount', 0);
 
-        if(!this.isQuestComplete('Overdraft') && companyAccount < amount) { return false; }
-        if(this.isQuestComplete('Overdraft') && companyAccount + Game.OVERDRAFT_AMOUNT < amount) { return false; }
-
-        return true;
+        return companyAccount >= amount;
     }
 
     /**
      * Produces a unit
      */
     static produceUnit() {
-        if(!this.canAfford(Game.PRODUCTION_COST)) { return; }
+        if(!this.canAfford(this.getCurrentProductionCost())) { return; }
 
         let companyAccount = Game.Services.ConfigService.get('companyAccount', 0);
         let inventory = Game.Services.ConfigService.get('inventory', 0);
 
         Game.Services.ConfigService.set('inventory', inventory + 1);
-        Game.Services.ConfigService.set('companyAccount', companyAccount - Game.PRODUCTION_COST);
+        Game.Services.ConfigService.set('companyAccount', companyAccount - this.getCurrentProductionCost());
+    }
+
+    /**
+     * Gets the current machine productivity
+     *
+     * @returns {Number} Machine productivity
+     */
+    static getCurrentMachineProductivity() {
+        let productivity = Game.MACHINE_PRODUCTIVITY;
+
+        if(this.isQuestComplete('Productivity')) {
+            productivity++;
+        }
+
+        return productivity;
+    }
+
+    /**
+     * Gets the current production cost
+     *
+     * @returns {Number} Current production cost
+     */
+    static getCurrentProductionCost() {
+        let cost = Game.PRODUCTION_COST;
+
+        if(this.isQuestComplete('Cost')) {
+            cost -= cost * 0.1;
+        }
+
+        return cost;
     }
 
     /**
@@ -69,7 +98,7 @@ class SessionService {
         let price = Game.MACHINE_PRICE;
 
         if(machines > 0) {
-            price += (Game.MACHINE_PRICE * 0.5) * machines;
+            price = price * Math.pow(1.5, machines);
         }
 
         return price;
@@ -158,8 +187,20 @@ class SessionService {
     static getBTax(year, month) {
         let btax = Game.Services.ConfigService.get('btax', {});
 
-        if(!btax[year]) { btax[year] = {}; }
-        if(!btax[year][month]) { btax[year][month] = { isPaid: false, amount: Math.round(Game.Services.ConfigService.get('btaxAmount', 0) / 12) }; }
+        if(!btax[year]) {
+            btax[year] = {};
+        }
+       
+        if(!btax[year][month]) {
+            btax[year][month] = {
+                isPaid: false,
+                amount: 0
+            };
+        }
+        
+        if(!btax[year][month].isPaid) {
+            btax[year][month].amount = Math.round(Game.Services.ConfigService.get('btaxAmount', 0) / 12);
+        }
 
         return btax[year][month];
     }
@@ -298,8 +339,6 @@ class SessionService {
         let year = date.getFullYear();
         let quarter = date.getQuarter() - 1;
 
-        let isFirstTime = !Game.Services.ConfigService.get('hasPaidVAT');
-
         if(quarter < 1) {
             quarter = 4;
             year--;
@@ -317,45 +356,7 @@ class SessionService {
 
         Game.Services.ConfigService.set('companyAccount', companyAccount - vat.amount);
 
-        Game.Services.ConfigService.set('hasPaidVAT', true);
-
-        return new Promise((resolve, reject) => {
-            if(!isFirstTime) { return resolve(); }
-
-            let modal = new Game.Views.Modals.Message({
-                title: 'Time',
-                canSubmit: false,
-                canCancel: false,
-                message: 'Try to speed time up a bit!',
-                focus: {
-                    element: '.drawer--timeline__controls',
-                    side: 'top',
-                    align: 'left'
-                }
-            });
-
-            let ffwdx2 = document.querySelector('button[title="FFWDx2"]');
-            let ffwdx4 = document.querySelector('button[title="FFWDx4"]');
-
-            modal.elevateFocusElement(true, ffwdx2); 
-            modal.elevateFocusElement(true, ffwdx4); 
-
-            let onClick = () => {
-                modal.close();
-            
-                resolve();
-        
-                ffwdx2.removeEventListener('click', onClick);
-                ffwdx4.removeEventListener('click', onClick);
-            };
-
-            ffwdx2.addEventListener('click', onClick);
-            ffwdx4.addEventListener('click', onClick);
-
-        })
-        .then(() => {
-            return Promise.resolve('VAT for ' + year + ' Q' + quarter + ' has been paid');
-        });
+        return Promise.resolve('VAT for ' + year + ' Q' + quarter + ' has been paid');
     }
 
     /**
@@ -384,7 +385,7 @@ class SessionService {
         let unitPrice = Game.Services.ConfigService.get('unitPrice', Game.DEFAULT_UNIT_PRICE);
 
         sales += unitPrice * 1.25;
-        cost += Game.PRODUCTION_COST * 1.25;
+        cost += this.getCurrentProductionCost() * 1.25;
 
         this.setSales(year, month, sales);
         this.setCost(year, month, cost);
@@ -580,13 +581,17 @@ class SessionService {
     static getDemandFactor() {
         let unitPrice = Game.Services.ConfigService.get('unitPrice', 0);
 
-        // Nobody wants units above 1000 DKK 
-        if(unitPrice > 1000) {
+        // Nobody wants units above 500 DKK 
+        if(unitPrice > 500) {
             return 0;
         }
+        
+        if(this.isQuestComplete('Demand 2')) {
+            return (unitPrice/100) * 0.8;
+        }
 
-        if(this.isQuestComplete('Demand')) {
-            return (unitPrice/100) / 2;
+        if(this.isQuestComplete('Demand 1')) {
+            return (unitPrice/100) * 0.9;
         }
 
         return unitPrice/100;

@@ -64,6 +64,15 @@ class Setup extends Crisp.View {
     }
 
     /**
+     * Event: Change product
+     *
+     * @param {InputEvent} e
+     */
+    onChangeProduct(e) {
+        this.model.productName = e.currentTarget.value || 'units';
+    }
+
+    /**
      * Event: Click next
      *
      * @param {InputEvent} e
@@ -75,6 +84,7 @@ class Setup extends Crisp.View {
         Game.Services.ConfigService.set('personalAccount', this.model.total - this.model.capital);
         Game.Services.ConfigService.set('companyAccount', this.model.capital);
         Game.Services.ConfigService.set('companyName', this.model.name);
+        Game.Services.ConfigService.set('productName', this.model.productName || 'units');
 
         Crisp.Router.go('/b-tax-estimation');
     }
@@ -96,6 +106,11 @@ class Setup extends Crisp.View {
                         _.label({class: 'widget widget--label'}, 'Capital'),
                         _.input({class: 'widget widget--input', type: 'number', min: 0, max: this.model.account, step: 1000, name: 'capital', placeholder: 'E.g. 3000', value: this.model.capital})
                             .on('input', (e) => { this.onChangeCapital(e); })
+                    ),
+                    _.div({class: 'widget-group align-center'},
+                        _.label({class: 'widget widget--label'}, 'Product'),
+                        _.input({class: 'widget widget--input', type: 'text', name: 'productName', placeholder: 'E.g. kittens or lasers'})
+                            .on('input', (e) => { this.onChangeProduct(e); })
                     )
                 ),
                 this.pieChart = new Game.Views.Charts.PieChart({
