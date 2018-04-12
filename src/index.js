@@ -13,6 +13,8 @@ window.Game = {
     MACHINE_PRODUCTIVITY: 1,
     PRODUCTION_COST: 10,
     DEFAULT_UNIT_PRICE: 40,
+    MIN_UNIT_PRICE: 1,
+    MAX_UNIT_PRICE: 500,
     
     // Quest goal constants
     MACHINE_PERSONAL_ACCOUNT_MINIMUM: 5000,

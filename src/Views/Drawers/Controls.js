@@ -14,10 +14,24 @@ class Controls extends Game.Views.Drawers.Drawer {
     /**
      * Event: Changed unit price
      *
-     * @param {Number} price
+     * @param {InputEvent} e
      */
-    onChangeUnitPrice(price) {
+    onChangeUnitPrice(e) {
+        let price = e.currentTarget.value;
+
+        if(price < Game.MIN_UNIT_PRICE) { 
+            price = Game.MIN_UNIT_PRICE;
+        }
+        
+        if(price > Game.MAX_UNIT_PRICE) { 
+            price = Game.MAX_UNIT_PRICE;
+        }
+
         Game.Services.SessionService.setUnitPrice(price);
+
+        if(Crisp.View.get('Message')) {
+            return;
+        }
 
         this.heartbeat();
     }
@@ -56,8 +70,8 @@ class Controls extends Game.Views.Drawers.Drawer {
             _.div({class: 'drawer--controls__heading'}, 'Pricing'),
             _.div({class: 'widget-group'},
                 _.div({dynamicContent: true, class: 'widget widget--label'}, 'Unit price:'),
-                _.input({disabled: !Game.Services.SessionService.isQuestComplete('Pricing'), class: 'widget widget--input small drawer--controls__pricing__input', type: 'number', value: Game.Services.ConfigService.get('unitPrice', Game.DEFAULT_UNIT_PRICE)})
-                    .on('input', (e) => { this.onChangeUnitPrice(e.currentTarget.value); }),
+                _.input({dynamicAttributes: true, min: Game.MIN_UNIT_PRICE, max: Game.MAX_UNIT_PRICE, disabled: !Game.Services.SessionService.isQuestComplete('Pricing'), class: 'widget widget--input small drawer--controls__pricing__input', type: 'number', value: Game.Services.ConfigService.get('unitPrice', Game.DEFAULT_UNIT_PRICE)})
+                    .on('input', (e) => { this.onChangeUnitPrice(e); }),
                 _.div({class: 'widget widget--label small'}, _.span({class: 'vat'}))
             ),
             _.div({class: 'widget-group'},
