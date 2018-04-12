@@ -15,7 +15,10 @@ class VATReportingTool extends Game.Views.Modals.Modal {
      * Renders the header
      */
     renderHeader() {
-        return _.h1('Report VAT for ' + this.year + ' Q' + this.quarter);
+        return [
+            _.h1('Report VAT for ' + this.year + ' Q' + this.quarter),
+            _.p('VAT is a 25% consumption tax added onto the price of goods and services')
+        ];
     }
 
     /**
