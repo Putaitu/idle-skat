@@ -203,15 +203,15 @@ class Timeline extends Game.Views.Drawers.Drawer {
         let date = Game.Services.TimeService.currentTime;
 
         return _.div({class: 'drawer__preview'},
-            _.div({dynamicContent: true, class: 'drawer--timeline__controls'},
+            _.div({class: 'drawer--timeline__controls'},
                 _.div({class: 'widget-group'},
-                    _.button({class: 'widget widget--button blue small' + (this.state === 'paused' ? ' active' : ''), title: 'Pause'}, '⏸')
+                    _.button({dynamicAttributes: true, class: 'widget widget--button blue small' + (this.state === 'paused' ? ' active' : ''), title: 'Pause'}, '⏸')
                         .click(() => { this.onClickPause(); }),
-                    _.button({class: 'widget widget--button blue small' + (this.state === 'playing' ? ' active' : ''), title: 'Play'}, '▶️')
+                    _.button({dynamicAttributes: true, class: 'widget widget--button blue small' + (this.state === 'playing' ? ' active' : ''), title: 'Play'}, '▶️')
                         .click(() => { this.onClickPlay(); }),
-                    _.button({class: 'widget widget--button blue small' + (this.state === 'ffwdx2' ? ' active' : ''), title: 'FFWDx2'}, '⏩')
+                    _.button({dynamicAttributes: true, class: 'widget widget--button blue small' + (this.state === 'ffwdx2' ? ' active' : ''), title: 'FFWDx2'}, '⏩')
                         .click(() => { this.onClickFastForward(2); }),
-                    _.button({class: 'widget widget--button blue small' + (this.state === 'ffwdx4' ? ' active' : ''), title: 'FFWDx4'}, '⏭')
+                    _.button({dynamicAttributes: true, class: 'widget widget--button blue small' + (this.state === 'ffwdx4' ? ' active' : ''), title: 'FFWDx4'}, '⏭')
                         .click(() => { this.onClickFastForward(4); })
                 )
             ),

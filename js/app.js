@@ -3055,13 +3055,13 @@ class Timeline extends Game.Views.Drawers.Drawer {
     renderContent() {
         let date = Game.Services.TimeService.currentTime;
 
-        return _.div({ class: 'drawer__preview' }, _.div({ dynamicContent: true, class: 'drawer--timeline__controls' }, _.div({ class: 'widget-group' }, _.button({ class: 'widget widget--button blue small' + (this.state === 'paused' ? ' active' : ''), title: 'Pause' }, '⏸').click(() => {
+        return _.div({ class: 'drawer__preview' }, _.div({ class: 'drawer--timeline__controls' }, _.div({ class: 'widget-group' }, _.button({ dynamicAttributes: true, class: 'widget widget--button blue small' + (this.state === 'paused' ? ' active' : ''), title: 'Pause' }, '⏸').click(() => {
             this.onClickPause();
-        }), _.button({ class: 'widget widget--button blue small' + (this.state === 'playing' ? ' active' : ''), title: 'Play' }, '▶️').click(() => {
+        }), _.button({ dynamicAttributes: true, class: 'widget widget--button blue small' + (this.state === 'playing' ? ' active' : ''), title: 'Play' }, '▶️').click(() => {
             this.onClickPlay();
-        }), _.button({ class: 'widget widget--button blue small' + (this.state === 'ffwdx2' ? ' active' : ''), title: 'FFWDx2' }, '⏩').click(() => {
+        }), _.button({ dynamicAttributes: true, class: 'widget widget--button blue small' + (this.state === 'ffwdx2' ? ' active' : ''), title: 'FFWDx2' }, '⏩').click(() => {
             this.onClickFastForward(2);
-        }), _.button({ class: 'widget widget--button blue small' + (this.state === 'ffwdx4' ? ' active' : ''), title: 'FFWDx4' }, '⏭').click(() => {
+        }), _.button({ dynamicAttributes: true, class: 'widget widget--button blue small' + (this.state === 'ffwdx4' ? ' active' : ''), title: 'FFWDx4' }, '⏭').click(() => {
             this.onClickFastForward(4);
         }))), _.div({ class: 'drawer--timeline__indicator' }, 'Present day'), _.div({ dynamicContent: true, class: 'drawer--timeline__scroller' }, _.div({ class: 'drawer--timeline__scroller__year' }, date.getFullYear()), _.div({ class: 'drawer--timeline__scroller__month' }, date.getMonthName()), _.div({ class: 'drawer--timeline__scroller__days' }, _.loop(60, day => {
             let currentDate = new Date(date);
