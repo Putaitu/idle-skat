@@ -764,7 +764,7 @@ class SessionService {
         let price = Game.MACHINE_PRICE;
 
         if (machines > 0) {
-            price = price * Math.pow(1.5, machines);
+            price = Math.round(price * Math.pow(1.5, machines) * 100) / 100;
         }
 
         return price;
